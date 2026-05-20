@@ -9,6 +9,8 @@ public class Edge {
 
     private boolean directed;
 
+    //TODO : Ajouter des paramètres lenght et width desquels dependra la capacité de l'edge
+
     private int capacity;
 
     public Edge(int id, Node start, Node end, boolean directed, int capacity) {
