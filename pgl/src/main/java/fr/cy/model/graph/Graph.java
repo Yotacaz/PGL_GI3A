@@ -8,7 +8,8 @@ public class Graph {
 
     private final List<Node> nodes;
     private final List<Edge> edges;
-
+    // TODO : Rajouter une liste d'adjacence pour simplifier dijskstra plus tard
+    
     public Graph() {
         this(new ArrayList<>(), new ArrayList<>());
     }
@@ -70,5 +71,7 @@ public class Graph {
         }
         return neighbors;
     }
+
+    //TODO : Ajouter une classe travail Pathfinder 
 
 }
