@@ -7,4 +7,7 @@ module fr.cy {
     opens fr.cy.controller to javafx.fxml;
 
     exports fr.cy;
+    exports fr.cy.controller;
+    exports fr.cy.model.agent;
+    exports fr.cy.model.graph;
 }
