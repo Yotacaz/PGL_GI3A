@@ -8,6 +8,10 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
+
+//TODO : Créer une classe parent a node et a edge qui contient capacity et isOnFire pour simplifier les choses et éviter les redondances
+
+
 /**
  * JavaFX App
  */
