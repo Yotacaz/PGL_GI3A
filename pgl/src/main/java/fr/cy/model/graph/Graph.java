@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import fr.cy.model.graph.element.Edge;
+import fr.cy.model.graph.element.Node;
+
 /**
  * Représente un graphe composé de nœuds et d'arêtes.
  *
@@ -25,9 +28,6 @@ public class Graph {
 
     /**
      * Crée un graphe vide.
-     *
-     * @param edges liste d'arêtes initiale
-     * @param nodes liste de nœuds initiale
      */
     public Graph() {
         this.edges = new ArrayList<>();
@@ -101,6 +101,14 @@ public class Graph {
      * @param edge l'arête à ajouter
      */
     public void addEdge(Edge edge) {
+        if (edge == null) {
+            throw new GraphException("Impossible d'ajouter une arête nulle.");
+        }
+
+        if (!adjacencyList.containsKey(edge.getStart()) || !adjacencyList.containsKey(edge.getEnd())) {
+            throw new GraphException("Les deux nœuds de l'arête doivent appartenir au graphe.");
+        }
+
         edges.add(edge);
         adjacencyList.get(edge.getStart()).add(edge);
 

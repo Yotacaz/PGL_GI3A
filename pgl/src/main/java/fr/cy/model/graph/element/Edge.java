@@ -1,4 +1,6 @@
-package fr.cy.model.graph;
+package fr.cy.model.graph.element;
+
+import fr.cy.model.graph.GraphConfig;
 
 /**
  * Représente une arête entre deux nœuds du graphe.
