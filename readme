@@ -3,5 +3,5 @@ Demo JavaFX application
 
 Run locally with Maven:
 
-	cd demo
+	cd pgl
 	mvn javafx:run
