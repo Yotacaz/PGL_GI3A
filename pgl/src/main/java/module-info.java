@@ -10,4 +10,5 @@ module fr.cy {
     exports fr.cy.controller;
     exports fr.cy.model.agent;
     exports fr.cy.model.graph;
+    exports fr.cy.model.pathfinding;
 }

@@ -20,34 +20,69 @@ public class Graph {
     /** Liste d'adjacence */
     private final Map<Node, List<Edge>> adjacencyList;
 
-    /** Prochain identifiant à attribuer aux nœuds */
-    private int nextNodeId;
-
-    /** Prochain identifiant à attribuer aux arêtes */
-    private int nextEdgeId;
-
-    // TODO : Attribution des ids sous forme de queue, recyclage
+    private final IdManager nodeIdManager;
+    private final IdManager edgeIdManager;
 
     /**
      * Crée un graphe vide.
-     */
-    public Graph() {
-        this(new ArrayList<>(), new ArrayList<>());
-    }
-
-    /**
-     * Crée un graphe à partir de listes existantes de nœuds et d'arêtes.
      *
      * @param edges liste d'arêtes initiale
      * @param nodes liste de nœuds initiale
      */
-    public Graph(List<Edge> edges, List<Node> nodes) {
-        this.edges = edges;
-        this.nodes = nodes;
+    public Graph() {
+        this.edges = new ArrayList<>();
+        this.nodes = new ArrayList<>();
 
         this.adjacencyList = new HashMap<>();
-        this.nextEdgeId = 0;
-        this.nextNodeId = 0;
+
+        this.nodeIdManager = new IdManager();
+        this.edgeIdManager = new IdManager();
+    }
+
+    /**
+     * Crée un noeud à une position spécifique dans le graphe
+     * 
+     * @param x coordonnée x
+     * @param y coordonnée y
+     * @return le noeud créé
+     */
+    public Node createNode(double x, double y) {
+        Node node = new Node(nodeIdManager.generateId(), x, y);
+        addNode(node);
+
+        return node;
+    }
+
+    /**
+     * Crée une arrête entre deux noeuds spécifiés
+     * 
+     * @param startNode noeud de départ
+     * @param endNode   noeud d'arrivée
+     * @return l'arrête créée
+     */
+    public Edge createEdge(Node startNode, Node endNode) {
+        Edge edge = new Edge(edgeIdManager.generateId(), startNode, endNode);
+        addEdge(edge);
+
+        return edge;
+    }
+
+    /**
+     * Crée une arrête spécifiée par deux noeuds, largeur, longueur et sa
+     * possibilité à être orienté.
+     * 
+     * @param startNode
+     * @param endNode
+     * @param length
+     * @param width
+     * @param directed
+     * @return l'arrête créée
+     */
+    public Edge createEdge(Node startNode, Node endNode, double length, double width, boolean directed) {
+        Edge edge = new Edge(edgeIdManager.generateId(), startNode, endNode, directed, width, length);
+
+        addEdge(edge);
+        return edge;
     }
 
     /**
@@ -57,25 +92,7 @@ public class Graph {
      */
     public void addNode(Node node) {
         nodes.add(node);
-    }
-
-    /**
-     * Supprime un nœud et toutes les arêtes qui y sont connectées.
-     *
-     * @param node le nœud à supprimer
-     */
-    public void removeNode(Node node) {
-        edges.removeIf(edge -> edge.getStart().equals(node)
-                || edge.getEnd().equals(node));
-
-        nodes.remove(node);
-    }
-
-    /**
-     * @return la liste de nœuds du graphe
-     */
-    public List<Node> getNodes() {
-        return nodes;
+        adjacencyList.put(node, new ArrayList<>());
     }
 
     /**
@@ -85,6 +102,28 @@ public class Graph {
      */
     public void addEdge(Edge edge) {
         edges.add(edge);
+        adjacencyList.get(edge.getStart()).add(edge);
+
+        if (!edge.isDirected()) {
+            adjacencyList.get(edge.getEnd()).add(edge);
+        }
+    }
+
+    /**
+     * Supprime un nœud et toutes les arêtes qui y sont connectées.
+     *
+     * @param node le nœud à supprimer
+     */
+    public void removeNode(Node node) {
+        List<Edge> edgesToRemove = new ArrayList<>(adjacencyList.get(node));
+
+        for (Edge edge : edgesToRemove) {
+            removeEdge(edge);
+        }
+
+        adjacencyList.remove(node);
+        nodes.remove(node);
+        nodeIdManager.releaseId(node.getId());
     }
 
     /**
@@ -94,6 +133,17 @@ public class Graph {
      */
     public void removeEdge(Edge edge) {
         edges.remove(edge);
+
+        adjacencyList.get(edge.getStart()).remove(edge);
+        adjacencyList.get(edge.getEnd()).remove(edge);
+        edgeIdManager.releaseId(edge.getId());
+    }
+
+    /**
+     * @return la liste de nœuds du graphe
+     */
+    public List<Node> getNodes() {
+        return nodes;
     }
 
     /**
@@ -120,9 +170,7 @@ public class Graph {
     }
 
     /**
-     * Calcule la liste des voisins directs d'un nœud en parcourant
-     * l'ensemble des arêtes. Cette méthode ne s'appuie pas sur
-     * {@link #adjacencyList}.
+     * Retourne la liste des voisins d'un nœud
      *
      * @param node nœud dont on veut les voisins
      * @return liste des nœuds voisins
@@ -130,16 +178,12 @@ public class Graph {
     public List<Node> getNeighbors(Node node) {
         List<Node> neighbors = new ArrayList<>();
 
-        for (Edge edge : edges) {
-            if (edge.getStart().equals(node)) {
-                neighbors.add(edge.getEnd());
-            }
-            if (!edge.isDirected()
-                    &&
-                    edge.getEnd().equals(node)) {
-                neighbors.add(edge.getStart());
-            }
+        List<Edge> connectedEdges = adjacencyList.get(node);
+
+        for (Edge edge : connectedEdges) {
+            neighbors.add(edge.getOppositeNode(node));
         }
+
         return neighbors;
     }
 
@@ -152,6 +196,25 @@ public class Graph {
         return adjacencyList;
     }
 
-    // TODO : Ajouter une classe travail Pathfinder
+    @Override
+    public String toString() {
 
+        return "Graph{" +
+                "\nnodes=" + nodes +
+                ",\nedges=" + edges +
+                "\n}";
+    }
+
+    public static void main(String[] args) {
+        Graph graph = new Graph();
+        Node n1 = graph.createNode(5, 5);
+        Node n2 = graph.createNode(15, 5);
+        Node n3 = graph.createNode(15, 10);
+        Node n4 = graph.createNode(20, 5);
+        n3.setExit(true);
+        graph.createEdge(n1, n2);
+        graph.createEdge(n2, n3);
+        graph.createEdge(n2, n4);
+
+    }
 }

@@ -35,8 +35,9 @@ public class Edge extends GraphElement {
      * @param end      nœud d'arrivée
      * @param directed true si l'arête est dirigée
      */
-    public Edge(int id, Node start, Node end, boolean directed) {
-        this(id, start, end, directed, GraphConfig.DEFAULT_EDGE_WIDTH, GraphConfig.DEFAULT_EDGE_LENGTH);
+    public Edge(int id, Node start, Node end) {
+        this(id, start, end, GraphConfig.DEFAULT_EDGE_DIRECTED, GraphConfig.DEFAULT_EDGE_WIDTH,
+                GraphConfig.DEFAULT_EDGE_LENGTH);
     }
 
     /**
@@ -74,6 +75,17 @@ public class Edge extends GraphElement {
      */
     public Node getEnd() {
         return end;
+    }
+
+    public Node getOppositeNode(Node node) {
+        if (node.equals(start)) {
+            return end;
+        }
+        if (node.equals(end)) {
+            return start;
+        }
+
+        return null;
     }
 
     /**
