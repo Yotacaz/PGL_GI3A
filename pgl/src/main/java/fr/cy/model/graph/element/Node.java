@@ -1,4 +1,4 @@
-package fr.cy.model.graph;
+package fr.cy.model.graph.element;
 
 import java.util.Objects;
 
