@@ -1,6 +1,8 @@
 package fr.cy.model.graph.element;
 
 import fr.cy.model.graph.GraphConfig;
+import fr.cy.model.agent.Agent;
+import java.util.*;
 
 /**
  * Représente une arête entre deux nœuds du graphe.
@@ -22,11 +24,12 @@ public class Edge extends GraphElement {
     /** Indique si l'arête est dirigée */
     private boolean directed;
 
-    /** Largeur de l'arête (>= 0) */
+    /** Dimensions de l'arête (>= 0) */
     private double width;
-
-    /** Longueur de l'arête (>= 0) */
     private double length;
+
+    /** Liste d'agents présent dans l'arrête */
+    private List<Agent> agents;
 
     /**
      * Constructeur simplifié utilisant les valeurs par défaut de
@@ -63,6 +66,8 @@ public class Edge extends GraphElement {
 
         setLength(length);
         setWidth(width);
+
+        this.agents = new ArrayList<>();
     }
 
     /**
@@ -139,12 +144,70 @@ public class Edge extends GraphElement {
     }
 
     /**
-     * Calcule la capacité de l'arête en multipliant largeur et longueur.
+     * Calcule la capacité totale de l'arête en multipliant largeur et longueur.
      *
      * @return la capacité (width * length)
      */
     public double getCapacity() {
         return width * length;
+    }
+
+    /**
+     * Calcule la surface occupée dans le couloir.
+     * 
+     * @return surface occupée
+     */
+    public double getOccupiedSpace() {
+        double occupied = 0;
+
+        for (Agent agent : agents) {
+            occupied += agent.getSurfaceAreaTakenByAgent();
+        }
+
+        return occupied;
+    }
+
+    /**
+     * Calcule le ration d'occupation du couloir
+     * 
+     * @return ration de congestion
+     */
+    public double getCongestionRatio() {
+        return getOccupiedSpace() / getCapacity();
+    }
+
+    /**
+     * Determine si un agent peut entrer dans le couloir selon l'espace restant.
+     * 
+     * @param agent Agent
+     * @return {@code true} si l'agent peut entrer
+     */
+    public boolean canEnter(Agent agent) {
+        return getOccupiedSpace() + agent.getSurfaceAreaTakenByAgent() <= getCapacity();
+    }
+
+    /**
+     * Ajoute ou non un agent dans l'arrête
+     * 
+     * @param agent Agent
+     * @return {@code true} si l'agent a été ajouté
+     */
+    public boolean addAgent(Agent agent) {
+        if (canEnter(agent)) {
+            agents.add(agent);
+
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Supprime un agent de l'arrête
+     * 
+     * @param agent Agent
+     */
+    public void removeAgent(Agent agent) {
+        agents.remove(agent);
     }
 
     /**
