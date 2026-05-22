@@ -4,24 +4,47 @@ import java.util.Optional;
 
 import fr.cy.model.graph.element.GraphElement;
 import fr.cy.model.graph.element.Node;
+import fr.cy.model.stress.StressInducing;
 
-public class Agent {
+public class Agent implements StressInducing {
+    /// Unique identifier for the agent
     private int id;
+    /// Name of the agent, for easier identification
     private String name;
+    /// Maximum speed of the agent, in units per time step
     private int maxSpeed;
+    /// Current speed of the agent, which may be reduced due to stress or crowding
     private int currentSpeed;
 
+    /// Surface area taken by the agent, used to calculate crowding effects
+    private double surfaceAreaTakenByAgent = 0.5;
+
+    /// Progress of the agent in the current component (either a node or an edge),
+    /// in units
     private int travelProgressInComponent;
+    /// Number of nodes visited by the agent, used for statistics
     private int nOfNodeVisited;
+    /// Maximum accumulated stress experienced by the agent during its journey, used
+    /// for statistics
+    private double maxAccumulatedStress = 0;
 
-    private float stressLevel = 0.0f;
-    private float stressTolerance;
+    /// Current state of the agent, which can be CALM, SELFISH, or PANICKING
+    private AgentState state = AgentState.CALM;
+    /// Stress level of the agent, between 0 and 1
+    private double stressLevel = 0.0;
+    /// Tolerance to stress, between 0 and 1, above which the agent starts panicking
+    private double stressTolerance;
 
-    private float crowdingTolerance;
+    /// Tolerance to crowding, between 0 and 1, above which the agent starts
+    /// panicking
+    private double crowdingTolerance;
+    /// Current component of the graph where the agent is located (either a node or
+    /// an edge)
     private GraphElement currentComponent;
+    /// Previous node visited by the agent, used in case of backtracking
     private Node previousNode = null;
 
-    public Agent(int id, String name, int maxSpeed, float stressTolerance, float crowdingTolerance) {
+    public Agent(int id, String name, int maxSpeed, double stressTolerance, double crowdingTolerance) {
         this.id = id;
         this.name = name;
         this.maxSpeed = maxSpeed;
@@ -30,24 +53,47 @@ public class Agent {
         this.crowdingTolerance = crowdingTolerance;
     }
 
-    public AgentState getState() {
-        Optional<AgentState> optState = AgentState.fromFloat(stressLevel, stressTolerance);
-        return optState.orElse(AgentState.PANICKING); // Default to PANICKING if no state matches
+    /**
+     * Update the state of the agent based on its current stress level and
+     * tolerance.
+     * 
+     * @return the new state of the agent after the update
+     */
+    public AgentState updateState() {
+        Optional<AgentState> optState = AgentState.fromdouble(stressLevel, stressTolerance);
+        if (optState.isEmpty()) {
+            System.err.println("Warning: Agent " + id + " has an invalid stress level of " + stressLevel
+                    + " with a tolerance of " + stressTolerance + ". Defaulting to PANICKING state.");
+        }
+        state = optState.orElse(AgentState.PANICKING); // Default to PANICKING if no state matches
+        return state;
     }
 
-    public boolean isPanicking() {
-        return stressLevel >= stressTolerance;
+
+    @Override
+    public double getStressInducingFactor() {
+        return getStressLevel() * 0.5; // FIXME: temporary
     }
 
+    /**
+     * @return the unique identifier of the agent
+     */
     public int getId() {
         return id;
+    }
+
+    /**
+     * @return the current state of the agent
+     */
+    public AgentState getState() {
+        return state;
     }
 
     public String getName() {
         return name;
     }
 
-    public float getStressLevel() {
+    public double getStressLevel() {
         return stressLevel;
     }
 
@@ -59,7 +105,7 @@ public class Agent {
         return previousNode;
     }
 
-    public float getCrowdingTolerance() {
+    public double getCrowdingTolerance() {
         return crowdingTolerance;
     }
 
@@ -71,12 +117,20 @@ public class Agent {
         return maxSpeed;
     }
 
-    public float getStressTolerance() {
+    public double getStressTolerance() {
         return stressTolerance;
+    }
+
+    public double getMaxAccumulatedStress() {
+        return maxAccumulatedStress;
     }
 
     public int getTravelProgressInComponent() {
         return travelProgressInComponent;
+    }
+
+    public double getSurfaceAreaTakenByAgent() {
+        return surfaceAreaTakenByAgent;
     }
 
 }

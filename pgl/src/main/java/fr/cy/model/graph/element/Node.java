@@ -1,6 +1,5 @@
 package fr.cy.model.graph.element;
 
-import java.util.Objects;
 
 /**
  * Classe représentant un nœud dans le graphe.

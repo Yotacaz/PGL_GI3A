@@ -3,29 +3,33 @@ package fr.cy.model.agent;
 import java.util.Optional;
 
 public enum AgentState {
+    /// Agent is calm and behaves normally
     CALM(0.0f, 0.5f),
+    /// Agent is selfish and may start pushing others to escape faster
     SELFISH(0.5f, 1f),
-    PANICKING(1f, Float.MAX_VALUE);
+    /// Agent is panicking and may cause more stress to others around it
+    PANICKING(1f, Double.MAX_VALUE);
 
-    private final float minStressLevel;
-    private final float maxStressLevel;
+    private final double minStressLevel;
+    private final double maxStressLevel;
 
-    private AgentState(float minStressLevel, float maxStressLevel) {
+    private AgentState(double minStressLevel, double maxStressLevel) {
         this.minStressLevel = minStressLevel;
         this.maxStressLevel = maxStressLevel;
     }
 
-    public float getMaxStressLevel() {
+    public double getMaxStressLevel() {
         return maxStressLevel;
     }
 
-    public float getMinStressLevel() {
+    public double getMinStressLevel() {
         return minStressLevel;
     }
 
-    public static Optional<AgentState> fromFloat(float stressLevel, float stressTolerance) {
+    public static Optional<AgentState> fromdouble(double stressLevel, double stressTolerance) {
         for (AgentState state : AgentState.values()) {
-            if (stressLevel >= state.getMinStressLevel()*stressTolerance && stressLevel < state.getMaxStressLevel()*stressTolerance) {
+            if (stressLevel >= state.getMinStressLevel() * stressTolerance
+                    && stressLevel < state.getMaxStressLevel() * stressTolerance) {
                 return Optional.of(state);
             }
         }
