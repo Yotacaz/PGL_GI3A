@@ -204,6 +204,10 @@ public class Graph {
         return adjacencyList;
     }
 
+    public List<Edge> getAdjacentEdges(Node node) {
+        return adjacencyList.getOrDefault(node, new ArrayList<>());
+    }
+
     @Override
     public String toString() {
 
