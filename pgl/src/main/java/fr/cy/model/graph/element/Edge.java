@@ -172,8 +172,21 @@ public class Edge extends GraphElement {
      * 
      * @return ration de congestion
      */
-    public double getCongestionRatio() {
+    public double getCongestion() {
         return getOccupiedSpace() / getCapacity();
+    }
+
+    @Override
+    public double getStressInducingFactor() {
+        double stress = 0;
+
+        stress += getCongestion() * 0.5;
+
+        if (isOnFire()) {
+            stress += 0.5;
+        }
+
+        return Math.min(stress, 1.0);
     }
 
     /**

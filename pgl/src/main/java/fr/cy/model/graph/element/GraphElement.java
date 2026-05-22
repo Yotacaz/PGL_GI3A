@@ -2,6 +2,7 @@ package fr.cy.model.graph.element;
 
 import java.util.Objects;
 
+import fr.cy.model.fire.Fire;
 import fr.cy.model.stress.StressInducing;
 
 /**
@@ -18,14 +19,10 @@ public abstract class GraphElement implements StressInducing {
     /** Identifiant unique de l'élément du graphe */
     private final int id;
 
-    /** Indicateur du state d'incendie de l'élément */
-    private boolean onFire;
-
-    /** Niveau de congestion de l'élément (valeur entre 0 et 1) */
-    private double congestion;
-
     /** Total stress induced by this element and its neighbors */
     private double totalStressInducedIncludingNeighbors = 0;
+
+    private Fire fire;
 
     /**
      * Constructeur initialisant un élément du graphe.
@@ -34,16 +31,15 @@ public abstract class GraphElement implements StressInducing {
      */
     protected GraphElement(int id) {
         this.id = id;
-        this.onFire = false;
-        this.congestion = 0;
+        removeFire();
     }
 
+    /**
+     * Le stress ne dépend pas de la même chose dans un node ou arrête étant donné
+     * qu'il n'y a pas de congestion dans les noeuds
+     */
     @Override
-    public double getStressInducingFactor() {
-        return Double.min(congestion * 0.5
-                + (onFire ? 0.5 : 0)
-                + (congestion > 0.8 ? 0.5 * congestion : 0), 1); // FIXME: temporary
-    }
+    public abstract double getStressInducingFactor();
 
     @Override
     public int hashCode() {
@@ -57,7 +53,7 @@ public abstract class GraphElement implements StressInducing {
             return true;
         }
 
-        if (!(o instanceof Node)) {
+        if (!(o instanceof GraphElement)) {
             return false;
         }
 
@@ -81,26 +77,19 @@ public abstract class GraphElement implements StressInducing {
      * @return {@code true} si l'élément est en feu, {@code false} sinon
      */
     public boolean isOnFire() {
-        return onFire;
+        return fire != null;
     }
 
-    /**
-     * Récupère le niveau de congestion de cet élément.
-     * 
-     * @return le niveau de congestion
-     */
-    public double getCongestion() {
-        return congestion;
+    public Fire getFire() {
+        return fire;
     }
 
-    /**
-     * Définit le niveau de congestion de cet élément.
-     * La valeur est limitée entre 0 et 1.
-     * 
-     * @param congestion le nouveau niveau de congestion
-     */
-    public void setCongestion(double congestion) {
-        this.congestion = Math.max(0, Math.min(1, congestion));
+    public void setFire(Fire fire) {
+        this.fire = fire;
+    }
+
+    public void removeFire() {
+        this.fire = null;
     }
 
     /**

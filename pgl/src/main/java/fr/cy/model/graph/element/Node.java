@@ -1,5 +1,6 @@
 package fr.cy.model.graph.element;
 
+import fr.cy.model.fire.Fire;
 
 /**
  * Classe représentant un nœud dans le graphe.
@@ -49,7 +50,6 @@ public class Node extends GraphElement {
                 ", y=" + y +
                 ", exit=" + isExit +
                 ", onFire=" + isOnFire() +
-                ", congestion=" + getCongestion() +
                 "}";
     }
 
@@ -96,5 +96,16 @@ public class Node extends GraphElement {
      */
     public void setExit(boolean exit) {
         isExit = exit;
+    }
+
+    /** TODO */
+    @Override
+    public double getStressInducingFactor() {
+
+        if (isOnFire()) {
+            return 0.7;
+        }
+
+        return 0.1;
     }
 }
