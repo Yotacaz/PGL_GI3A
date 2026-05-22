@@ -2,6 +2,8 @@ package fr.cy.model.graph.element;
 
 import java.util.Objects;
 
+import fr.cy.model.stress.StressInducing;
+
 /**
  * Classe abstraite représentant un élément du graphe.
  * 
@@ -12,7 +14,7 @@ import java.util.Objects;
  * @author GI3A
  * @version 1.0
  */
-public abstract class GraphElement {
+public abstract class GraphElement implements StressInducing {
     /** Identifiant unique de l'élément du graphe */
     private final int id;
 
@@ -21,6 +23,9 @@ public abstract class GraphElement {
 
     /** Niveau de congestion de l'élément (valeur entre 0 et 1) */
     private double congestion;
+
+    /** Total stress induced by this element and its neighbors */
+    private double totalStressInducedIncludingNeighbors = 0;
 
     /**
      * Constructeur initialisant un élément du graphe.
@@ -31,6 +36,13 @@ public abstract class GraphElement {
         this.id = id;
         this.onFire = false;
         this.congestion = 0;
+    }
+
+    @Override
+    public double getStressInducingFactor() {
+        return Double.min(congestion * 0.5
+                + (onFire ? 0.5 : 0)
+                + (congestion > 0.8 ? 0.5 * congestion : 0), 1); // FIXME: temporary
     }
 
     @Override
@@ -89,6 +101,29 @@ public abstract class GraphElement {
      */
     public void setCongestion(double congestion) {
         this.congestion = Math.max(0, Math.min(1, congestion));
+    }
+
+    /**
+     * @return the total stress induced by this element and its neighbors, which is
+     *         a value between 0 and 1
+     */
+    public double getTotalStressInducedIncludingNeighbors() {
+        return totalStressInducedIncludingNeighbors;
+    }
+
+    /**
+     * Set the total stress induced by this element and its neighbors.
+     * 
+     * @param totalStressInducedIncludingNeighbors the new total stress induced by
+     *                                             this element and its neighbors,
+     *                                             which should be a value between 0
+     *                                             and 1
+     */
+    public void setTotalStressInducedIncludingNeighbors(double totalStressInducedIncludingNeighbors) {
+        if (totalStressInducedIncludingNeighbors < 0 || totalStressInducedIncludingNeighbors > 1) {
+            throw new IllegalArgumentException("Total stress induced including neighbors must be between 0 and 1");
+        }
+        this.totalStressInducedIncludingNeighbors = totalStressInducedIncludingNeighbors;
     }
 
 }
