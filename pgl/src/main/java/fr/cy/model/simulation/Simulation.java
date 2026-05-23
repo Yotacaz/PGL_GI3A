@@ -18,7 +18,7 @@ public class Simulation {
     public Simulation(Graph graph) {
         this.graph = graph;
         this.agentManager = new AgentManager();
-        this.pathFinder = new PathFinder();
+        this.pathFinder = new PathFinder(graph);
         this.fireService = new FireService();
 
         this.currentTick = 0;

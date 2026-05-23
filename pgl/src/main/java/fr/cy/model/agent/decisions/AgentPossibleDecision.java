@@ -5,5 +5,6 @@ public enum AgentPossibleDecision {
     FOLLOW_LESS_CROWDED_PATH,
     FOLLOW_RECOMMENDED_PATH,
     RANDOM,
+    NICEST_PATH,
     FOLLOW_SHORTEST_PATH;
 }
