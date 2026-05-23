@@ -1,16 +1,14 @@
 package fr.cy.model.simulation;
 
-import java.util.ArrayList;
-import java.util.List;
 
-import fr.cy.model.agent.Agent;
+import fr.cy.model.agent.AgentManager;
 import fr.cy.model.fire.FireService;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.pathfinding.PathFinder;
 
 public class Simulation {
     private final Graph graph;
-    private final List<Agent> agents;
+    private final AgentManager agentManager;
     private final PathFinder pathFinder;
     private final FireService fireService;
 
@@ -19,7 +17,7 @@ public class Simulation {
 
     public Simulation(Graph graph) {
         this.graph = graph;
-        this.agents = new ArrayList<>();
+        this.agentManager = new AgentManager();
         this.pathFinder = new PathFinder();
         this.fireService = new FireService();
 
@@ -36,8 +34,7 @@ public class Simulation {
     }
 
     public void moveAgents() {
-        for (Agent agent : agents) {
-        }
+        
     }
 
     public void spreadFire() {
@@ -64,9 +61,9 @@ public class Simulation {
         return running;
     }
 
-    public List<Agent> getAgents() {
-        return agents;
-    }
+    // public List<Agent> getAgents() {
+    //     return agents;
+    // }
 
     public Graph getGraph() {
         return graph;

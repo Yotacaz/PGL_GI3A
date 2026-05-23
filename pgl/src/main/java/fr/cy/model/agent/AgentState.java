@@ -3,11 +3,11 @@ package fr.cy.model.agent;
 import java.util.Optional;
 
 public enum AgentState {
-    /// Agent is calm and behaves normally
+    /** Agent is calm and behaves normally */
     CALM(0.0f, 0.5f),
-    /// Agent is selfish and may start pushing others to escape faster
+    /** Agent is selfish and may start pushing others to escape faster */
     SELFISH(0.5f, 1f),
-    /// Agent is panicking and may cause more stress to others around it
+    /** Agent is panicking and may cause more stress to others around it */
     PANICKING(1f, Double.MAX_VALUE);
 
     private final double minStressLevel;
