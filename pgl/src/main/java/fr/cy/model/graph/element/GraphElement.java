@@ -34,7 +34,7 @@ public abstract class GraphElement implements StressInducing {
         removeFire();
     }
 
-    /**
+    /**ça
      * Le stress ne dépend pas de la même chose dans un node ou arrête étant donné
      * qu'il n'y a pas de congestion dans les noeuds
      */

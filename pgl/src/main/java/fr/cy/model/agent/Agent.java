@@ -2,9 +2,11 @@ package fr.cy.model.agent;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import fr.cy.model.agent.decisions.AgentDecisionScore;
 import fr.cy.model.agent.decisions.AgentPossibleDecision;
@@ -14,6 +16,14 @@ import fr.cy.model.graph.element.GraphElement;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.stress.StressInducing;
 
+/**
+ * Represents an individual agent participating in the simulation.
+ *
+ * <p>The class currently stores basic physical attributes (speed, surface area),
+ * behavioral parameters (stress and crowding tolerances) and decision-making
+ * helpers used by the simulation. Many behavioral methods are placeholders and
+ * should be implemented when simulation rules are defined.</p>
+ */
 public class Agent implements StressInducing {
     /** Unique identifier for the agent */
     private int id;
@@ -38,12 +48,12 @@ public class Agent implements StressInducing {
     for statistics */
     private double maxAccumulatedStress = 0;
 
-    /** Factor representing the agent's own decision-making ability, between 0 and 
+    /** Factor representing the agent's own decision-making ability, between 0 and
      *  1, where 0 means the agent will always follow the crowd */
-    private double baseOwnDescisionMakingFactor;
+    private double baseOwnDecisionMakingFactor;
 
     /** List of personality traits that can influence the agent's behavior */
-    private List<AgentPersonalityTrait> personalityTraits = new ArrayList<>();
+    private Set<AgentPersonalityTrait> personalityTraits = new HashSet<>(); //TODO: implement feature
 
     /** Map to store the scores of different possible decisions for the agent, used in decision-making
      * This is a class attribute in order to avoid creating a new map for each agent at each decision step*/
@@ -85,18 +95,18 @@ public class Agent implements StressInducing {
         this.currentSpeed = maxSpeed; // Start at max speed
         this.stressTolerance = stressTolerance;
         this.crowdingTolerance = crowdingTolerance;
-        this.baseOwnDescisionMakingFactor = 0.5; // FIXME: temporary, should be between 0 and 1
+        this.baseOwnDecisionMakingFactor = 0.5; // FIXME: temporary, should be between 0 and 1
     }
 
     public Map<AgentPossibleDecision, AgentDecisionScore> evaluatePossibleDecision(AgentPossibleDecision decision) {
         // TODO: Placeholder implementation, should evaluate the decision based on the agent's state and environment
-        double baseScore = Math.random() < baseOwnDescisionMakingFactor ? 1.0 : 0.0; // Randomly decide based on own decision-making factor
+        double baseScore = Math.random() < baseOwnDecisionMakingFactor ? 1.0 : 0.0; // Randomly decide based on own decision-making factor
         decisionsScore.put(decision, new AgentDecisionScore(baseScore, true));
         return decisionsScore;
     }
 
     public double getCurrentOwnDecisionMakingFactor() {
-        return baseOwnDescisionMakingFactor * stressLevel;
+        return baseOwnDecisionMakingFactor * stressLevel;
     }
 
     /**
@@ -185,8 +195,11 @@ public class Agent implements StressInducing {
         return surfaceAreaTakenByAgent;
     }
 
-    public double getBaseOwnDescisionMakingFactor() {
-        return baseOwnDescisionMakingFactor;
+    /**
+     * @return the base own decision-making factor (0..1)
+     */
+    public double getBaseOwnDecisionMakingFactor() {
+        return baseOwnDecisionMakingFactor;
     }
 
     public boolean isAlive() {
