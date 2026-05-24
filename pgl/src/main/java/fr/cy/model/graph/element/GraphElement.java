@@ -1,7 +1,10 @@
 package fr.cy.model.graph.element;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
+import fr.cy.model.agent.Agent;
 import fr.cy.model.fire.Fire;
 import fr.cy.model.stress.StressInducing;
 
@@ -19,6 +22,9 @@ public abstract class GraphElement implements StressInducing {
     /** Identifiant unique de l'élément du graphe */
     private final int id;
 
+    private final List<Agent> agents;
+    private double capacity;
+
     /** Total stress induced by this element and its neighbors */
     private double totalStressInducedIncludingNeighbors = 0;
 
@@ -29,17 +35,22 @@ public abstract class GraphElement implements StressInducing {
      * 
      * @param id l'identifiant unique de l'élément
      */
-    protected GraphElement(int id) {
+    protected GraphElement(int id, double capacity) {
         this.id = id;
+        this.agents = new ArrayList<>();
+        this.capacity = Math.max(0.1, capacity);
         removeFire();
     }
 
-    /**ça
-     * Le stress ne dépend pas de la même chose dans un node ou arrête étant donné
-     * qu'il n'y a pas de congestion dans les noeuds
-     */
     @Override
     public abstract double getStressInducingFactor();
+
+    /***
+     * Determine la liste des elements voisins
+     * 
+     * @return liste de vosions
+     */
+    public abstract List<GraphElement> getNeighbors();
 
     @Override
     public int hashCode() {
@@ -90,6 +101,66 @@ public abstract class GraphElement implements StressInducing {
 
     public void removeFire() {
         this.fire = null;
+    }
+
+    public List<Agent> getAgents() {
+        return agents;
+    }
+
+    /**
+     * Ajoute un agent si la capacité le permet
+     * 
+     * @param a Agent
+     */
+    public void addAgent(Agent a) {
+        if (!isFull()) {
+            agents.add(a);
+        }
+    }
+
+    /**
+     * Enleve un agent
+     * 
+     * @param a agent
+     */
+    public void removeAgent(Agent a) {
+        agents.remove(a);
+    }
+
+    public double getCapacity() {
+        return capacity;
+    }
+
+    /**
+     * Determine espace occupée par les agents
+     * 
+     * @return surface occupée
+     */
+    public double getOccupiedSpace() {
+        double occupied = 0;
+        for (Agent agent : agents) {
+            occupied += agent.getSurfaceAreaTakenByAgent();
+        }
+
+        return occupied;
+    }
+
+    /**
+     * Calcule la congestion entre 0 et 1 selon les agenrs présents
+     * 
+     * @return congestion
+     */
+    public double getCongestion() {
+        return Math.min(getOccupiedSpace() / getCapacity(), 1);
+    }
+
+    /**
+     * Determine si l'élement est full
+     * 
+     * @return true si oui
+     */
+    public boolean isFull() {
+        return getOccupiedSpace() >= capacity;
     }
 
     /**
