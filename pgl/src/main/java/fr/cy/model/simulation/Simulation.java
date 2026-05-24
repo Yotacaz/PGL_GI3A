@@ -2,6 +2,7 @@ package fr.cy.model.simulation;
 
 
 import fr.cy.model.agent.AgentManager;
+import fr.cy.model.agent.behaviour.decisions.DecisionContextProvider;
 import fr.cy.model.fire.FireService;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.pathfinding.PathFinder;
@@ -17,9 +18,10 @@ public class Simulation {
 
     public Simulation(Graph graph) {
         this.graph = graph;
-        this.agentManager = new AgentManager();
         this.pathFinder = new PathFinder(graph);
         this.fireService = new FireService();
+        // DecisionContextProvider decisionContextProvider = new DecisionContextProvider(graph, pathFinder);
+        this.agentManager = new AgentManager();
 
         this.currentTick = 0;
         this.running = false;

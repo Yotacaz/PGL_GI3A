@@ -12,4 +12,6 @@ public interface AgentAction {
 	 * @param agent the agent performing the action
 	 */
 	void perform(Agent agent);
+
+	boolean isCompleted();
 }

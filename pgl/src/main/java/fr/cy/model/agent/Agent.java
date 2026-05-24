@@ -1,19 +1,22 @@
 package fr.cy.model.agent;
 
-import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import fr.cy.model.agent.decisions.AgentDecisionScore;
-import fr.cy.model.agent.decisions.AgentPossibleDecision;
-import fr.cy.model.agent.personalityTraits.AgentPersonalityTrait;
+import fr.cy.model.agent.agentActions.AgentAction;
+import fr.cy.model.agent.agentActions.FollowAgentAction;
+import fr.cy.model.agent.behaviour.AgentState;
+import fr.cy.model.agent.behaviour.decisions.AgentDecisionScore;
+import fr.cy.model.agent.behaviour.decisions.AgentPossibleDecision;
+import fr.cy.model.agent.behaviour.decisions.DecisionContext;
+import fr.cy.model.agent.behaviour.personalityTraits.AgentPersonalityTrait;
 import fr.cy.model.graph.IdManager;
-import fr.cy.model.graph.element.GraphElement;
+import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
+import fr.cy.model.pathfinding.GraphPath;
 import fr.cy.model.stress.StressInducing;
 
 /**
@@ -26,13 +29,13 @@ import fr.cy.model.stress.StressInducing;
  */
 public class Agent implements StressInducing {
     /** Unique identifier for the agent */
-    private int id;
+    private final int id;
     /** Name of the agent, for easier identification */
     private String name;
     /** Maximum speed of the agent, in units per time step */
-    private int maxSpeed;
+    private double maxSpeed;
     /** Current speed of the agent, which may be reduced due to stress or crowding */
-    private int currentSpeed;
+    // private double currentSpeed;
 
     /** Flag indicating whether the agent is alive or has been removed from the simulation */
     private boolean isAlive = true;
@@ -41,7 +44,7 @@ public class Agent implements StressInducing {
     private double surfaceAreaTakenByAgent = 0.5;
 
     /** Progress of the agent in the current component (either a node or an edge), in units */
-    private int travelProgressInComponent;
+    private double travelProgressPercentageInComponent;
     /** Number of nodes visited by the agent, used for statistics */
     private int nOfNodeVisited;
     /** Maximum accumulated stress experienced by the agent during its journey, used
@@ -53,11 +56,11 @@ public class Agent implements StressInducing {
     private double baseOwnDecisionMakingFactor;
 
     /** List of personality traits that can influence the agent's behavior */
-    private Set<AgentPersonalityTrait> personalityTraits = new HashSet<>(); //TODO: implement feature
+    private final Set<AgentPersonalityTrait> personalityTraits = new HashSet<>(); //TODO: implement feature
 
     /** Map to store the scores of different possible decisions for the agent, used in decision-making
      * This is a class attribute in order to avoid creating a new map for each agent at each decision step*/
-    private Map<AgentPossibleDecision, AgentDecisionScore> decisionsScore = new EnumMap<>(AgentPossibleDecision.class);
+    private final Map<AgentPossibleDecision, AgentDecisionScore> decisionsScore = new EnumMap<>(AgentPossibleDecision.class);
 
     /** Current state of the agent, which can be CALM, SELFISH, or PANICKING */
     private AgentState state = AgentState.CALM;
@@ -68,10 +71,13 @@ public class Agent implements StressInducing {
 
     /** Tolerance to crowding, between 0 and 1, above which the agent starts panicking */
     private double crowdingTolerance;
-    /** Current component of the graph where the agent is located (either a node or an edge) */
-    private GraphElement currentComponent;
+    /** Current edge of the graph where the agent is located */
+    private Edge currentEdge;
+    private boolean isOnNode = true; // True if the agent is currently on a node, false if on an edge
     /** Previous node visited by the agent, used in case of backtracking */
     private Node previousNode = null;
+    private AgentAction currentAction = null; // The path the agent is currently following, if any
+
 
     /**  Static IdManager to generate unique identifiers for agents */
     private static IdManager idManager = new IdManager();
@@ -92,10 +98,21 @@ public class Agent implements StressInducing {
         this.id = idManager.generateId();
         this.name = name;
         this.maxSpeed = maxSpeed;
-        this.currentSpeed = maxSpeed; // Start at max speed
         this.stressTolerance = stressTolerance;
         this.crowdingTolerance = crowdingTolerance;
         this.baseOwnDecisionMakingFactor = 0.5; // FIXME: temporary, should be between 0 and 1
+    }
+
+    AgentAction makeDecision(DecisionContext decisionContext) {
+        // Placeholder implementation - in a real implementation, this would use the decision context to determine the appropriate action
+        currentAction = new FollowAgentAction();
+        return currentAction;
+    }
+
+    void performCurrentAction() {
+        if (currentAction != null) {
+            currentAction.perform(this);
+        }
     }
 
     public Map<AgentPossibleDecision, AgentDecisionScore> evaluatePossibleDecision(AgentPossibleDecision decision) {
@@ -171,11 +188,11 @@ public class Agent implements StressInducing {
         return crowdingTolerance;
     }
 
-    public int getCurrentSpeed() {
-        return currentSpeed;
-    }
+    // public double getCurrentSpeed() {
+    //     return currentSpeed;
+    // }
 
-    public int getMaxSpeed() {
+    public double getMaxSpeed() {
         return maxSpeed;
     }
 
@@ -187,8 +204,18 @@ public class Agent implements StressInducing {
         return maxAccumulatedStress;
     }
 
-    public int getTravelProgressInComponent() {
-        return travelProgressInComponent;
+    public double travelBy(double distance) {
+        // Placeholder implementation - in a real implementation, this would update the agent's position along the current edge
+        return distance; // Return the actual distance traveled, which may be less than the requested distance if the agent reaches the end of the edge
+    }
+
+    public double getTravelProgressPercentageInComponent() {
+        return travelProgressPercentageInComponent;
+    }
+
+    public double setTravelProgressPercentageInComponent(double newTravelProgressInComponent) {
+        this.travelProgressPercentageInComponent = newTravelProgressInComponent;
+        return this.travelProgressPercentageInComponent;
     }
 
     public double getSurfaceAreaTakenByAgent() {
@@ -204,5 +231,20 @@ public class Agent implements StressInducing {
 
     public boolean isAlive() {
         return isAlive;
+    }
+
+    public boolean isOnNode() {
+        return isOnNode;
+    }
+
+    public boolean needToMakeDecision() {
+        return isOnNode();
+    }
+
+    public Edge getCurrentEdge() {
+        return currentEdge;
+    }
+    public AgentAction getCurrentAction() {
+        return currentAction;
     }
 }

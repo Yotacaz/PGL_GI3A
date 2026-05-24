@@ -36,6 +36,7 @@ public class PathFinder {
 
         return cost;
     }
+    
 
     public List<Node> reconstructPath(Map<Node, Node> previous, Node goal) {
         List<Node> path = new ArrayList<>();

@@ -11,4 +11,10 @@ public class RandomAgentAction implements AgentAction {
 	public void perform(Agent agent) {
 		// Placeholder: implement random behavior
 	}
+
+	@Override
+	public boolean isCompleted() {
+		// Placeholder: determine if the random action is completed
+		return false;	
+	}
 }
