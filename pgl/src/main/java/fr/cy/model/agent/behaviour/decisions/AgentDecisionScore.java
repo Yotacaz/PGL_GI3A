@@ -1,4 +1,4 @@
-package fr.cy.model.agent.decisions;
+package fr.cy.model.agent.behaviour.decisions;
 
 /**
  * Holds the aggregated score for a possible decision and whether the

@@ -1,4 +1,4 @@
-package fr.cy.model.agent;
+package fr.cy.model.agent.behaviour;
 
 import java.util.Optional;
 

@@ -120,6 +120,15 @@ public class Node extends GraphElement {
         return new ArrayList<>(connectedEdges);
     }
 
+    public Edge getEdgeTo(Node neighbor) {
+        for (Edge edge : connectedEdges) {
+            if (edge.getOppositeNode(this).equals(neighbor)) {
+                return edge;
+            }
+        }
+        return null;
+    }
+
     /**
      * Ajoute une arête connectée à ce nœud.
      * 

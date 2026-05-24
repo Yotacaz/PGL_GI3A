@@ -1,4 +1,4 @@
-package fr.cy.model.agent.decisions;
+package fr.cy.model.agent.behaviour.decisions;
 
 public enum AgentPossibleDecision {
     FOLLOW_CROWD,

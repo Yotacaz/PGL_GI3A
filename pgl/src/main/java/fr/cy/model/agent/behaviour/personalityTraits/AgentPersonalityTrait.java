@@ -1,8 +1,8 @@
-package fr.cy.model.agent.personalityTraits;
+package fr.cy.model.agent.behaviour.personalityTraits;
 
 import java.util.Map;
 
-import fr.cy.model.agent.decisions.AgentPossibleDecision;
+import fr.cy.model.agent.behaviour.decisions.AgentPossibleDecision;
 
 public class AgentPersonalityTrait {
     public AgentPersonalityTrait() {

@@ -1,4 +1,4 @@
-package fr.cy.model.agent.personalityTraits;
+package fr.cy.model.agent.behaviour.personalityTraits;
 
 /**
  * Marker trait for agents with reduced mobility or special needs. Simulation

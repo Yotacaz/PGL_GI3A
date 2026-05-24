@@ -11,4 +11,11 @@ public class FollowAgentAction implements AgentAction {
 	public void perform(Agent agent) {
 		// Placeholder: implement follow-agent behavior
 	}
+
+	@Override
+	public boolean isCompleted() {
+		// Placeholder: determine if the follow action is completed
+		return false;
+	}
+
 }
