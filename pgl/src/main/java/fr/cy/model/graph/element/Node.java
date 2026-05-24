@@ -1,6 +1,7 @@
 package fr.cy.model.graph.element;
 
-import fr.cy.model.fire.Fire;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Classe représentant un nœud dans le graphe.
@@ -21,6 +22,9 @@ public class Node extends GraphElement {
 
     private boolean isExit;
 
+    /** Liste des arêtes connectées à ce nœud */
+    private final List<Edge> connectedEdges;
+
     /**
      * Constructeur créant un nouveau nœud avec une position spécifiée.
      * 
@@ -28,11 +32,13 @@ public class Node extends GraphElement {
      * @param x  la coordonnée X du nœud
      * @param y  la coordonnée Y du nœud
      */
-    public Node(int id, double x, double y) {
-        super(id);
+    public Node(int id, double x, double y, double capacity) {
+        super(id, capacity);
         this.id = id;
         this.x = x;
         this.y = y;
+
+        connectedEdges = new ArrayList<>();
     }
 
     /**
@@ -107,5 +113,30 @@ public class Node extends GraphElement {
         }
 
         return 0.1;
+    }
+
+    @Override
+    public List<GraphElement> getNeighbors() {
+        return new ArrayList<>(connectedEdges);
+    }
+
+    /**
+     * Ajoute une arête connectée à ce nœud.
+     * 
+     * @param edge l'arête à ajouter
+     */
+    public void addEdge(Edge edge) {
+        if (edge != null) {
+            connectedEdges.add(edge);
+        }
+    }
+
+    /**
+     * Retourne toutes les arêtes connectées à ce nœud.
+     * 
+     * @return liste des arêtes
+     */
+    public List<Edge> getEdges() {
+        return new ArrayList<>(connectedEdges);
     }
 }

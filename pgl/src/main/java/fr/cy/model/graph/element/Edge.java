@@ -1,7 +1,6 @@
 package fr.cy.model.graph.element;
 
 import fr.cy.model.graph.GraphConfig;
-import fr.cy.model.agent.Agent;
 import java.util.*;
 
 /**
@@ -27,9 +26,6 @@ public class Edge extends GraphElement {
     /** Dimensions de l'arête (>= 0) */
     private double width;
     private double length;
-
-    /** Liste d'agents présent dans l'arrête */
-    private List<Agent> agents;
 
     /**
      * Constructeur simplifié utilisant les valeurs par défaut de
@@ -57,7 +53,7 @@ public class Edge extends GraphElement {
      */
     public Edge(int id, Node start, Node end, boolean directed, double width, double length) {
 
-        super(id);
+        super(id, width * length);
 
         this.start = start;
         this.end = end;
@@ -66,8 +62,6 @@ public class Edge extends GraphElement {
 
         setLength(length);
         setWidth(width);
-
-        this.agents = new ArrayList<>();
     }
 
     /**
@@ -148,32 +142,27 @@ public class Edge extends GraphElement {
      *
      * @return la capacité (width * length)
      */
+    @Override
     public double getCapacity() {
         return width * length;
     }
 
     /**
-     * Calcule la surface occupée dans le couloir.
+     * Calcule la vitesse maximale de déplacement des agents dans cette arête
+     * en fonction de la congestion et de la longueur.
      * 
-     * @return surface occupée
+     * @return la vitesse maximale calculée
      */
-    public double getOccupiedSpace() {
-        double occupied = 0;
-
-        for (Agent agent : agents) {
-            occupied += agent.getSurfaceAreaTakenByAgent();
+    public double getMaxAgentSpeed() {
+        if (isOnFire()) {
+            return 0.0;
         }
 
-        return occupied;
-    }
+        double congestionFactor = 1.0 - getCongestion();
 
-    /**
-     * Calcule le ration d'occupation du couloir
-     * 
-     * @return ration de congestion
-     */
-    public double getCongestion() {
-        return getOccupiedSpace() / getCapacity();
+        double calculatedSpeed = GraphConfig.DEFAULT_EDGE_MAX_AGENT_SPEED * congestionFactor;
+
+        return Math.max(calculatedSpeed, 0.0);
     }
 
     @Override
@@ -189,38 +178,14 @@ public class Edge extends GraphElement {
         return Math.min(stress, 1.0);
     }
 
-    /**
-     * Determine si un agent peut entrer dans le couloir selon l'espace restant.
-     * 
-     * @param agent Agent
-     * @return {@code true} si l'agent peut entrer
-     */
-    public boolean canEnter(Agent agent) {
-        return getOccupiedSpace() + agent.getSurfaceAreaTakenByAgent() <= getCapacity();
-    }
+    @Override
+    public List<GraphElement> getNeighbors() {
+        List<GraphElement> neighbors = new ArrayList<>();
 
-    /**
-     * Ajoute ou non un agent dans l'arrête
-     * 
-     * @param agent Agent
-     * @return {@code true} si l'agent a été ajouté
-     */
-    public boolean addAgent(Agent agent) {
-        if (canEnter(agent)) {
-            agents.add(agent);
+        neighbors.add(start);
+        neighbors.add(end);
 
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Supprime un agent de l'arrête
-     * 
-     * @param agent Agent
-     */
-    public void removeAgent(Agent agent) {
-        agents.remove(agent);
+        return neighbors;
     }
 
     /**
@@ -237,9 +202,10 @@ public class Edge extends GraphElement {
                 ", endNode=" + end.getId() +
                 ", length=" + length +
                 ", width=" + width +
+                ", maxAgentSpeed=" + String.format("%.2f", getMaxAgentSpeed()) +
                 ", directed=" + directed +
                 ", onFire=" + isOnFire() +
-                ", congestion=" + getCongestion() +
+                ", congestion=" + String.format("%.2f", getCongestion()) +
                 '}';
     }
 }

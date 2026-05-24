@@ -42,15 +42,27 @@ public class Graph {
     /**
      * Crée un noeud à une position spécifique dans le graphe
      * 
+     * @param x        coordonnée x
+     * @param y        coordonnée y
+     * @param capacité maximale
+     * @return le noeud créé
+     */
+    public Node createNode(double x, double y, double capacity) {
+        Node node = new Node(nodeIdManager.generateId(), x, y, capacity);
+        addNode(node);
+
+        return node;
+    }
+
+    /**
+     * Crée un noeud à une position spécifique dans le graphe
+     * 
      * @param x coordonnée x
      * @param y coordonnée y
      * @return le noeud créé
      */
     public Node createNode(double x, double y) {
-        Node node = new Node(nodeIdManager.generateId(), x, y);
-        addNode(node);
-
-        return node;
+        return createNode(x, y, GraphConfig.DEFAULT_NODE_CAPACITY);
     }
 
     /**
@@ -111,9 +123,13 @@ public class Graph {
 
         edges.add(edge);
         adjacencyList.get(edge.getStart()).add(edge);
+        edge.getStart().addEdge(edge);
 
         if (!edge.isDirected()) {
             adjacencyList.get(edge.getEnd()).add(edge);
+            edge.getEnd().addEdge(edge);
+        } else {
+            edge.getEnd().addEdge(edge);
         }
     }
 
