@@ -6,15 +6,17 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import fr.cy.model.agent.agentActions.AgentAction;
-import fr.cy.model.agent.agentActions.FollowAgentAction;
 import fr.cy.model.agent.behaviour.AgentState;
+import fr.cy.model.agent.behaviour.agentActions.AgentAction;
+import fr.cy.model.agent.behaviour.agentActions.FollowAgentAction;
+import fr.cy.model.agent.behaviour.agentActions.RandomAgentAction;
 import fr.cy.model.agent.behaviour.decisions.AgentDecisionScore;
 import fr.cy.model.agent.behaviour.decisions.AgentPossibleDecision;
 import fr.cy.model.agent.behaviour.decisions.DecisionContext;
 import fr.cy.model.agent.behaviour.personalityTraits.AgentPersonalityTrait;
 import fr.cy.model.graph.IdManager;
 import fr.cy.model.graph.element.Edge;
+import fr.cy.model.graph.element.GraphElement;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.pathfinding.GraphPath;
 import fr.cy.model.stress.StressInducing;
@@ -60,7 +62,8 @@ public class Agent implements StressInducing {
 
     /** Map to store the scores of different possible decisions for the agent, used in decision-making
      * This is a class attribute in order to avoid creating a new map for each agent at each decision step*/
-    private final Map<AgentPossibleDecision, AgentDecisionScore> decisionsScore = new EnumMap<>(AgentPossibleDecision.class);
+    private final Map<AgentPossibleDecision, AgentDecisionScore> decisionsScore = new EnumMap<>(
+            AgentPossibleDecision.class);
 
     /** Current state of the agent, which can be CALM, SELFISH, or PANICKING */
     private AgentState state = AgentState.CALM;
@@ -77,7 +80,6 @@ public class Agent implements StressInducing {
     /** Previous node visited by the agent, used in case of backtracking */
     private Node previousNode = null;
     private AgentAction currentAction = null; // The path the agent is currently following, if any
-
 
     /**  Static IdManager to generate unique identifiers for agents */
     private static IdManager idManager = new IdManager();
@@ -105,7 +107,7 @@ public class Agent implements StressInducing {
 
     AgentAction makeDecision(DecisionContext decisionContext) {
         // Placeholder implementation - in a real implementation, this would use the decision context to determine the appropriate action
-        currentAction = new FollowAgentAction();
+        currentAction = new RandomAgentAction(this);
         return currentAction;
     }
 
@@ -184,6 +186,14 @@ public class Agent implements StressInducing {
         return previousNode;
     }
 
+    public Node getCurrentNode() {
+        return isOnNode ? getPreviousNode() : null;
+    }
+
+    public GraphElement getCurrentGraphElement() {
+        return isOnNode ? getCurrentNode() : getCurrentEdge();
+    }
+
     public double getCrowdingTolerance() {
         return crowdingTolerance;
     }
@@ -244,6 +254,14 @@ public class Agent implements StressInducing {
     public Edge getCurrentEdge() {
         return currentEdge;
     }
+
+    public Edge getCurrentEdgeOrNextEdgeIfOnNode(){
+        if(currentAction == null) {
+            return null;
+        }
+        return currentAction.getCurrentEdgeOrNextEdgeIfOnNode();
+    }
+
     public AgentAction getCurrentAction() {
         return currentAction;
     }

@@ -1,4 +1,4 @@
-package fr.cy.model.agent.agentActions;
+package fr.cy.model.agent.behaviour.agentActions;
 
 import fr.cy.model.agent.Agent;
 import fr.cy.model.pathfinding.GraphPath;
@@ -8,8 +8,8 @@ import fr.cy.model.pathfinding.GraphPath;
  */
 public class FollowLessCrowdedPathAction extends AbstractFollowPathAction {
 
-	public FollowLessCrowdedPathAction(GraphPath path) {
-		super(path);
+	public FollowLessCrowdedPathAction(Agent agent, GraphPath path) {
+		super(agent, path);
 	}
 
 	@Override

@@ -141,6 +141,21 @@ public class Node extends GraphElement {
     }
 
     /**
+     * Return all outgoing edges from this node. For undirected edges, they are considered outgoing from both nodes.
+     * @return list of outgoing edges
+     */
+    public List<Edge> getOutGoingEdges() {
+        //FIXME: It is not efficient to compute outgoing edges every time
+        List<Edge> outgoingEdges = new ArrayList<>();
+        for (Edge edge : connectedEdges) {
+            if (!edge.isDirected() || edge.getStart().equals(this)) {
+                outgoingEdges.add(edge);
+            }
+        }
+        return outgoingEdges;
+    }
+
+    /**
      * Retourne toutes les arêtes connectées à ce nœud.
      * 
      * @return liste des arêtes
