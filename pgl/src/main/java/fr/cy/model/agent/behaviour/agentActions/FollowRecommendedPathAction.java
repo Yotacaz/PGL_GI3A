@@ -1,4 +1,4 @@
-package fr.cy.model.agent.agentActions;
+package fr.cy.model.agent.behaviour.agentActions;
 
 import fr.cy.model.agent.Agent;
 import fr.cy.model.pathfinding.GraphPath;
@@ -7,8 +7,8 @@ import fr.cy.model.pathfinding.GraphPath;
  * Action representing following a recommended path (from pathfinder or signage).
  */
 public class FollowRecommendedPathAction extends AbstractFollowPathAction {
-	public FollowRecommendedPathAction(GraphPath path) {
-		super(path);
+	public FollowRecommendedPathAction(Agent agent,GraphPath path) {
+		super(agent, path);
 	}
 
 	@Override

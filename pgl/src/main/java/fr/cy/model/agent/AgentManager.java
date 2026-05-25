@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import fr.cy.model.agent.agentActions.AgentAction;
+import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.agent.behaviour.decisions.AgentPossibleDecision;
 import fr.cy.model.agent.behaviour.decisions.DecisionContext;
 import fr.cy.model.agent.behaviour.decisions.DecisionContextProvider;
@@ -63,6 +63,9 @@ public class AgentManager {
     public void tick() {
         sortAgentsByOwnDecisionMakingFactor(); //should be relatively fast since the list is almost sorted
         for (Agent agent : agents) {
+            if (agent.isOnNode()) {
+
+            }
             double maxAgentSpeed = agent.getMaxSpeed();
             DecisionContext decisionContext = decisionContextProvider.constructContext(agent);
             AgentAction action = agent.makeDecision(decisionContext);
