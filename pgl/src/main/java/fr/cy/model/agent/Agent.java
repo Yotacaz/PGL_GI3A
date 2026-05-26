@@ -1,6 +1,6 @@
 package fr.cy.model.agent;
 
-import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -12,7 +12,7 @@ import fr.cy.model.agent.behaviour.agentActions.FollowAgentAction;
 import fr.cy.model.agent.behaviour.agentActions.RandomAgentAction;
 import fr.cy.model.agent.behaviour.decisions.AgentDecisionScore;
 import fr.cy.model.agent.behaviour.decisions.AgentPossibleDecision;
-import fr.cy.model.agent.behaviour.decisions.DecisionContext;
+import fr.cy.model.agent.behaviour.decisions.DecisionNodeContext;
 import fr.cy.model.agent.behaviour.personalityTraits.AgentPersonalityTrait;
 import fr.cy.model.graph.IdManager;
 import fr.cy.model.graph.element.Edge;
@@ -62,8 +62,7 @@ public class Agent implements StressInducing {
 
     /** Map to store the scores of different possible decisions for the agent, used in decision-making
      * This is a class attribute in order to avoid creating a new map for each agent at each decision step*/
-    private final Map<AgentPossibleDecision, AgentDecisionScore> decisionsScore = new EnumMap<>(
-            AgentPossibleDecision.class);
+    private final Map<Class<? extends AgentAction>, AgentDecisionScore> decisionsScore = new HashMap<>();
 
     /** Current state of the agent, which can be CALM, SELFISH, or PANICKING */
     private AgentState state = AgentState.CALM;
@@ -105,10 +104,8 @@ public class Agent implements StressInducing {
         this.baseOwnDecisionMakingFactor = 0.5; // FIXME: temporary, should be between 0 and 1
     }
 
-    AgentAction makeDecision(DecisionContext decisionContext) {
-        // Placeholder implementation - in a real implementation, this would use the decision context to determine the appropriate action
-        currentAction = new RandomAgentAction(this);
-        return currentAction;
+    AgentAction makeDecision(DecisionNodeContext decisionContext) {
+        return null;    //TODO
     }
 
     void performCurrentAction() {
@@ -117,7 +114,7 @@ public class Agent implements StressInducing {
         }
     }
 
-    public Map<AgentPossibleDecision, AgentDecisionScore> evaluatePossibleDecision(AgentPossibleDecision decision) {
+    public Map<Class<? extends AgentAction>, AgentDecisionScore> evaluatePossibleDecision(Class<? extends AgentAction> decision) {
         // TODO: Placeholder implementation, should evaluate the decision based on the agent's state and environment
         double baseScore = Math.random() < baseOwnDecisionMakingFactor ? 1.0 : 0.0; // Randomly decide based on own decision-making factor
         decisionsScore.put(decision, new AgentDecisionScore(baseScore, true));
@@ -202,6 +199,7 @@ public class Agent implements StressInducing {
     //     return currentSpeed;
     // }
 
+
     public double getMaxSpeed() {
         return maxSpeed;
     }
@@ -255,8 +253,8 @@ public class Agent implements StressInducing {
         return currentEdge;
     }
 
-    public Edge getCurrentEdgeOrNextEdgeIfOnNode(){
-        if(currentAction == null) {
+    public Edge getCurrentEdgeOrNextEdgeIfOnNode() {
+        if (currentAction == null) {
             return null;
         }
         return currentAction.getCurrentEdgeOrNextEdgeIfOnNode();

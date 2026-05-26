@@ -32,7 +32,7 @@ public class RandomAgentAction extends AgentAction {
 		if (!agent.isOnNode()) {
 			return chosenEdge; // Random action does not specify a particular edge when on a node
 		}
-		List<Edge> outgoingEdges = agent.getPreviousNode().getOutGoingEdges();
+		List<Edge> outgoingEdges = agent.getPreviousNode().getOutgoingEdges();
 		return null; //TODO
 		
 		

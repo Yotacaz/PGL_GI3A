@@ -7,8 +7,11 @@ import java.util.List;
 import java.util.Map;
 
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
+import fr.cy.model.agent.behaviour.agentActions.FollowAgentAction;
+import fr.cy.model.agent.behaviour.agentActions.FollowRecommendedPathAction;
+import fr.cy.model.agent.behaviour.agentActions.RandomAgentAction;
 import fr.cy.model.agent.behaviour.decisions.AgentPossibleDecision;
-import fr.cy.model.agent.behaviour.decisions.DecisionContext;
+import fr.cy.model.agent.behaviour.decisions.DecisionNodeContext;
 import fr.cy.model.agent.behaviour.decisions.DecisionContextProvider;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.GraphElement;
@@ -28,15 +31,15 @@ public class AgentManager {
     }
 
     /** Factors used to influence agent decision-making */
-    private Map<AgentPossibleDecision, Double> decisionMakingFactors = new EnumMap<>(AgentPossibleDecision.class);
+    private Map<Class<? extends AgentAction>, Double> decisionMakingFactors = new HashMap<>();
     {
         // Initialize decision-making factors for each decision type
-        decisionMakingFactors.put(AgentPossibleDecision.FOLLOW_CROWD, 2.0);
-        decisionMakingFactors.put(AgentPossibleDecision.FOLLOW_LESS_CROWDED_PATH, 1.0);
-        decisionMakingFactors.put(AgentPossibleDecision.FOLLOW_RECOMMENDED_PATH, 1.5);
-        decisionMakingFactors.put(AgentPossibleDecision.RANDOM, 0.05);
-        decisionMakingFactors.put(AgentPossibleDecision.FOLLOW_SHORTEST_PATH, 0.2);
-        decisionMakingFactors.put(AgentPossibleDecision.NICEST_PATH, 0.5);
+        decisionMakingFactors.put(FollowAgentAction.class, 2.0);
+        decisionMakingFactors.put(RandomAgentAction.class, 1.0);
+        decisionMakingFactors.put(FollowRecommendedPathAction.class, 1.5);
+        decisionMakingFactors.put(RandomAgentAction.class, 0.05);
+        // decisionMakingFactors.put(FollowShortestPathAction.class, 0.2);
+        // decisionMakingFactors.put(NicestPathAction.class, 0.5);
     }
 
     /**
@@ -61,13 +64,14 @@ public class AgentManager {
     }
 
     public void tick() {
+        decisionContextProvider.clearCache();
         sortAgentsByOwnDecisionMakingFactor(); //should be relatively fast since the list is almost sorted
+
         for (Agent agent : agents) {
             if (agent.isOnNode()) {
 
             }
-            double maxAgentSpeed = agent.getMaxSpeed();
-            DecisionContext decisionContext = decisionContextProvider.constructContext(agent);
+            DecisionNodeContext decisionContext = decisionContextProvider.getContext(agent);
             AgentAction action = agent.makeDecision(decisionContext);
         }
 
