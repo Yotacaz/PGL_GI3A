@@ -3,6 +3,7 @@ package fr.cy.model.graph.element;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.io.Serializable;
 
 import fr.cy.model.agent.Agent;
 import fr.cy.model.fire.Fire;
@@ -18,11 +19,12 @@ import fr.cy.model.stress.StressInducing;
  * @author GI3A
  * @version 1.0
  */
-public abstract class GraphElement implements StressInducing {
+public abstract class GraphElement implements StressInducing, Serializable {
+    private static final long serialVersionUID = 1L;
     /** Identifiant unique de l'élément du graphe */
     private final int id;
 
-    private final List<Agent> agents;
+    private transient List<Agent> agents;
     private double capacity;
 
     /** Total stress induced by this element and its neighbors */

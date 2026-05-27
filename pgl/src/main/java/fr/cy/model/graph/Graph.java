@@ -4,11 +4,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.io.Serializable;
 
 
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.pathfinding.*;
+
 
 /**
  * Représente un graphe composé de nœuds et d'arêtes.
@@ -16,7 +18,8 @@ import fr.cy.model.pathfinding.*;
  * @author GI3A
  * @version 1.0
  */
-public class Graph {
+public class Graph implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     /** Liste de tous les nœuds et edges du graphe */
     private final List<Node> nodes;

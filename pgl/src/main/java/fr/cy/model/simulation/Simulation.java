@@ -1,17 +1,21 @@
 package fr.cy.model.simulation;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 
 import fr.cy.model.agent.AgentManager;
-import fr.cy.model.agent.behaviour.decisions.DecisionContextProvider;
 import fr.cy.model.fire.FireService;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.pathfinding.PathFinder;
 
-public class Simulation {
+public class Simulation implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private final Graph graph;
-    private final AgentManager agentManager;
-    private final PathFinder pathFinder;
-    private final FireService fireService;
+    private transient AgentManager agentManager;
+    private transient PathFinder pathFinder;
+    private transient FireService fireService;
 
     private int currentTick;
     private boolean running;
@@ -33,6 +37,14 @@ public class Simulation {
 
     public void stop() {
         running = false;
+    }
+
+    private void readObject(ObjectInputStream objectInputStream) throws IOException, ClassNotFoundException {
+        objectInputStream.defaultReadObject();
+
+        this.pathFinder = new PathFinder(graph);
+        this.fireService = new FireService();
+        this.agentManager = new AgentManager();
     }
 
 
@@ -64,6 +76,11 @@ public class Simulation {
 
     public FireService getFireService() {
         return fireService;
+    }
+
+    
+    public int getCurrentTick() {
+        return currentTick;
     }
 
 
