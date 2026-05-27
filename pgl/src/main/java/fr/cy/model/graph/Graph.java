@@ -232,7 +232,7 @@ public class Graph {
                 ",\nedges=" + edges +
                 "\n}";
     }
-
+    
     public static void main(String[] args) {
         Graph graph = new Graph();
         Node n1 = graph.createNode(5, 5);

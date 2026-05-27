@@ -1,8 +1,8 @@
-package fr.cy.model.agent.behaviour;
+package fr.cy.model.agent.behaviour.properties;
 
 import java.util.Optional;
 
-public enum AgentState {
+public enum EmotionalState {
     /** Agent is calm and behaves normally */
     CALM(0.0f, 0.5f),
     /** Agent is selfish and may start pushing others to escape faster */
@@ -13,7 +13,7 @@ public enum AgentState {
     private final double minStressLevel;
     private final double maxStressLevel;
 
-    private AgentState(double minStressLevel, double maxStressLevel) {
+    private EmotionalState(double minStressLevel, double maxStressLevel) {
         this.minStressLevel = minStressLevel;
         this.maxStressLevel = maxStressLevel;
     }
@@ -26,8 +26,8 @@ public enum AgentState {
         return minStressLevel;
     }
 
-    public static Optional<AgentState> fromdouble(double stressLevel, double stressTolerance) {
-        for (AgentState state : AgentState.values()) {
+    public static Optional<EmotionalState> fromdouble(double stressLevel, double stressTolerance) {
+        for (EmotionalState state : EmotionalState.values()) {
             if (stressLevel >= state.getMinStressLevel() * stressTolerance
                     && stressLevel < state.getMaxStressLevel() * stressTolerance) {
                 return Optional.of(state);
@@ -36,7 +36,7 @@ public enum AgentState {
         return Optional.empty();
     }
 
-    public AgentState nextState() {
+    public EmotionalState nextState() {
         switch (this) {
             case CALM:
                 return SELFISH;

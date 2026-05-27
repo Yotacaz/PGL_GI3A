@@ -1,27 +1,19 @@
 package fr.cy.model.agent;
 
 import java.util.Collections;
-import java.util.EnumMap;
-import java.util.HashMap;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
-import fr.cy.model.agent.behaviour.agentActions.FollowAgentAction;
-import fr.cy.model.agent.behaviour.agentActions.FollowRecommendedPathAction;
-import fr.cy.model.agent.behaviour.agentActions.RandomAgentAction;
-import fr.cy.model.agent.behaviour.decisions.AgentPossibleDecision;
 import fr.cy.model.agent.behaviour.decisions.DecisionNodeContext;
 import fr.cy.model.agent.behaviour.decisions.DecisionContextProvider;
-import fr.cy.model.graph.element.Edge;
-import fr.cy.model.graph.element.GraphElement;
 
 /**
  * Manager responsible for higher-level operations on {@link Agent} instances.
  * Currently holds configuration values used when evaluating decisions.
  */
 public class AgentManager {
-
+    private AgentSettings agentSettings = new AgentSettings();
     private List<Agent> agents;
     private DecisionContextProvider decisionContextProvider;
     // private Map<Agent, AgentAction> agentActionsPreviousTick = new HashMap<>();
@@ -30,26 +22,12 @@ public class AgentManager {
         return Collections.emptyList();
     }
 
-    /** Factors used to influence agent decision-making */
-    private Map<Class<? extends AgentAction>, Double> decisionMakingFactors = new HashMap<>();
-    {
-        // Initialize decision-making factors for each decision type
-        decisionMakingFactors.put(FollowAgentAction.class, 2.0);
-        decisionMakingFactors.put(RandomAgentAction.class, 1.0);
-        decisionMakingFactors.put(FollowRecommendedPathAction.class, 1.5);
-        decisionMakingFactors.put(RandomAgentAction.class, 0.05);
-        // decisionMakingFactors.put(FollowShortestPathAction.class, 0.2);
-        // decisionMakingFactors.put(NicestPathAction.class, 0.5);
-    }
-
-    /**
-     * Retrieves the decision-making factor for a given agent decision type
-     *
-     * @param decision The type of agent decision to retrieve the factor for
-     * @return The decision-making factor associated with the specified decision type
-     */
-    public double getDecisionMakingFactor(AgentPossibleDecision decision) {
-        return decisionMakingFactors.getOrDefault(decision, Double.NEGATIVE_INFINITY);
+    private class AgentByOwnDecisionMakingComparator implements Comparator<Agent> {
+        @Override
+        public int compare(Agent a1, Agent a2) {
+            // Higher decision-making score means higher priority (comes first)
+            return Double.compare(a2.getCurrentOwnDecisionMakingFactor(), a1.getCurrentOwnDecisionMakingFactor());
+        }
     }
 
     /**
@@ -72,7 +50,7 @@ public class AgentManager {
 
             }
             DecisionNodeContext decisionContext = decisionContextProvider.getContext(agent);
-            AgentAction action = agent.makeDecision(decisionContext);
+            AgentAction action = agent.makeDecision(decisionContext, agentSettings);
         }
 
         for (Agent agent : agents) {
