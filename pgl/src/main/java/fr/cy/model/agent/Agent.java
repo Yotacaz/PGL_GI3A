@@ -1,24 +1,17 @@
 package fr.cy.model.agent;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 
-import fr.cy.model.agent.behaviour.AgentState;
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
-import fr.cy.model.agent.behaviour.agentActions.FollowAgentAction;
-import fr.cy.model.agent.behaviour.agentActions.RandomAgentAction;
 import fr.cy.model.agent.behaviour.decisions.AgentDecisionScore;
 import fr.cy.model.agent.behaviour.decisions.AgentPossibleDecision;
 import fr.cy.model.agent.behaviour.decisions.DecisionNodeContext;
-import fr.cy.model.agent.behaviour.personalityTraits.AgentPersonalityTrait;
+import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 import fr.cy.model.graph.IdManager;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.GraphElement;
 import fr.cy.model.graph.element.Node;
-import fr.cy.model.pathfinding.GraphPath;
 import fr.cy.model.stress.StressInducing;
 
 /**
@@ -39,9 +32,6 @@ public class Agent implements StressInducing {
     /** Current speed of the agent, which may be reduced due to stress or crowding */
     // private double currentSpeed;
 
-    /** Flag indicating whether the agent is alive or has been removed from the simulation */
-    private boolean isAlive = true;
-
     /** Surface area taken by the agent, used to calculate crowding effects */
     private double surfaceAreaTakenByAgent = 0.5;
 
@@ -53,23 +43,11 @@ public class Agent implements StressInducing {
     for statistics */
     private double maxAccumulatedStress = 0;
 
-    /** Factor representing the agent's own decision-making ability, between 0 and
-     *  1, where 0 means the agent will always follow the crowd */
-    private double baseOwnDecisionMakingFactor;
-
-    /** List of personality traits that can influence the agent's behavior */
-    private final Set<AgentPersonalityTrait> personalityTraits = new HashSet<>(); //TODO: implement feature
-
     /** Map to store the scores of different possible decisions for the agent, used in decision-making
      * This is a class attribute in order to avoid creating a new map for each agent at each decision step*/
-    private final Map<Class<? extends AgentAction>, AgentDecisionScore> decisionsScore = new HashMap<>();
+    private final Map<AgentPossibleDecision, AgentDecisionScore> decisionsScore = new HashMap<>();
 
-    /** Current state of the agent, which can be CALM, SELFISH, or PANICKING */
-    private AgentState state = AgentState.CALM;
-    /** Stress level of the agent, between 0 and 1 */
-    private double stressLevel = 0.0;
-    /** Tolerance to stress, between 0 and 1, above which the agent starts panicking */
-    private double stressTolerance;
+    private AgentDecisionalProperties agentState;
 
     /** Tolerance to crowding, between 0 and 1, above which the agent starts panicking */
     private double crowdingTolerance;
@@ -79,6 +57,9 @@ public class Agent implements StressInducing {
     /** Previous node visited by the agent, used in case of backtracking */
     private Node previousNode = null;
     private AgentAction currentAction = null; // The path the agent is currently following, if any
+
+    /** Flag indicating whether the agent is alive or has been removed from the simulation */
+    private boolean isAlive = true;
 
     /**  Static IdManager to generate unique identifiers for agents */
     private static IdManager idManager = new IdManager();
@@ -99,13 +80,25 @@ public class Agent implements StressInducing {
         this.id = idManager.generateId();
         this.name = name;
         this.maxSpeed = maxSpeed;
-        this.stressTolerance = stressTolerance;
         this.crowdingTolerance = crowdingTolerance;
-        this.baseOwnDecisionMakingFactor = 0.5; // FIXME: temporary, should be between 0 and 1
+        this.agentState = new AgentDecisionalProperties(this.id, stressTolerance, 0.5);
     }
 
-    AgentAction makeDecision(DecisionNodeContext decisionContext) {
-        return null;    //TODO
+    AgentAction makeDecision(DecisionNodeContext decisionContext, AgentSettings agentSettings) {
+        computeAgentDecisionsScore(agentSettings, decisionContext);
+        return null; //TODO
+    }
+
+    private double computeAgentDecisionsScore(AgentSettings agentSettings, DecisionNodeContext decisionContext) {
+        // real implementation :
+        double totalScore = 0.0;
+        for (AgentPossibleDecision possibleDecision : AgentPossibleDecision.values()) {
+            AgentDecisionScore decisionScore = possibleDecision.computeScore(decisionContext, agentState);
+            decisionsScore.put(possibleDecision, decisionScore);
+            totalScore += decisionScore.getScore();
+        }
+        return totalScore;
+
     }
 
     void performCurrentAction() {
@@ -114,36 +107,9 @@ public class Agent implements StressInducing {
         }
     }
 
-    public Map<Class<? extends AgentAction>, AgentDecisionScore> evaluatePossibleDecision(Class<? extends AgentAction> decision) {
-        // TODO: Placeholder implementation, should evaluate the decision based on the agent's state and environment
-        double baseScore = Math.random() < baseOwnDecisionMakingFactor ? 1.0 : 0.0; // Randomly decide based on own decision-making factor
-        decisionsScore.put(decision, new AgentDecisionScore(baseScore, true));
-        return decisionsScore;
-    }
-
-    public double getCurrentOwnDecisionMakingFactor() {
-        return baseOwnDecisionMakingFactor * stressLevel;
-    }
-
-    /**
-     * Update the state of the agent based on its current stress level and
-     * tolerance.
-     * 
-     * @return the new state of the agent after the update
-     */
-    public AgentState updateState() {
-        Optional<AgentState> optState = AgentState.fromdouble(stressLevel, stressTolerance);
-        if (optState.isEmpty()) {
-            System.err.println("Warning: Agent " + id + " has an invalid stress level of " + stressLevel
-                    + " with a tolerance of " + stressTolerance + ". Defaulting to PANICKING state.");
-        }
-        state = optState.orElse(AgentState.PANICKING); // Default to PANICKING if no state matches
-        return state;
-    }
-
     @Override
     public double getStressInducingFactor() {
-        return getStressLevel() * 0.5; // FIXME: temporary
+        return agentState.getStressLevel() * 0.5; // FIXME: temporary
     }
 
     /**
@@ -160,19 +126,8 @@ public class Agent implements StressInducing {
         return id;
     }
 
-    /**
-     * @return the current state of the agent
-     */
-    public AgentState getState() {
-        return state;
-    }
-
     public String getName() {
         return name;
-    }
-
-    public double getStressLevel() {
-        return stressLevel;
     }
 
     public int getnOfNodeVisited() {
@@ -195,17 +150,16 @@ public class Agent implements StressInducing {
         return crowdingTolerance;
     }
 
+    public double getCurrentOwnDecisionMakingFactor() {
+        return agentState.getCurrentOwnDecisionMakingFactor();
+    }
+
     // public double getCurrentSpeed() {
     //     return currentSpeed;
     // }
 
-
     public double getMaxSpeed() {
         return maxSpeed;
-    }
-
-    public double getStressTolerance() {
-        return stressTolerance;
     }
 
     public double getMaxAccumulatedStress() {
@@ -228,13 +182,6 @@ public class Agent implements StressInducing {
 
     public double getSurfaceAreaTakenByAgent() {
         return surfaceAreaTakenByAgent;
-    }
-
-    /**
-     * @return the base own decision-making factor (0..1)
-     */
-    public double getBaseOwnDecisionMakingFactor() {
-        return baseOwnDecisionMakingFactor;
     }
 
     public boolean isAlive() {

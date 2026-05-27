@@ -5,14 +5,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Map.Entry;
 
 import fr.cy.model.agent.Agent;
 import fr.cy.model.graph.Graph;
-import fr.cy.model.graph.element.GraphElement;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.graph.element.Edge;
-import fr.cy.model.pathfinding.GraphPath;
 import fr.cy.model.pathfinding.PathFinder;
 
 public class DecisionContextProvider {
@@ -32,8 +29,7 @@ public class DecisionContextProvider {
         if (cachedContext == null) {
             cachedContext = constructContext(agent);
             cachedContexts.put(node, cachedContext);
-        }else{
-            
+        } else {
 
         }
         return cachedContext;
@@ -83,8 +79,8 @@ public class DecisionContextProvider {
 
         // GraphPath recommendedPath = pathFinder.findPath(agent.getCurrentNode(), null);
         List<Edge> outgoingEdges = currentNode.getOutgoingEdges();
-        return new DecisionNodeContext(currentNode, null, outgoingEdges, nearbyIncomingAgents, nearbyOutgoingAgents,
-                agent.getStressLevel(), currentNode.getCongestion());
+        return new DecisionNodeContext(currentNode, null, null, outgoingEdges, nearbyIncomingAgents,
+                nearbyOutgoingAgents);
 
     }
 
