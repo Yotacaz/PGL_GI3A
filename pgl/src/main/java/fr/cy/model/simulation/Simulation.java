@@ -35,17 +35,6 @@ public class Simulation {
         running = false;
     }
 
-    public void moveAgents() {
-        
-    }
-
-    public void spreadFire() {
-
-    }
-
-    public void updateStress() {
-
-    }
 
     public void tick() {
         if (!running) {
@@ -53,9 +42,7 @@ public class Simulation {
         }
 
         fireService.updateFires(graph);
-        moveAgents();
-        updateStress();
-
+        agentManager.tick();
         currentTick++;
     }
 
@@ -63,11 +50,21 @@ public class Simulation {
         return running;
     }
 
-    // public List<Agent> getAgents() {
-    //     return agents;
-    // }
-
     public Graph getGraph() {
         return graph;
     }
+
+    public AgentManager getAgentManager() {
+        return agentManager;
+    }
+
+    public PathFinder getPathFinder() {
+        return pathFinder;
+    }
+
+    public FireService getFireService() {
+        return fireService;
+    }
+
+
 }

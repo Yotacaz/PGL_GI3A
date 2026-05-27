@@ -171,6 +171,10 @@ public class Agent implements StressInducing {
         return name;
     }
 
+    public GraphElement getPosition() {
+        return isOnNode ? getPreviousNode() : getCurrentEdge();
+    }
+
     public double getStressLevel() {
         return stressLevel;
     }
@@ -228,6 +232,13 @@ public class Agent implements StressInducing {
 
     public double getSurfaceAreaTakenByAgent() {
         return surfaceAreaTakenByAgent;
+    }
+
+    public void setStressLevel(double stressLevel) {
+        this.stressLevel = stressLevel;
+        if (stressLevel > maxAccumulatedStress) {
+            maxAccumulatedStress = stressLevel;
+        }
     }
 
     /**
