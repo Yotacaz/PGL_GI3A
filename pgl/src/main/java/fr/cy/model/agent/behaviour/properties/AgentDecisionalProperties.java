@@ -19,6 +19,9 @@ public class AgentDecisionalProperties {
      *  1, where 0 means the agent will always follow the crowd */
     private double baseOwnDecisionMakingFactor;
 
+    /** Maximum accumulated stress experienced by the agent during its journey, used
+    for statistics */
+    private double maxAccumulatedStress = 0;
 
     /** List of personality traits that can influence the agent's behavior */
     private final Set<AgentPersonalityTrait> personalityTraits = new HashSet<>(); //TODO: implement feature
@@ -57,6 +60,13 @@ public class AgentDecisionalProperties {
         return stressTolerance;
     }
 
+    public void setStressLevel(double stressLevel){
+        this.stressLevel = stressLevel;
+        if (stressLevel > maxAccumulatedStress) {
+            maxAccumulatedStress = stressLevel;
+        }
+    }
+
     public double getStressLevel() {
         return stressLevel;
     }
@@ -72,5 +82,7 @@ public class AgentDecisionalProperties {
         return baseOwnDecisionMakingFactor * stressLevel;
     }
 
-    
+    public double getMaxAccumulatedStress() {
+        return maxAccumulatedStress;
+    }
 }

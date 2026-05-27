@@ -1,7 +1,7 @@
 package fr.cy.view;
 
 import fr.cy.model.agent.Agent;
-import fr.cy.model.agent.behaviour.AgentState;
+import fr.cy.model.agent.behaviour.properties.EmotionalState;
 import fr.cy.model.graph.element.Node;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
@@ -115,7 +115,7 @@ public class NodeInfoPanel extends VBox {
                     .average().orElse(0);
             avgStressLabel.setText("Stress moy. : " + String.format("%.0f%%", avgStress * 100));
 
-            AgentState dominant = getDominantState(agents);
+            EmotionalState dominant = getDominantState(agents);
             dominantStateLabel.setText("État dominant : " + dominant.name());
         }
 
@@ -133,10 +133,9 @@ public class NodeInfoPanel extends VBox {
             fireSpreadLabel.setText("Propagation : " + String.format("%.2f", node.getFire().getSpreadRate()));
             fireTicksLabel.setText("Brûle depuis : " + node.getFire().getBurningTicks() + " ticks");
         } else {
-            setFireVisible(false);
+            setFireVisible(true);
             fireLabel.setText("Pas de feu ✅");
             fireLabel.setTextFill(Color.GREEN);
-            setFireVisible(true); // on affiche juste "Pas de feu"
             fireIntensityLabel.setVisible(false);
             fireSmokeLabel.setVisible(false);
             fireSpreadLabel.setVisible(false);
@@ -147,18 +146,18 @@ public class NodeInfoPanel extends VBox {
     /**
      * Détermine l'état le plus fréquent parmi les agents.
      */
-    private AgentState getDominantState(List<Agent> agents) {
+    private EmotionalState getDominantState(List<Agent> agents) {
         int calm = 0, selfish = 0, panicking = 0;
         for (Agent a : agents) {
             switch (a.getState()) {
-                case CALM      -> calm++;
-                case SELFISH   -> selfish++;
+                case CALM -> calm++;
+                case SELFISH -> selfish++;
                 case PANICKING -> panicking++;
             }
         }
-        if (panicking >= calm && panicking >= selfish) return AgentState.PANICKING;
-        if (selfish >= calm)                           return AgentState.SELFISH;
-        return AgentState.CALM;
+        if (panicking >= calm && panicking >= selfish) return EmotionalState.PANICKING;
+        if (selfish >= calm) return EmotionalState.SELFISH;
+        return EmotionalState.CALM;
     }
 
     /** Affiche ou cache les labels liés au feu. */

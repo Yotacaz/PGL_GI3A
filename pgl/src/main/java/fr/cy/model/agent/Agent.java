@@ -8,6 +8,7 @@ import fr.cy.model.agent.behaviour.decisions.AgentDecisionScore;
 import fr.cy.model.agent.behaviour.decisions.AgentPossibleDecision;
 import fr.cy.model.agent.behaviour.decisions.DecisionNodeContext;
 import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
+import fr.cy.model.agent.behaviour.properties.EmotionalState;
 import fr.cy.model.graph.IdManager;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.GraphElement;
@@ -134,6 +135,10 @@ public class Agent implements StressInducing {
 
     public double getStressLevel() {
         return agentState.getStressLevel();
+    }
+
+    public EmotionalState getState() {
+        return agentState.getState();
     }
 
     public int getnOfNodeVisited() {
