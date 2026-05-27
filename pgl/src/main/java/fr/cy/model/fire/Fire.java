@@ -1,5 +1,7 @@
 package fr.cy.model.fire;
 
+
+import java.io.Serializable;
 /** TODO: VALEURS MAGIQUES: A RETRAVAILLER */
 
 /**
@@ -9,7 +11,8 @@ package fr.cy.model.fire;
  * {@link #update()} method advances the fire by one tick and modifies the
  * intensity and smoke level according to fixed multipliers.
  */
-public class Fire {
+public class Fire implements Serializable {
+    private static final long serialVersionUID = 1L;
     private double intensity;
     private double smokeLevel;
     private double spreadRate;
