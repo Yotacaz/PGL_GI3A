@@ -64,6 +64,10 @@ public class AgentManager {
     }
 
     public void tick() {
+        moveAgents();
+        updateStress();
+    }
+    public void moveAgents(){
         decisionContextProvider.clearCache();
         sortAgentsByOwnDecisionMakingFactor(); //should be relatively fast since the list is almost sorted
 
@@ -77,6 +81,19 @@ public class AgentManager {
 
         for (Agent agent : agents) {
             agent.performCurrentAction();
+        }
+
+    }
+
+    public List<Agent> getAgents() {
+        return agents;
+    }
+
+    public void updateStress() {
+        for (Agent agent : agents) {
+            double stressLevel = agent.getStressLevel();
+            //TODO: Update stress level based on current conditions (e.g., proximity to fire, congestion, etc.)
+            
         }
     }
 

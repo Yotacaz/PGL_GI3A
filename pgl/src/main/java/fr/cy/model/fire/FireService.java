@@ -17,6 +17,10 @@ public class FireService {
         this.random = new Random();
     }
 
+    public boolean isOnFire(GraphElement element) {
+        return element.isOnFire();
+    }
+
     public void updateFires(Graph graph) {
         /** Elements qui prendront feu */
         Set<GraphElement> newFires = new HashSet<>();

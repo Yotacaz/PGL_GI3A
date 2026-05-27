@@ -90,4 +90,23 @@ public class PathFinder {
         return reconstructPath(previous, goal);
     }
 
+
+    public double getDistanceToNearestExit(Node start) {
+        double minDistance = Double.POSITIVE_INFINITY;
+
+        for (Node exit : graph.getExits()) {
+            List<Node> path = shortestPath(start, exit);
+            if (!path.isEmpty()) {
+                double distance = path.stream()
+                        .flatMap(node -> graph.getAdjacentEdges(node).stream())
+                        .mapToDouble(Edge::getLength)
+                        .sum();
+
+                minDistance = Math.min(minDistance, distance);
+            }
+        }
+
+        return minDistance;
+    }
+
 }
