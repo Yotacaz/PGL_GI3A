@@ -5,8 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
+import fr.cy.model.pathfinding.*;
 
 /**
  * Représente un graphe composé de nœuds et d'arêtes.
@@ -232,7 +234,21 @@ public class Graph {
                 ",\nedges=" + edges +
                 "\n}";
     }
+
+    public List<Node> getExits() {
+        List<Node> exits = new ArrayList<>();
+
+        for (Node node : nodes) {
+            if (node.isExit()) {
+                exits.add(node);
+            }
+        }
+
+        return exits;
+    }
+
     
+
     public static void main(String[] args) {
         Graph graph = new Graph();
         Node n1 = graph.createNode(5, 5);

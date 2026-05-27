@@ -39,9 +39,7 @@ public class Agent implements StressInducing {
     private double travelProgressPercentageInComponent;
     /** Number of nodes visited by the agent, used for statistics */
     private int nOfNodeVisited;
-    /** Maximum accumulated stress experienced by the agent during its journey, used
-    for statistics */
-    private double maxAccumulatedStress = 0;
+    
 
     /** Map to store the scores of different possible decisions for the agent, used in decision-making
      * This is a class attribute in order to avoid creating a new map for each agent at each decision step*/
@@ -130,6 +128,14 @@ public class Agent implements StressInducing {
         return name;
     }
 
+    public GraphElement getPosition() {
+        return isOnNode ? getPreviousNode() : getCurrentEdge();
+    }
+
+    public double getStressLevel() {
+        return agentState.getStressLevel();
+    }
+
     public int getnOfNodeVisited() {
         return nOfNodeVisited;
     }
@@ -163,7 +169,7 @@ public class Agent implements StressInducing {
     }
 
     public double getMaxAccumulatedStress() {
-        return maxAccumulatedStress;
+        return agentState.getMaxAccumulatedStress();
     }
 
     public double travelBy(double distance) {
@@ -182,6 +188,17 @@ public class Agent implements StressInducing {
 
     public double getSurfaceAreaTakenByAgent() {
         return surfaceAreaTakenByAgent;
+    }
+
+    public void setStressLevel(double stressLevel) {
+        agentState.setStressLevel(stressLevel);
+    }
+
+    /**
+     * @return the base own decision-making factor (0..1)
+     */
+    public double getBaseOwnDecisionMakingFactor() {
+        return agentState.getBaseOwnDecisionMakingFactor();
     }
 
     public boolean isAlive() {
