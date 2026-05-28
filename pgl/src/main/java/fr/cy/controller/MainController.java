@@ -10,24 +10,30 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 
 /**
- * Contrôleur de la vue principale.
- *
- * Crée un graphe de test, l'affiche dans le Pane central,
- * et branche le clic sur un nœud pour afficher ses infos à droite.
+ * Contrôleur principal de l'application JavaFX.
+ * Crée un graphe de démonstration et affiche la vue interactive.
  */
-public class PrimaryController {
+public class MainController {
 
-    /** Le Pane central injecté depuis primary.fxml */
     @FXML
     private Pane graphContainer;
 
-    /** Le BorderPane racine — permet d'ajouter le panneau d'infos à droite */
     @FXML
     private BorderPane root;
 
     @FXML
     public void initialize() {
-        // --- 1. Créer le graphe (modèle) ---
+        Graph graph = buildDemoGraph();
+
+        NodeInfoPanel infoPanel = new NodeInfoPanel();
+        root.setRight(infoPanel);
+
+        GraphView graphView = new GraphView(graph);
+        graphView.setOnNodeClicked(infoPanel::display);
+        graphContainer.getChildren().add(graphView);
+    }
+
+    private Graph buildDemoGraph() {
         Graph graph = new Graph();
 
         Node n1 = graph.createNode(150, 150);
@@ -52,16 +58,6 @@ public class PrimaryController {
         graph.createEdge(n3, sortie1);
         graph.createEdge(n4, sortie2);
 
-        // --- 2. Créer le panneau d'infos et l'ajouter à droite ---
-        NodeInfoPanel infoPanel = new NodeInfoPanel();
-        root.setRight(infoPanel);
-
-        // --- 3. Créer la vue du graphe ---
-        GraphView graphView = new GraphView(graph);
-
-        // Quand on clique sur un nœud → mettre à jour le panneau d'infos
-        graphView.setOnNodeClicked(node -> infoPanel.display(node));
-
-        graphContainer.getChildren().add(graphView);
+        return graph;
     }
 }
