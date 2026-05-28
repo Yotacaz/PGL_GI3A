@@ -30,6 +30,22 @@ public abstract class GraphElement implements StressInducing {
 
     private Fire fire;
 
+    // ===== STATISTIQUES =====
+    /** Nombre total d'agents passés par cet élément */
+    private int totalAgentsCount = 0;
+
+    /** Nombre de fois où cet élément a été complètement rempli */
+    private int timesFull = 0;
+
+    /** Congestion maximale atteinte */
+    private double maxCongestion = 0;
+
+    /** Somme des congestions pour calculer la moyenne */
+    private double sumCongestion = 0;
+
+    /** Nombre de fois où la congestion a été mesurée */
+    private int congestionMeasureCount = 0;
+
     /**
      * Constructeur initialisant un élément du graphe.
      * 
@@ -115,6 +131,14 @@ public abstract class GraphElement implements StressInducing {
     public void addAgent(Agent a) {
         if (!isFull()) {
             agents.add(a);
+            // Mettre à jour les statistiques
+            incrementTotalAgentsCount();
+            recordCongestionMeasure();
+
+            // Vérifier si on vient de remplir l'élément
+            if (isFull()) {
+                incrementTimesFull();
+            }
         }
     }
 
@@ -124,7 +148,10 @@ public abstract class GraphElement implements StressInducing {
      * @param a agent
      */
     public void removeAgent(Agent a) {
-        agents.remove(a);
+        // remove only if present, then record congestion measure
+        if (agents.remove(a)) {
+            recordCongestionMeasure();
+        }
     }
 
     public double getCapacity() {
@@ -184,6 +211,73 @@ public abstract class GraphElement implements StressInducing {
             throw new IllegalArgumentException("Total stress induced including neighbors must be between 0 and 1");
         }
         this.totalStressInducedIncludingNeighbors = totalStressInducedIncludingNeighbors;
+    }
+
+    // ===== STATISTIQUES =====
+
+    /**
+     * Incrémente le compteur d'agents passés.
+     */
+    public void incrementTotalAgentsCount() {
+        this.totalAgentsCount++;
+    }
+
+    /**
+     * @return le nombre total d'agents passés par cet élément
+     */
+    public int getTotalAgentsCount() {
+        return totalAgentsCount;
+    }
+
+    /**
+     * Incrémente le compteur de fois où l'élément a été rempli.
+     */
+    public void incrementTimesFull() {
+        this.timesFull++;
+    }
+
+    /**
+     * @return le nombre de fois où l'élément a été complètement rempli
+     */
+    public int getTimesFull() {
+        return timesFull;
+    }
+
+    /**
+     * Enregistre une mesure de congestion.
+     */
+    public void recordCongestionMeasure() {
+        double currentCongestion = getCongestion();
+        sumCongestion += currentCongestion;
+        congestionMeasureCount++;
+
+        if (currentCongestion > maxCongestion) {
+            maxCongestion = currentCongestion;
+        }
+    }
+
+    /**
+     * @return la congestion maximale atteinte
+     */
+    public double getMaxCongestion() {
+        return maxCongestion;
+    }
+
+    /**
+     * @return la congestion moyenne
+     */
+    public double getAverageCongestion() {
+        if (congestionMeasureCount == 0) {
+            return 0;
+        }
+        return sumCongestion / congestionMeasureCount;
+    }
+
+    /**
+     * @return le nombre de mesures de congestion enregistrées
+     */
+    public int getCongestionMeasureCount() {
+        return congestionMeasureCount;
     }
 
 }
