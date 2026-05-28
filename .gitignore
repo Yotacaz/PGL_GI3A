@@ -3,7 +3,7 @@ target/
 .DS_Store
 perso
 .metadata
-bin
+bin/
 .settings
 .project
 .classpath
