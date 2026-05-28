@@ -165,6 +165,20 @@ public class Edge extends GraphElement {
         return Math.max(calculatedSpeed, 0.0);
     }
 
+    public double getMaxAgentSpeedInDirection(Node fromNode) {  //TODO
+        if (directed) {
+            if (fromNode.equals(start)) {
+                return getMaxAgentSpeed();
+            } else if (fromNode.equals(end)) {
+                return getMaxAgentSpeed(); 
+            } else {
+                throw new IllegalArgumentException("Le nœud spécifié n'est pas connecté à cette arête");
+            }
+        } else {
+            return getMaxAgentSpeed();
+        }
+    }
+
     @Override
     public double getStressInducingFactor() {
         double stress = 0;

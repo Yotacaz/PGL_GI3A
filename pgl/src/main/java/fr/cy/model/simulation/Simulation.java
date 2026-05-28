@@ -14,6 +14,7 @@ public class Simulation {
     private final FireService fireService;
 
     private int currentTick;
+    public static final double TICK_DURATION = 1.0; 
     private boolean running;
 
     public Simulation(Graph graph) {

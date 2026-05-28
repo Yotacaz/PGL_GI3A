@@ -1,6 +1,5 @@
 package fr.cy.model.agent;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -17,10 +16,6 @@ public class AgentManager {
     private List<Agent> agents;
     private DecisionContextProvider decisionContextProvider;
     // private Map<Agent, AgentAction> agentActionsPreviousTick = new HashMap<>();
-
-    public List<Agent> getAgentsByOwnDecisionMakingFactor(double factor) {
-        return Collections.emptyList();
-    }
 
     private class AgentByOwnDecisionMakingComparator implements Comparator<Agent> {
         @Override
@@ -42,8 +37,8 @@ public class AgentManager {
     }
 
     public void tick() {
-        moveAgents();
         updateStress();
+        moveAgents();
     }
     public void moveAgents(){
         decisionContextProvider.clearCache();
@@ -51,14 +46,13 @@ public class AgentManager {
 
         for (Agent agent : agents) {
             if (agent.isOnNode()) {
-
+                DecisionNodeContext decisionContext = decisionContextProvider.getContext(agent);
+                AgentAction action = agent.makeDecision(decisionContext, agentSettings);
             }
-            DecisionNodeContext decisionContext = decisionContextProvider.getContext(agent);
-            AgentAction action = agent.makeDecision(decisionContext, agentSettings);
         }
 
         for (Agent agent : agents) {
-            agent.performCurrentAction();
+            double performed = agent.performCurrentAction(agentSettings);
         }
 
     }
@@ -70,6 +64,7 @@ public class AgentManager {
     public void updateStress() {
         for (Agent agent : agents) {
             double stressLevel = agent.getStressLevel();
+
             //TODO: Update stress level based on current conditions (e.g., proximity to fire, congestion, etc.)
             
         }
