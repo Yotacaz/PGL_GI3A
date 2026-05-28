@@ -13,4 +13,7 @@ module fr.cy {
     exports fr.cy.model.graph;
     exports fr.cy.model.graph.element;
     exports fr.cy.model.pathfinding;
+    exports fr.cy.model.agent.behaviour.agentActions;
+    exports fr.cy.model.agent.behaviour.decisions;
+    exports fr.cy.model.agent.behaviour.properties;
 }

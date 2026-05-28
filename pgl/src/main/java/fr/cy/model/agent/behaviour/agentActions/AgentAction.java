@@ -1,6 +1,7 @@
 package fr.cy.model.agent.behaviour.agentActions;
 
 import fr.cy.model.agent.Agent;
+import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.graph.element.Edge;
 
 /**
@@ -9,6 +10,8 @@ import fr.cy.model.graph.element.Edge;
  */
 public abstract class AgentAction {
 	private Agent agent;
+	/** The progress of the action, between 0 and 1 */
+	private double progress = 0.0;
 
 	public AgentAction(Agent agent) {
 		this.agent = agent;
@@ -18,13 +21,30 @@ public abstract class AgentAction {
 		return agent;
 	}
 
+	public double getProgress() {
+		return progress;
+	}
+
+	protected void setProgress(double newProgress) {
+		if (newProgress < 0) {
+			throw new IllegalArgumentException("Progress must be positive");
+		}
+		progress = Math.min(newProgress, 1.0);
+	}
+
+	protected void incrementProgress(double delta) {
+		setProgress(progress + delta);
+	}
+
 	/**
 	 * Execute the action for the given agent.
-	 * @param agent the agent performing the action
+	 * @return the consumed time after performing the action for this tick, 0 if a whole tick is left to be consumed.
 	 */
-	public abstract void perform(Agent agent);
+	public abstract double perform(AgentSettings agentSettings);
 
-	public abstract boolean isCompleted();
+	public boolean isCompleted() {
+		return progress >= 1.0;
+	}
 
 	public abstract Edge getCurrentEdgeOrNextEdgeIfOnNode();
 }
