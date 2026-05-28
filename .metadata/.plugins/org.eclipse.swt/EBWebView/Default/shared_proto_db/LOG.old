@@ -1,2 +1,3 @@
-2026/05/27-17:29:54.341 4898 Creating DB C:\Users\MSI\Downloads\PGL_GI3A\.metadata\.plugins\org.eclipse.swt\EBWebView\Default\shared_proto_db since it was missing.
-2026/05/27-17:29:54.351 4898 Reusing MANIFEST C:\Users\MSI\Downloads\PGL_GI3A\.metadata\.plugins\org.eclipse.swt\EBWebView\Default\shared_proto_db/MANIFEST-000001
+2026/05/27-19:43:17.533 51f8 Reusing MANIFEST C:\Users\MSI\Downloads\PGL_GI3A\.metadata\.plugins\org.eclipse.swt\EBWebView\Default\shared_proto_db/MANIFEST-000001
+2026/05/27-19:43:17.534 51f8 Recovering log #3
+2026/05/27-19:43:17.535 51f8 Reusing old log C:\Users\MSI\Downloads\PGL_GI3A\.metadata\.plugins\org.eclipse.swt\EBWebView\Default\shared_proto_db/000003.log 

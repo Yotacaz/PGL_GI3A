@@ -50,6 +50,10 @@ public class Simulation {
         return running;
     }
 
+    public int getCurrentTick() {
+        return currentTick;
+    }
+
     public Graph getGraph() {
         return graph;
     }

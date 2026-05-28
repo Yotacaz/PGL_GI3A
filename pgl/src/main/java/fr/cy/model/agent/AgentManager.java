@@ -54,7 +54,7 @@ public class AgentManager {
 
     /**
      * Retrieves a list of agents whose base own decision-making factor matches
-     * the provided factor. 
+     * the provided factor.
      *
      * @param factor The decision-making factor to filter agents, typically between 0 and 1
      * @return A list of agents that match the specified decision-making factor (never null)
@@ -93,7 +93,7 @@ public class AgentManager {
         for (Agent agent : agents) {
             double stressLevel = agent.getStressLevel();
             //TODO: Update stress level based on current conditions (e.g., proximity to fire, congestion, etc.)
-            
+
         }
     }
 

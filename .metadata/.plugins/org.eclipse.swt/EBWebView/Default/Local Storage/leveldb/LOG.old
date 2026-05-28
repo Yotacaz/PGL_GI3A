@@ -1,2 +1,3 @@
-2026/05/27-17:29:54.353 51ac Creating DB C:\Users\MSI\Downloads\PGL_GI3A\.metadata\.plugins\org.eclipse.swt\EBWebView\Default\Local Storage\leveldb since it was missing.
-2026/05/27-17:29:54.374 51ac Reusing MANIFEST C:\Users\MSI\Downloads\PGL_GI3A\.metadata\.plugins\org.eclipse.swt\EBWebView\Default\Local Storage\leveldb/MANIFEST-000001
+2026/05/27-19:43:17.586 650c Reusing MANIFEST C:\Users\MSI\Downloads\PGL_GI3A\.metadata\.plugins\org.eclipse.swt\EBWebView\Default\Local Storage\leveldb/MANIFEST-000001
+2026/05/27-19:43:17.594 650c Recovering log #3
+2026/05/27-19:43:17.598 650c Reusing old log C:\Users\MSI\Downloads\PGL_GI3A\.metadata\.plugins\org.eclipse.swt\EBWebView\Default\Local Storage\leveldb/000003.log 
