@@ -3,3 +3,6 @@ target/
 .DS_Store
 perso
 .metadata
+bin
+.settings
+.project
