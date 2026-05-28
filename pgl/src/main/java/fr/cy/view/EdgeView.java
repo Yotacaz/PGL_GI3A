@@ -23,12 +23,29 @@ public class EdgeView extends Line {
         );
         this.edge = edge;
 
-        // Style visuel
-        setStroke(Color.GRAY);
-        setStrokeWidth(3);
+        // Style visuel uniquement — le clic est géré par hitArea dans GraphView
+        setStroke(Color.web("#5A5A8A"));
+        setStrokeWidth(4);
+        setMouseTransparent(true);
     }
 
     public Edge getEdge() {
         return edge;
+    }
+
+    /**
+     * Met à jour la couleur de l'arête selon son état actuel.
+     * - Rouge        : en feu
+     * - Gris→Orange  : dégradé selon la congestion
+     */
+    public void refresh() {
+        if (edge.isOnFire()) {
+            setStroke(Color.RED);
+            setStrokeWidth(5);
+        } else {
+            Color edgeColor = Color.web("#5A5A8A").interpolate(Color.DARKORANGE, edge.getCongestion());
+            setStroke(edgeColor);
+            setStrokeWidth(4);
+        }
     }
 }

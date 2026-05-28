@@ -2,6 +2,7 @@ package fr.cy.view;
 
 import fr.cy.model.graph.element.Node;
 import javafx.scene.Cursor;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 
@@ -15,7 +16,7 @@ import javafx.scene.shape.Circle;
 public class NodeView extends Circle {
 
     /** Rayon du cercle en pixels */
-    private static final double RADIUS = 15;
+    private static final double RADIUS = 18;
 
     /** Le nœud du modèle associé à cette vue */
     private final Node node;
@@ -37,7 +38,8 @@ public class NodeView extends Circle {
             setFill(Color.STEELBLUE);
             setStroke(Color.DARKBLUE);
         }
-        setStrokeWidth(2);
+        setStrokeWidth(2.5);
+        setEffect(new DropShadow(10, Color.BLACK));
 
         // Curseur main quand on survole le nœud
         setCursor(Cursor.HAND);
@@ -70,5 +72,26 @@ public class NodeView extends Circle {
 
     public Node getNode() {
         return node;
+    }
+
+    /**
+     * Met à jour la couleur du nœud selon son état actuel.
+     * Appelé à chaque tick de la simulation.
+     * - Rouge    : en feu
+     * - Bleu→Orange : dégradé selon la congestion
+     * - Vert     : sortie (inchangé)
+     */
+    public void refresh() {
+        if (node.isOnFire()) {
+            setFill(Color.RED);
+            setStroke(Color.DARKRED);
+        } else if (node.isExit()) {
+            setFill(Color.LIMEGREEN);
+            setStroke(Color.DARKGREEN);
+        } else {
+            Color base = Color.STEELBLUE.interpolate(Color.ORANGE, node.getCongestion());
+            setFill(base);
+            setStroke(Color.DARKBLUE);
+        }
     }
 }
