@@ -6,3 +6,4 @@ perso
 bin
 .settings
 .project
+.classpath
