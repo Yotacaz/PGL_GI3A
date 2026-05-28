@@ -1,7 +1,7 @@
 package fr.cy.view;
 
 import fr.cy.model.agent.Agent;
-import fr.cy.model.agent.behaviour.AgentState;
+import fr.cy.model.agent.behaviour.properties.EmotionalState;
 import fr.cy.model.graph.element.Node;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
@@ -151,7 +151,7 @@ public class NodeInfoPanel extends VBox {
             avgStressLabel.setText("Stress moy. : " + String.format("%.0f%%", avgStress * 100));
             avgStressLabel.setStyle(data + "-fx-text-fill: " + stressColor(avgStress) + ";");
 
-            AgentState dominant = getDominantState(agents);
+            EmotionalState dominant = getDominantState(agents);
             dominantStateLabel.setText("État dominant : " + dominant.name());
             dominantStateLabel.setStyle(data + "-fx-text-fill: " + stateColor(dominant) + ";");
         }
@@ -171,47 +171,32 @@ public class NodeInfoPanel extends VBox {
             fireSpreadLabel.setText("Propagation : " + String.format("%.2f", node.getFire().getSpreadRate()));
             fireTicksLabel.setText("Brûle depuis : " + node.getFire().getBurningTicks() + " ticks");
         } else {
-            setFireDetailsVisible(false);
-            fireLabel.setVisible(true);
-            fireLabel.setText("Pas de feu ✓");
-            fireLabel.setStyle(data + "-fx-text-fill: " + GREEN + ";");
+            setFireVisible(false);
+            fireLabel.setText("Pas de feu ✅");
+            fireLabel.setTextFill(Color.GREEN);
+            setFireVisible(true); // on affiche juste "Pas de feu"
+            fireIntensityLabel.setVisible(false);
+            fireSmokeLabel.setVisible(false);
+            fireSpreadLabel.setVisible(false);
+            fireTicksLabel.setVisible(false);
         }
     }
 
-    // -----------------------------------------------------------------------
-
-    private String congestionColor(double cong) {
-        if (cong > 0.7) return RED;
-        if (cong > 0.4) return ORANGE;
-        return GREEN;
-    }
-
-    private String stressColor(double stress) {
-        if (stress > 0.7) return RED;
-        if (stress > 0.4) return ORANGE;
-        return GREEN;
-    }
-
-    private String stateColor(AgentState state) {
-        return switch (state) {
-            case CALM      -> GREEN;
-            case SELFISH   -> ORANGE;
-            case PANICKING -> RED;
-        };
-    }
-
+    /**
+     * Détermine l'état le plus fréquent parmi les agents.
+     */
     private AgentState getDominantState(List<Agent> agents) {
         int calm = 0, selfish = 0, panicking = 0;
         for (Agent a : agents) {
             switch (a.getState()) {
-                case CALM      -> calm++;
-                case SELFISH   -> selfish++;
+                case CALM -> calm++;
+                case SELFISH -> selfish++;
                 case PANICKING -> panicking++;
             }
         }
-        if (panicking >= calm && panicking >= selfish) return AgentState.PANICKING;
-        if (selfish >= calm)                           return AgentState.SELFISH;
-        return AgentState.CALM;
+        if (panicking >= calm && panicking >= selfish) return EmotionalState.PANICKING;
+        if (selfish >= calm) return EmotionalState.SELFISH;
+        return EmotionalState.CALM;
     }
 
     private void setFireDetailsVisible(boolean v) {
