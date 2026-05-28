@@ -1,5 +1,6 @@
 package fr.cy.controller;
 
+import fr.cy.model.fire.Fire;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Node;
 import fr.cy.view.GraphView;
@@ -39,6 +40,8 @@ public class PrimaryController {
         Node sortie2 = graph.createNode(700, 450);
         sortie1.setExit(true);
         sortie2.setExit(true);
+
+        n4.setFire(new Fire(0.5, 0.5, 0.2));
 
         graph.createEdge(n1, n2);
         graph.createEdge(n2, n3);
