@@ -40,13 +40,13 @@ public class Agent implements StressInducing {
     private double travelProgressPercentageInComponent;
     /** Number of nodes visited by the agent, used for statistics */
     private int nOfNodeVisited;
-    
 
     /** Map to store the scores of different possible decisions for the agent, used in decision-making
      * This is a class attribute in order to avoid creating a new map for each agent at each decision step*/
     private final Map<AgentPossibleDecision, AgentDecisionScore> decisionsScore = new HashMap<>();
 
-    private AgentDecisionalProperties agentState;
+    /** Current behavioral state of the agent, used to influence decision-making and stress levels */
+    private AgentDecisionalProperties behavioralState;
 
     /** Tolerance to crowding, between 0 and 1, above which the agent starts panicking */
     private double crowdingTolerance;
@@ -80,41 +80,53 @@ public class Agent implements StressInducing {
         this.name = name;
         this.maxSpeed = maxSpeed;
         this.crowdingTolerance = crowdingTolerance;
-        this.agentState = new AgentDecisionalProperties(this.id, stressTolerance, 0.5);
+        this.behavioralState = new AgentDecisionalProperties(this.id, stressTolerance, 0.5);
     }
 
     AgentAction makeDecision(DecisionNodeContext decisionContext, AgentSettings agentSettings) {
-        computeAgentDecisionsScore(agentSettings, decisionContext);
-        return null; //TODO
+        double totalScore = computeAgentDecisionsScore(agentSettings, decisionContext);
+        //using the scores convert value to probabilities and select an action based on these probabilities
+        double randomValue = Math.random() * totalScore;
+        double cumulativeProbability = 0.0;
+        for (Map.Entry<AgentPossibleDecision, AgentDecisionScore> entry : decisionsScore.entrySet()) {
+            AgentDecisionScore decisionScore = entry.getValue();
+            cumulativeProbability += decisionScore.getScore();
+            if (randomValue <= cumulativeProbability) {
+                AgentPossibleDecision selectedDecision = entry.getKey();
+                return selectedDecision.toAgentAction(decisionContext, this, decisionScore);
+            }
+        }
+        return null;
     }
 
     private double computeAgentDecisionsScore(AgentSettings agentSettings, DecisionNodeContext decisionContext) {
-        // real implementation :
+        //No need to clear the map as it is overwritten at each decision step
         double totalScore = 0.0;
         for (AgentPossibleDecision possibleDecision : AgentPossibleDecision.values()) {
-            AgentDecisionScore decisionScore = possibleDecision.computeScore(decisionContext, agentState);
+            double factor = agentSettings.getDecisionMakingFactor(possibleDecision);
+            AgentDecisionScore decisionScore = possibleDecision.computeScore(decisionContext, behavioralState, factor);
             decisionsScore.put(possibleDecision, decisionScore);
             totalScore += decisionScore.getScore();
         }
         return totalScore;
-
     }
 
-    void performCurrentAction() {
+    double performCurrentAction(AgentSettings agentSettings) {
         if (currentAction != null) {
-            currentAction.perform(this);
+            return currentAction.perform(agentSettings);
         }
+        return 0.0;
     }
 
     @Override
     public double getStressInducingFactor() {
-        return agentState.getStressLevel() * 0.5; // FIXME: temporary
+        return behavioralState.getStressLevel() * 0.5; // FIXME: temporary
     }
 
     /**
      * Release the id when agent is removed from the simulation
      */
-    public void releaseId() {
+    void releaseId() { // should be called from agentManager
         idManager.releaseId(id);
     }
 
@@ -134,11 +146,11 @@ public class Agent implements StressInducing {
     }
 
     public double getStressLevel() {
-        return agentState.getStressLevel();
+        return behavioralState.getStressLevel();
     }
 
     public EmotionalState getState() {
-        return agentState.getState();
+        return behavioralState.getEmotionnalState();
     }
 
     public int getnOfNodeVisited() {
@@ -147,6 +159,10 @@ public class Agent implements StressInducing {
 
     public Node getPreviousNode() {
         return previousNode;
+    }
+
+    public void setPreviousNode(Node previousNode) {
+        this.previousNode = previousNode;
     }
 
     public Node getCurrentNode() {
@@ -162,7 +178,7 @@ public class Agent implements StressInducing {
     }
 
     public double getCurrentOwnDecisionMakingFactor() {
-        return agentState.getCurrentOwnDecisionMakingFactor();
+        return behavioralState.getCurrentOwnDecisionMakingFactor();
     }
 
     // public double getCurrentSpeed() {
@@ -174,7 +190,7 @@ public class Agent implements StressInducing {
     }
 
     public double getMaxAccumulatedStress() {
-        return agentState.getMaxAccumulatedStress();
+        return behavioralState.getMaxAccumulatedStress();
     }
 
     public double travelBy(double distance) {
@@ -196,14 +212,14 @@ public class Agent implements StressInducing {
     }
 
     public void setStressLevel(double stressLevel) {
-        agentState.setStressLevel(stressLevel);
+        behavioralState.setStressLevel(stressLevel);
     }
 
     /**
      * @return the base own decision-making factor (0..1)
      */
     public double getBaseOwnDecisionMakingFactor() {
-        return agentState.getBaseOwnDecisionMakingFactor();
+        return behavioralState.getBaseOwnDecisionMakingFactor();
     }
 
     public boolean isAlive() {
@@ -214,12 +230,20 @@ public class Agent implements StressInducing {
         return isOnNode;
     }
 
+    public void setIsOnNode(boolean isOnNode) {
+        this.isOnNode = isOnNode;
+    }
+
     public boolean needToMakeDecision() {
         return isOnNode();
     }
 
     public Edge getCurrentEdge() {
         return currentEdge;
+    }
+
+    public void setCurrentEdge(Edge currentEdge) {
+        this.currentEdge = currentEdge;
     }
 
     public Edge getCurrentEdgeOrNextEdgeIfOnNode() {
@@ -231,5 +255,30 @@ public class Agent implements StressInducing {
 
     public AgentAction getCurrentAction() {
         return currentAction;
+    }
+
+    public double getEffectiveSpeed(AgentSettings agentSettings) {
+        double maxEdgeSpeed = currentEdge != null ? currentEdge.getMaxAgentSpeedInDirection(previousNode)
+                : Double.POSITIVE_INFINITY;
+        double agentMaxSpeed = getMaxSpeed();
+        double effectiveMaxSpeed = Math.min(agentMaxSpeed, maxEdgeSpeed);
+        assert effectiveMaxSpeed >= 0 : "Effective max speed should be non-negative";
+        double speed = 0.0;
+        behavioralState.updateEmotionnalState();
+        double walkSpeedReductionFactor = agentSettings.getWALK_SPEED_REDUCTION_FACTOR();
+        switch (behavioralState.getEmotionnalState()) {
+            case CALM:
+                speed = Math.min(agentMaxSpeed * walkSpeedReductionFactor, effectiveMaxSpeed);
+                break;
+            case SELFISH:
+                speed = Math.min(agentMaxSpeed * walkSpeedReductionFactor * 1.5, effectiveMaxSpeed);
+                break;
+            case PANICKING:
+                speed = effectiveMaxSpeed;
+                break;
+            default:
+                throw new IllegalStateException("Unexpected emotional state: " + behavioralState.getEmotionnalState());
+        }
+        return speed;
     }
 }

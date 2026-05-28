@@ -39,7 +39,7 @@ public class AgentDecisionalProperties {
      * 
      * @return the new state of the agent after the update
      */
-    public EmotionalState updateState() {
+    public EmotionalState updateEmotionnalState() {
         Optional<EmotionalState> optState = EmotionalState.fromdouble(stressLevel, stressTolerance);
         if (optState.isEmpty()) {
             System.err.println("Warning: Agent " + id + " has an invalid stress level of " + stressLevel
@@ -52,7 +52,7 @@ public class AgentDecisionalProperties {
     /**
      * @return the current state of the agent
      */
-    public EmotionalState getState() {
+    public EmotionalState getEmotionnalState() {
         return state;
     }
 

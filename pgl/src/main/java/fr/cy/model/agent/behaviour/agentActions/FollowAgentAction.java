@@ -1,6 +1,7 @@
 package fr.cy.model.agent.behaviour.agentActions;
 
 import fr.cy.model.agent.Agent;
+import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.graph.element.Edge;
 
 /**
@@ -16,8 +17,9 @@ public class FollowAgentAction extends AgentAction {
 	}
 
 	@Override
-	public void perform(Agent agent) {
+	public double perform(AgentSettings agentSettings) {
 		// Placeholder: implement follow-agent behavior
+		return 0.0;
 	}
 
 	@Override
