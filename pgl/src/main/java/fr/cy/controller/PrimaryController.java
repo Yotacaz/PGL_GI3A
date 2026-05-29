@@ -5,7 +5,6 @@ import fr.cy.model.fire.Fire;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
-import fr.cy.model.pathfinding.PathFinder;
 import fr.cy.model.simulation.Simulation;
 import fr.cy.view.AgentTransit;
 import fr.cy.view.EdgeInfoPanel;
@@ -23,9 +22,14 @@ import javafx.scene.layout.Pane;
 import javafx.util.Duration;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Set;
 
 public class PrimaryController {
 
@@ -64,8 +68,6 @@ public class PrimaryController {
     }
 
     // -----------------------------------------------------------------------
-    // Setup / Reset
-    // -----------------------------------------------------------------------
 
     private void setupSimulation() {
         if (timeline != null) timeline.stop();
@@ -77,7 +79,6 @@ public class PrimaryController {
         if (tickLabel       != null) tickLabel.setText("0");
         if (playPauseButton != null) playPauseButton.setText("▶  Play");
 
-        // --- 1. Graphe ---
         Graph graph = new Graph();
 
         Node n1 = graph.createNode(150, 150);
@@ -100,29 +101,26 @@ public class PrimaryController {
         graph.createEdge(n3, sortie1);
         graph.createEdge(n4, sortie2);
 
-        // --- 2. Agents ---
+        // Agents avec des vitesses variees (1=lent, 2=moyen, 3=rapide)
         n1.addAgent(new Agent("Alice", 2, 0.7, 0.6));
         n1.addAgent(new Agent("Bob",   1, 0.3, 0.4));
         n2.addAgent(new Agent("Carol", 3, 0.8, 0.7));
         n3.addAgent(new Agent("Dave",  2, 0.1, 0.2));
         n3.addAgent(new Agent("Eve",   1, 0.5, 0.5));
-        n3.addAgent(new Agent("Frank", 2, 0.6, 0.3));
+        n3.addAgent(new Agent("Frank", 3, 0.6, 0.3));
 
         initialAgentCount = graph.getNodes().stream()
                 .mapToInt(n -> n.getAgents().size()).sum();
 
-        // --- 3. Feu sur n1 ---
-        n1.setFire(new Fire(1.0, 1.0, 0.3));
+        // Feu sur n1 : spreadRate modere pour que les agents vitesse 2+ puissent echapper
+        n1.setFire(new Fire(1.0, 1.0, 0.2));
 
-        // --- 4. Simulation ---
         simulation = new Simulation(graph);
 
-        // --- 5. Panneaux d'infos ---
         nodeInfoPanel = new NodeInfoPanel();
         edgeInfoPanel = new EdgeInfoPanel();
         root.setRight(nodeInfoPanel);
 
-        // --- 6. Vue du graphe ---
         graphView = new GraphView(graph);
         graphView.setOnNodeClicked(node -> {
             selectedNode = node;
@@ -142,7 +140,7 @@ public class PrimaryController {
         graphView.prefWidthProperty().bind(graphContainer.widthProperty());
         graphView.prefHeightProperty().bind(graphContainer.heightProperty());
 
-        completionLabel = new Label("✓   TOUS LES AGENTS ÉVACUÉS !");
+        completionLabel = new Label("TOUS LES AGENTS EVACUES !");
         completionLabel.setMaxWidth(Double.MAX_VALUE);
         completionLabel.setAlignment(Pos.CENTER);
         completionLabel.setStyle(
@@ -156,37 +154,41 @@ public class PrimaryController {
         graphContainer.getChildren().add(completionLabel);
 
         graphView.refresh();
-
-        // --- 7. Timeline ---
         setupTimeline();
     }
 
+    // -----------------------------------------------------------------------
+
     private void setupTimeline() {
-        timeline = new Timeline(new KeyFrame(Duration.millis(500), e -> {
-            try {
-                simulation.tick();
-            } catch (Exception ex) {
-                simulation.getFireService().updateFires(simulation.getGraph());
-            }
-
-            // 1. Déplacer les agents des noeuds vers les arêtes (crée les transits)
-            moveAgents(simulation.getGraph(), simulation.getPathFinder());
-            // 2. Avancer les transits existants — les agents complétés arrivent sur les noeuds
-            advanceTransits();
-            // 3. Mettre à jour le stress
-            updateStress(simulation.getGraph());
-            // 4. Rafraîchir le panneau : noeuds montrent les agents arrivés, arêtes montrent les agents en transit
-            refreshInfoPanel();
-            // 5. Vérifier si la simulation est terminée
-            checkCompletion(simulation.getGraph());
-
-            localTick++;
-            tickLabel.setText(String.valueOf(localTick));
-            graphView.refresh();
-            graphView.redrawAgents();
-            graphView.drawTransitAgents(transits);
-        }));
+        timeline = new Timeline(new KeyFrame(Duration.millis(500), e -> doTick()));
         timeline.setCycleCount(Timeline.INDEFINITE);
+    }
+
+    private void doTick() {
+        // 1. Feu en premier : les agents verront l'etat ACTUEL du feu pour choisir leur chemin
+        simulation.getFireService().updateFires(simulation.getGraph());
+
+        // 2. Deplacement : Dijkstra evite les noeuds/aretes EN FEU
+        //    Si bloque de tous les cotes, l'agent reste sur place (ne disparait pas)
+        moveAgents(simulation.getGraph());
+
+        // 3. Avancer les transits : agents arrives rejoignent leurs noeuds
+        advanceTransits();
+
+        // 4. Stress
+        updateStress(simulation.getGraph());
+
+        // 5. Panneau d'info
+        refreshInfoPanel();
+
+        // 6. Fin de simulation ?
+        checkCompletion(simulation.getGraph());
+
+        localTick++;
+        tickLabel.setText(String.valueOf(localTick));
+        graphView.refresh();
+        graphView.redrawAgents();
+        graphView.drawTransitAgents(transits);
     }
 
     // -----------------------------------------------------------------------
@@ -214,7 +216,7 @@ public class PrimaryController {
     private void advanceTransits() {
         List<AgentTransit> completed = new ArrayList<>();
         for (AgentTransit t : transits) {
-            t.progress += AgentTransit.STEP;
+            t.progress += t.step;
             if (t.isCompleted()) completed.add(t);
         }
         transits.removeAll(completed);
@@ -241,50 +243,95 @@ public class PrimaryController {
         }
     }
 
-    private void moveAgents(Graph graph, PathFinder pathFinder) {
+    private void moveAgents(Graph graph) {
         Map<Agent, Node> origins      = new LinkedHashMap<>();
         Map<Agent, Node> destinations = new LinkedHashMap<>();
 
         for (Node node : graph.getNodes()) {
             for (Agent agent : new ArrayList<>(node.getAgents())) {
                 origins.put(agent, node);
-                destinations.put(agent,
-                    node.isExit() ? null : getNextNodeTowardExit(node, graph, pathFinder));
+                if (node.isExit()) {
+                    destinations.put(agent, null); // sortie → agent quitte le graphe
+                } else {
+                    // null si tous les chemins sont bloques par le feu → agent reste sur place
+                    destinations.put(agent, getNextNodeTowardExit(node, graph));
+                }
             }
         }
 
         for (Agent agent : origins.keySet()) {
             Node origin = origins.get(agent);
             Node dest   = destinations.get(agent);
-            origin.removeAgent(agent);
-            if (dest != null) {
+
+            if (origin.isExit()) {
+                // L'agent a atteint une sortie : il quitte la simulation
+                origin.removeAgent(agent);
+            } else if (dest != null) {
+                // L'agent se deplace vers le prochain noeud accessible
+                origin.removeAgent(agent);
                 Edge edge = origin.getEdgeTo(dest);
                 if (edge != null) edge.addAgent(agent);
                 transits.add(new AgentTransit(agent, origin, dest));
             }
+            // dest == null ET pas une sortie → feu bloque tout → l'agent reste sur son noeud
         }
     }
 
-    private Node getNextNodeTowardExit(Node node, Graph graph, PathFinder pathFinder) {
-        Node   bestNext = null;
-        double bestDist = Double.MAX_VALUE;
-        for (Node exit : graph.getExits()) {
-            List<Node> path = pathFinder.shortestPath(node, exit);
-            if (path.size() >= 2) {
-                double dist = computePathLength(path);
-                if (dist < bestDist) { bestDist = dist; bestNext = path.get(1); }
+    /**
+     * Dijkstra qui évite strictement les arêtes et noeuds en feu.
+     * Si aucun chemin libre n'existe, retourne null (l'agent reste sur place).
+     * Les agents ne peuvent PAS entrer dans un noeud ou arête en feu.
+     */
+    private Node getNextNodeTowardExit(Node node, Graph graph) {
+        if (node.isExit()) return null;
+
+        Map<Node, Double> dist    = new HashMap<>();
+        Map<Node, Node>   parent  = new HashMap<>();
+        Set<Node>         visited = new HashSet<>();
+        PriorityQueue<Node> pq    = new PriorityQueue<>(
+            Comparator.comparingDouble(n -> dist.getOrDefault(n, Double.MAX_VALUE))
+        );
+
+        dist.put(node, 0.0);
+        pq.add(node);
+
+        while (!pq.isEmpty()) {
+            Node current = pq.poll();
+            if (visited.contains(current)) continue;
+            visited.add(current);
+
+            if (current.isExit() && !current.equals(node)) {
+                // Sortie trouvee : remonter au premier pas depuis le noeud de depart
+                Node step = current;
+                while (parent.containsKey(step) && !parent.get(step).equals(node)) {
+                    step = parent.get(step);
+                }
+                return step;
+            }
+
+            for (Edge edge : current.getEdges()) {
+                // Regle stricte : JAMAIS dans une arete en feu
+                if (edge.isOnFire()) continue;
+
+                Node neighbor = edge.getOppositeNode(current);
+                if (neighbor == null || visited.contains(neighbor)) continue;
+
+                // Regle stricte : JAMAIS dans un noeud en feu (sauf sortie, mais sorties ne brulent pas)
+                if (neighbor.isOnFire()) continue;
+
+                // Cout = longueur + penalite de congestion (prefere les chemins moins encombres)
+                double cost = edge.getLength() + neighbor.getCongestion() * 5.0;
+                double newDist = dist.getOrDefault(current, Double.MAX_VALUE) + cost;
+
+                if (newDist < dist.getOrDefault(neighbor, Double.MAX_VALUE)) {
+                    dist.put(neighbor, newDist);
+                    parent.put(neighbor, current);
+                    pq.add(neighbor);
+                }
             }
         }
-        return bestNext;
-    }
 
-    private double computePathLength(List<Node> path) {
-        double dist = 0;
-        for (int i = 0; i < path.size() - 1; i++) {
-            Edge edge = path.get(i).getEdgeTo(path.get(i + 1));
-            if (edge != null) dist += edge.getLength();
-        }
-        return dist;
+        return null; // Aucun chemin sans feu → agent reste bloque sur place
     }
 
     // -----------------------------------------------------------------------
@@ -304,17 +351,7 @@ public class PrimaryController {
 
     @FXML
     private void onStep() {
-        simulation.getFireService().updateFires(simulation.getGraph());
-        moveAgents(simulation.getGraph(), simulation.getPathFinder());
-        advanceTransits();
-        updateStress(simulation.getGraph());
-        refreshInfoPanel();
-        checkCompletion(simulation.getGraph());
-        localTick++;
-        tickLabel.setText(String.valueOf(localTick));
-        graphView.refresh();
-        graphView.redrawAgents();
-        graphView.drawTransitAgents(transits);
+        doTick();
     }
 
     @FXML
