@@ -6,7 +6,6 @@ import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.pathfinding.GraphPath;
-import java.util.Objects;
 
 public class FollowPathAction extends AbstractMoveAction {
     private GraphPath path = null;

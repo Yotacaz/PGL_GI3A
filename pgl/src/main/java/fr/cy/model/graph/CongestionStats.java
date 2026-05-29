@@ -16,7 +16,7 @@ public class CongestionStats<T extends GraphElement> {
     private int count;
 
     private CongestionStats(double maxCongestionLevel, double minCongestionLevel, double averageCongestionLevel,
-            double totalCongestionLevel, T mostCongestedElement, T leastCongestedElement,
+            double totalCongestionLevel, T mostCongestedElement, T leastCongestedElement, List<T> sortedByCongestion,
             int count) {
         this.maxCongestionLevel = maxCongestionLevel;
         this.minCongestionLevel = minCongestionLevel;
@@ -24,6 +24,7 @@ public class CongestionStats<T extends GraphElement> {
         this.totalCongestionLevel = totalCongestionLevel;
         this.mostCongestedElement = mostCongestedElement;
         this.leastCongestedElement = leastCongestedElement;
+        this.sortedByCongestion = sortedByCongestion;
         this.count = count;
     }
 
@@ -39,19 +40,19 @@ public class CongestionStats<T extends GraphElement> {
     /**
      * Computes congestion statistics for a list of graph elements, including maximum, minimum, average, and total congestion levels, as well as identifying the most and least congested elements.
      * @param graphElements the list of graph elements to analyze for congestion statistics **WARNING: the list will be sorted in place**.
-     * @return
+     * @return the congestion statistics for the provided graph elements
      */
-    public static <T extends GraphElement> CongestionStats<T> computeCongestionStats(List<T> graphElements) { //extend needed due to generic type invariance
-        double maxCongestionLevel = Double.MIN_VALUE;
-        double minCongestionLevel = Double.MAX_VALUE;
+    public static <T extends GraphElement> CongestionStats<T> computeCongestionStats(List<T> graphElements) { 
         // sorted by congestion level, from the most to the least congested
         graphElements.sort(new CongestionsGraphElementComparator());
         double totalCongestionLevel = graphElements.stream().mapToDouble(T::getCongestion).sum();
         int count = graphElements.size();
+        double maxCongestionLevel = count > 0 ? graphElements.get(0).getCongestion() : 0.0;
+        double minCongestionLevel = count > 0 ? graphElements.get(count - 1).getCongestion() : 0.0;
 
         double averageCongestionLevel = count > 0 ? totalCongestionLevel / count : 0.0;
         return new CongestionStats<>(maxCongestionLevel, minCongestionLevel, averageCongestionLevel, totalCongestionLevel,
-                graphElements.get(0), graphElements.get(count - 1), count);
+                graphElements.get(0), graphElements.get(count - 1), graphElements, count);
     }
 
     public double getAverageCongestionLevel() {

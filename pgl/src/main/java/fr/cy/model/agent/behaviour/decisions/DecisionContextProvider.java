@@ -57,7 +57,7 @@ public class DecisionContextProvider {
             for (Agent nearbyAgent : edge.getAgents()) {
                 // Determine if the nearby agent is incoming or outgoing relative to the current node
                 Node oppositeNode = edge.getOppositeNode(currentNode);
-                if (oppositeNode.equals(nearbyAgent.getPreviousNode())) {
+                if (oppositeNode.equals(nearbyAgent.getPreviousOrCurrentNode())) {
                     nearbyIncomingAgents.computeIfAbsent(edge, k -> new ArrayList<>()).add(nearbyAgent);
                 } else {
                     nearbyOutgoingAgents.computeIfAbsent(edge, k -> new ArrayList<>()).add(nearbyAgent);

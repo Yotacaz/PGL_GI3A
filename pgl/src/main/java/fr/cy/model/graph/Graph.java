@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.pathfinding.*;
@@ -228,11 +227,21 @@ public class Graph {
 
     @Override
     public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Graph{\n");
 
-        return "Graph{" +
-                "\nnodes=" + nodes +
-                ",\nedges=" + edges +
-                "\n}";
+        sb.append("  Nodes:\n");
+        for (Node node : nodes) {
+            sb.append("    ").append(node).append("\n");
+        }
+
+        sb.append("  Edges:\n");
+        for (Edge edge : edges) {
+            sb.append("    ").append(edge).append("\n");
+        }
+
+        sb.append("}");
+        return sb.toString();
     }
 
     public List<Node> getExits() {
@@ -246,8 +255,6 @@ public class Graph {
 
         return exits;
     }
-
-    
 
     public static void main(String[] args) {
         Graph graph = new Graph();
