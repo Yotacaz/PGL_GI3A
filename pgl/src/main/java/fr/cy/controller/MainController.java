@@ -9,10 +9,6 @@ import javafx.fxml.FXML;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 
-/**
- * Contrôleur principal de l'application JavaFX.
- * Crée un graphe de démonstration et affiche la vue interactive.
- */
 public class MainController {
 
     @FXML

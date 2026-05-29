@@ -2,6 +2,7 @@ package fr.cy.model.agent;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.agent.behaviour.decisions.DecisionNodeContext;
@@ -16,6 +17,15 @@ public class AgentManager {
     private List<Agent> agents;
     private DecisionContextProvider decisionContextProvider;
     // private Map<Agent, AgentAction> agentActionsPreviousTick = new HashMap<>();
+
+    public AgentManager(List<Agent> agents, DecisionContextProvider decisionContextProvider) {
+        this.agents = agents;
+        this.decisionContextProvider = decisionContextProvider;
+    }
+
+    public AgentManager(DecisionContextProvider decisionContextProvider) {
+        this(null, decisionContextProvider);
+    }
 
     private class AgentByOwnDecisionMakingComparator implements Comparator<Agent> {
         @Override
@@ -68,6 +78,29 @@ public class AgentManager {
             //TODO: Update stress level based on current conditions (e.g., proximity to fire, congestion, etc.)
 
         }
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        AgentManager other = (AgentManager) obj;
+        return Objects.equals(agentSettings, other.agentSettings) && Objects.equals(agents, other.agents)
+                && Objects.equals(decisionContextProvider, other.decisionContextProvider);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(agentSettings, agents, decisionContextProvider);
+    }
+
+    @Override
+    public String toString() {
+        return "AgentManager{" +
+                "agentSettings=" + agentSettings +
+                ", agentsCount=" + (agents == null ? 0 : agents.size()) +
+                ", hasDecisionProvider=" + (decisionContextProvider != null) +
+                '}';
     }
 
 }

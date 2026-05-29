@@ -6,6 +6,7 @@ import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.pathfinding.GraphPath;
+import java.util.Objects;
 
 public class FollowPathAction extends AbstractMoveAction {
     private GraphPath path = null;
@@ -43,6 +44,26 @@ public class FollowPathAction extends AbstractMoveAction {
             currentEdgeIndex++;
         }
         return consumedTime;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), path, currentEdgeIndex);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!super.equals(obj)) return false;
+        if (getClass() != obj.getClass()) return false;
+        FollowPathAction other = (FollowPathAction) obj;
+        return currentEdgeIndex == other.currentEdgeIndex && Objects.equals(path, other.path);
+    }
+
+    @Override
+    public String toString() {
+        return super.toString().replace("}", "") + ", path=" + (path == null ? "null" : path.toString()) + 
+                ", index=" + currentEdgeIndex + '}';
     }
 
 }

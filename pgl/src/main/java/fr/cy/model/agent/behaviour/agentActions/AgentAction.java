@@ -1,5 +1,7 @@
 package fr.cy.model.agent.behaviour.agentActions;
 
+import java.util.Objects;
+
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.graph.element.Edge;
@@ -47,4 +49,26 @@ public abstract class AgentAction {
 	}
 
 	public abstract Edge getCurrentEdgeOrNextEdgeIfOnNode();
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(agent == null ? null : agent.getId(), progress, this.getClass());
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) return true;
+		if (obj == null || getClass() != obj.getClass()) return false;
+		AgentAction other = (AgentAction) obj;
+		return Double.compare(progress, other.progress) == 0
+				&& Objects.equals(agent == null ? null : agent.getId(), other.agent == null ? null : other.agent.getId());
+	}
+
+	@Override
+	public String toString() {
+		return this.getClass().getSimpleName() + "{" +
+				"agentId=" + (agent == null ? "null" : agent.getId()) +
+				", progress=" + String.format("%.3f", progress) +
+				'}';
+	}
 }

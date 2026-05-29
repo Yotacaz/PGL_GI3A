@@ -2,6 +2,7 @@ package fr.cy.model.agent.behaviour.properties;
 
 import java.util.HashSet;
 import java.util.Optional;
+import java.util.Objects;
 import java.util.Set;
 
 import fr.cy.model.agent.behaviour.personalityTraits.AgentPersonalityTrait;
@@ -84,5 +85,35 @@ public class AgentDecisionalProperties {
 
     public double getMaxAccumulatedStress() {
         return maxAccumulatedStress;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, state, stressLevel, stressTolerance, baseOwnDecisionMakingFactor, maxAccumulatedStress,
+                personalityTraits);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        AgentDecisionalProperties other = (AgentDecisionalProperties) obj;
+        return id == other.id && Double.compare(stressLevel, other.stressLevel) == 0
+                && Double.compare(stressTolerance, other.stressTolerance) == 0
+                && Double.compare(baseOwnDecisionMakingFactor, other.baseOwnDecisionMakingFactor) == 0
+                && Double.compare(maxAccumulatedStress, other.maxAccumulatedStress) == 0
+                && state == other.state && Objects.equals(personalityTraits, other.personalityTraits);
+    }
+
+    @Override
+    public String toString() {
+        return "AgentDecisionalProperties{" +
+                "id=" + id +
+                ", state=" + state +
+                ", stressLevel=" + String.format("%.3f", stressLevel) +
+                ", stressTolerance=" + String.format("%.3f", stressTolerance) +
+                ", baseOwnDecisionMakingFactor=" + String.format("%.3f", baseOwnDecisionMakingFactor) +
+                ", maxAccumulatedStress=" + String.format("%.3f", maxAccumulatedStress) +
+                '}';
     }
 }

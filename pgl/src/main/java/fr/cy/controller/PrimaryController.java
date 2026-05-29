@@ -227,14 +227,12 @@ public class PrimaryController {
             delta  = Math.min(delta, 0.15);
             for (Agent agent : node.getAgents()) {
                 agent.setStressLevel(Math.min(1.0, agent.getStressLevel() + delta));
-                agent.updateState();
             }
         }
         for (AgentTransit t : transits) {
             double delta = t.from.isOnFire() ? 0.06 : 0;
             delta += t.from.getCongestion() * 0.03;
             t.agent.setStressLevel(Math.min(1.0, t.agent.getStressLevel() + delta));
-            t.agent.updateState();
         }
     }
 
