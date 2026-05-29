@@ -45,7 +45,8 @@ public class Agent implements StressInducing {
     /** Map to store the scores of different possible decisions for the agent, used in decision-making
      * This is a class attribute in order to avoid creating a new map for each agent at each decision step*/
     private final Map<AgentPossibleDecision, AgentDecisionScore> decisionsScore = new HashMap<>();
-
+    /** The last selected decision by the agent */
+    private AgentPossibleDecision lastSelectedDecision = null;
     /** Current behavioral state of the agent, used to influence decision-making and stress levels */
     private AgentDecisionalProperties behavioralState;
 
@@ -55,7 +56,7 @@ public class Agent implements StressInducing {
     private Edge currentEdge;
     private boolean isOnNode = true; // True if the agent is currently on a node, false if on an edge
     /** Previous node visited by the agent, used in case of backtracking */
-    private Node previousNode = null;
+    private Node previousOrCurrentNode = null;
     private AgentAction currentAction = null; // The path the agent is currently following, if any
 
     /** Flag indicating whether the agent is alive or has been removed from the simulation */
@@ -63,6 +64,16 @@ public class Agent implements StressInducing {
 
     /**  Static IdManager to generate unique identifiers for agents */
     private static IdManager idManager = new IdManager();
+
+    public Agent(String name, Node startingNode, double maxSpeed, double stressTolerance, double crowdingTolerance,
+            double baseOwnDecisionMakingFactor) {
+        this.id = idManager.generateId();
+        this.name = name;
+        this.maxSpeed = maxSpeed;
+        this.crowdingTolerance = crowdingTolerance;
+        putOnNode(startingNode);
+        this.behavioralState = new AgentDecisionalProperties(this.id, stressTolerance, baseOwnDecisionMakingFactor);
+    }
 
     /**
      * Constructor to create a new agent with the specified parameters.
@@ -76,12 +87,8 @@ public class Agent implements StressInducing {
      *                          1, above which the agent starts panicking
      * @apiNote should not be multithreaded, as it uses a static IdManager
      */
-    public Agent(String name, int maxSpeed, double stressTolerance, double crowdingTolerance) {
-        this.id = idManager.generateId();
-        this.name = name;
-        this.maxSpeed = maxSpeed;
-        this.crowdingTolerance = crowdingTolerance;
-        this.behavioralState = new AgentDecisionalProperties(this.id, stressTolerance, 0.5);
+    public Agent(String name, double maxSpeed, double stressTolerance, double crowdingTolerance) {
+        this(name, null, maxSpeed, stressTolerance, crowdingTolerance, 0.5);
     }
 
     AgentAction makeDecision(DecisionNodeContext decisionContext, AgentSettings agentSettings) {
@@ -94,7 +101,10 @@ public class Agent implements StressInducing {
             cumulativeProbability += decisionScore.getScore();
             if (randomValue <= cumulativeProbability) {
                 AgentPossibleDecision selectedDecision = entry.getKey();
-                return selectedDecision.toAgentAction(decisionContext, this, decisionScore);
+                setLastSelectedDecision(selectedDecision);
+                AgentAction action = selectedDecision.toAgentAction(decisionContext, this, decisionScore);
+                setCurrentAction(action);
+                return action;
             }
         }
         return null;
@@ -138,12 +148,16 @@ public class Agent implements StressInducing {
         return id;
     }
 
+    void setCurrentAction(AgentAction currentAction) {
+        this.currentAction = currentAction;
+    }
+
     public String getName() {
         return name;
     }
 
     public GraphElement getPosition() {
-        return isOnNode ? getPreviousNode() : getCurrentEdge();
+        return isOnNode ? getPreviousOrCurrentNode() : getCurrentEdge();
     }
 
     public double getStressLevel() {
@@ -158,16 +172,73 @@ public class Agent implements StressInducing {
         return nOfNodeVisited;
     }
 
-    public Node getPreviousNode() {
-        return previousNode;
+    public void incrementNodeVisited() {
+        nOfNodeVisited++;
     }
 
-    public void setPreviousNode(Node previousNode) {
-        this.previousNode = previousNode;
+    public Node getPreviousOrCurrentNode() {
+        return previousOrCurrentNode;
+    }
+
+    public void setPreviousOrCurrentNode(Node previousNode) {
+        this.previousOrCurrentNode = previousNode;
+    }
+
+    public void putOnNode(Node currentNode) {
+        Node previousNode = getPreviousOrCurrentNode();
+        if (previousNode != null) {
+            previousNode.removeAgent(this);
+        }
+        Edge currentEdge = getCurrentEdge();
+        if (currentEdge != null) {
+            assert !isOnNode : "incorrect state: agent cannot be on an edge and on a node at the same time";
+            currentEdge.removeAgent(this);
+        }
+
+        if (currentNode != null) {
+            currentNode.addAgent(this);
+        }
+        this.previousOrCurrentNode = currentNode;
+        setCurrentEdge(null);
+        setIsOnNode(true);
     }
 
     public Node getCurrentNode() {
-        return isOnNode ? getPreviousNode() : null;
+        return isOnNode ? getPreviousOrCurrentNode() : null;
+    }
+
+    public Edge getCurrentEdge() {
+        return currentEdge;
+    }
+
+    public void setCurrentEdge(Edge currentEdge) {
+        this.currentEdge = currentEdge;
+    }
+
+    public void putOnEdge(Edge edge) {
+        Edge currentEdge = getCurrentEdge();
+        if (currentEdge != null) {
+            assert !isOnNode
+                    : "incorrect state: agent cannot be on an edge and on a node at the same time (was on an edge but isOnNode was true)";
+            currentEdge.removeAgent(this);
+        }
+        if (getCurrentNode() != null) {
+            assert isOnNode
+                    : "incorrect state: agent cannot be on an edge and on a node at the same time (was on a node but isOnNode was false)";
+            getCurrentNode().removeAgent(this);
+        }
+        if (edge != null) {
+            edge.addAgent(this);
+        }
+        setCurrentEdge(edge);
+        setIsOnNode(false);
+    }
+
+    public Edge getCurrentEdgeOrNextEdgeIfOnNode() {
+        if (currentAction == null) {
+            return null;
+        }
+        return currentAction.getCurrentEdgeOrNextEdgeIfOnNode();
     }
 
     public GraphElement getCurrentGraphElement() {
@@ -181,10 +252,6 @@ public class Agent implements StressInducing {
     public double getCurrentOwnDecisionMakingFactor() {
         return behavioralState.getCurrentOwnDecisionMakingFactor();
     }
-
-    // public double getCurrentSpeed() {
-    //     return currentSpeed;
-    // }
 
     public double getMaxSpeed() {
         return maxSpeed;
@@ -239,27 +306,20 @@ public class Agent implements StressInducing {
         return isOnNode();
     }
 
-    public Edge getCurrentEdge() {
-        return currentEdge;
-    }
-
-    public void setCurrentEdge(Edge currentEdge) {
-        this.currentEdge = currentEdge;
-    }
-
-    public Edge getCurrentEdgeOrNextEdgeIfOnNode() {
-        if (currentAction == null) {
-            return null;
-        }
-        return currentAction.getCurrentEdgeOrNextEdgeIfOnNode();
+    void setLastSelectedDecision(AgentPossibleDecision lastSelectedDecision) {
+        this.lastSelectedDecision = lastSelectedDecision;
     }
 
     public AgentAction getCurrentAction() {
         return currentAction;
     }
 
+    public AgentPossibleDecision getLastSelectedDecision() {
+        return lastSelectedDecision;
+    }
+
     public double getEffectiveSpeed(AgentSettings agentSettings) {
-        double maxEdgeSpeed = currentEdge != null ? currentEdge.getMaxAgentSpeedInDirection(previousNode)
+        double maxEdgeSpeed = currentEdge != null ? currentEdge.getMaxAgentSpeedInDirection(previousOrCurrentNode)
                 : Double.POSITIVE_INFINITY;
         double agentMaxSpeed = getMaxSpeed();
         double effectiveMaxSpeed = Math.min(agentMaxSpeed, maxEdgeSpeed);
@@ -304,7 +364,7 @@ public class Agent implements StressInducing {
     public String toString() {
         String position;
         if (isOnNode) {
-            position = previousNode == null ? "Node[?]" : "Node[" + previousNode.getId() + "]";
+            position = previousOrCurrentNode == null ? "Node[?]" : "Node[" + previousOrCurrentNode.getId() + "]";
         } else {
             position = currentEdge == null ? "Edge[?]" : "Edge[" + currentEdge.getId() + "]";
         }
@@ -324,7 +384,7 @@ public class Agent implements StressInducing {
     }
 
     public static void main(String[] args) {
-        Agent agent = new Agent("TestAgent", 1, 0.5, 0.5);
+        Agent agent = new Agent("TestAgent", 1.0, 0.5, 0.5);
         System.out.println(agent.toString());
     }
 }
