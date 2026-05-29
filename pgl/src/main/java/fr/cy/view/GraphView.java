@@ -14,6 +14,7 @@ import javafx.scene.text.Text;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -164,20 +165,47 @@ public class GraphView extends Pane {
         getChildren().removeAll(transitAgentViews);
         transitAgentViews.clear();
 
-        for (AgentTransit transit : transits) {
-            NodeView fromView = nodeViewMap.get(transit.from);
-            NodeView toView   = nodeViewMap.get(transit.to);
-            if (fromView == null || toView == null) continue;
+        // Grouper les transits par arete pour calculer l'offset perpendiculaire
+        Map<String, List<AgentTransit>> byEdge = new LinkedHashMap<>();
+        for (AgentTransit t : transits) {
+            int a = Math.min(t.from.getId(), t.to.getId());
+            int b = Math.max(t.from.getId(), t.to.getId());
+            byEdge.computeIfAbsent(a + "_" + b, k -> new ArrayList<>()).add(t);
+        }
 
-            AgentView agentView = new AgentView(transit.agent);
+        for (List<AgentTransit> group : byEdge.values()) {
+            int n = group.size();
+            for (int i = 0; i < n; i++) {
+                AgentTransit transit = group.get(i);
+                NodeView fromView = nodeViewMap.get(transit.from);
+                NodeView toView   = nodeViewMap.get(transit.to);
+                if (fromView == null || toView == null) continue;
 
-            double x = fromView.getCenterX() + (toView.getCenterX() - fromView.getCenterX()) * transit.progress;
-            double y = fromView.getCenterY() + (toView.getCenterY() - fromView.getCenterY()) * transit.progress;
-            agentView.setCenterX(x);
-            agentView.setCenterY(y);
+                double fx = fromView.getCenterX(), fy = fromView.getCenterY();
+                double tx = toView.getCenterX(),   ty = toView.getCenterY();
 
-            transitAgentViews.add(agentView);
-            getChildren().add(agentView);
+                // Position interpolee sur l'arete
+                double x = fx + (tx - fx) * transit.progress;
+                double y = fy + (ty - fy) * transit.progress;
+
+                // Offset perpendiculaire pour eviter la superposition
+                if (n > 1) {
+                    double edgeLen = Math.sqrt((tx - fx) * (tx - fx) + (ty - fy) * (ty - fy));
+                    if (edgeLen > 0) {
+                        double perpX = -(ty - fy) / edgeLen;
+                        double perpY =  (tx - fx) / edgeLen;
+                        double offset = (i - (n - 1) / 2.0) * 11;
+                        x += perpX * offset;
+                        y += perpY * offset;
+                    }
+                }
+
+                AgentView agentView = new AgentView(transit.agent);
+                agentView.setCenterX(x);
+                agentView.setCenterY(y);
+                transitAgentViews.add(agentView);
+                getChildren().add(agentView);
+            }
         }
     }
 }
