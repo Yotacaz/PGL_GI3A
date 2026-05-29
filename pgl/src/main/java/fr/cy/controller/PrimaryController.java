@@ -169,11 +169,16 @@ public class PrimaryController {
                 simulation.getFireService().updateFires(simulation.getGraph());
             }
 
-            advanceTransits();
-            updateStress(simulation.getGraph());
-            refreshInfoPanel();
-            checkCompletion(simulation.getGraph());
+            // 1. Déplacer les agents des noeuds vers les arêtes (crée les transits)
             moveAgents(simulation.getGraph(), simulation.getPathFinder());
+            // 2. Avancer les transits existants — les agents complétés arrivent sur les noeuds
+            advanceTransits();
+            // 3. Mettre à jour le stress
+            updateStress(simulation.getGraph());
+            // 4. Rafraîchir le panneau : noeuds montrent les agents arrivés, arêtes montrent les agents en transit
+            refreshInfoPanel();
+            // 5. Vérifier si la simulation est terminée
+            checkCompletion(simulation.getGraph());
 
             localTick++;
             tickLabel.setText(String.valueOf(localTick));
@@ -300,10 +305,11 @@ public class PrimaryController {
     @FXML
     private void onStep() {
         simulation.getFireService().updateFires(simulation.getGraph());
+        moveAgents(simulation.getGraph(), simulation.getPathFinder());
         advanceTransits();
         updateStress(simulation.getGraph());
         refreshInfoPanel();
-        moveAgents(simulation.getGraph(), simulation.getPathFinder());
+        checkCompletion(simulation.getGraph());
         localTick++;
         tickLabel.setText(String.valueOf(localTick));
         graphView.refresh();

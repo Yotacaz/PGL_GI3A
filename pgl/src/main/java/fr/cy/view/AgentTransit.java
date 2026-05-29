@@ -21,7 +21,7 @@ public class AgentTransit {
      */
     public double progress;
 
-    public static final double STEP = 0.33; // 3 ticks pour traverser une arête
+    public static final double STEP = 0.2; // 5 ticks pour traverser une arête
 
     public AgentTransit(Agent agent, Node from, Node to) {
         this.agent    = agent;
