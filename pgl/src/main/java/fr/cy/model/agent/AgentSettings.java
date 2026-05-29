@@ -3,6 +3,7 @@ package fr.cy.model.agent;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Objects;
 
 import fr.cy.model.agent.behaviour.decisions.AgentPossibleDecision;
 
@@ -47,6 +48,31 @@ public class AgentSettings {
 
     public double getWALK_SPEED_REDUCTION_FACTOR() {
         return WALK_SPEED_REDUCTION_FACTOR;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        AgentSettings other = (AgentSettings) obj;
+        return Double.compare(other.WALKING_SPEED, WALKING_SPEED) == 0
+                && Double.compare(other.RUNNING_SPEED, RUNNING_SPEED) == 0
+                && Double.compare(other.WALK_SPEED_REDUCTION_FACTOR, WALK_SPEED_REDUCTION_FACTOR) == 0
+                && Objects.equals(defaultDecisionMakingFactors, other.defaultDecisionMakingFactors);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(defaultDecisionMakingFactors, WALKING_SPEED, RUNNING_SPEED, WALK_SPEED_REDUCTION_FACTOR);
+    }
+
+    @Override
+    public String toString() {
+        return "AgentSettings{" +
+                "decisionFactors=" + defaultDecisionMakingFactors +
+                ", WALKING_SPEED=" + WALKING_SPEED +
+                ", RUNNING_SPEED=" + RUNNING_SPEED +
+                '}';
     }
 
 }

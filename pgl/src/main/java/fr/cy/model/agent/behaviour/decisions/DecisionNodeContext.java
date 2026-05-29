@@ -112,4 +112,13 @@ public class DecisionNodeContext {
         return sourceNode.equals(other.sourceNode);
     }
 
+    @Override
+    public String toString() {
+        return "DecisionNodeContext{" +
+                "sourceNode=" + (sourceNode == null ? "null" : sourceNode.toString()) +
+                ", outgoingEdges=" + (outgoingEdges == null ? 0 : outgoingEdges.size()) +
+                ", totalNearbyAgents=" + totalNumberOfNearbyAgents +
+                '}';
+    }
+
 }

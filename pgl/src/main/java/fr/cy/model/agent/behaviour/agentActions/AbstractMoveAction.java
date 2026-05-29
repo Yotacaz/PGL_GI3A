@@ -1,5 +1,7 @@
 package fr.cy.model.agent.behaviour.agentActions;
 
+import java.util.Objects;
+
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.graph.element.Edge;
@@ -54,6 +56,25 @@ public abstract class AbstractMoveAction extends AgentAction {
         double distanceTraveled = Math.min(speed * Simulation.TICK_DURATION, remainingDistance);
         timeConsumed = distanceTraveled / speed;
         return timeConsumed;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), edgeProgress);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!super.equals(obj)) return false;
+        if (getClass() != obj.getClass()) return false;
+        AbstractMoveAction other = (AbstractMoveAction) obj;
+        return Double.compare(edgeProgress, other.edgeProgress) == 0;
+    }
+
+    @Override
+    public String toString() {
+        return super.toString().replace("}", "") + ", edgeProgress=" + String.format("%.3f", edgeProgress) + '}';
     }
 
 }

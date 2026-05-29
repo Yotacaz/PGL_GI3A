@@ -1,6 +1,7 @@
 package fr.cy.model.agent.behaviour.decisions;
 
 import java.util.Map;
+import java.util.Objects;
 
 import fr.cy.model.graph.element.Edge;
 
@@ -46,5 +47,30 @@ public class AgentDecisionScore {
 
     public double getTotalScoreForPreferredNeighboringEdges() {
         return totalScoreForPreferredNeighboringEdges;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(decisionScore, isValid, preferredNeighboringEdges, totalScoreForPreferredNeighboringEdges);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        AgentDecisionScore other = (AgentDecisionScore) obj;
+        return Double.compare(decisionScore, other.decisionScore) == 0 && isValid == other.isValid
+                && Objects.equals(preferredNeighboringEdges, other.preferredNeighboringEdges)
+                && Double.compare(totalScoreForPreferredNeighboringEdges, other.totalScoreForPreferredNeighboringEdges) == 0;
+    }
+
+    @Override
+    public String toString() {
+        return "AgentDecisionScore{" +
+                "score=" + decisionScore +
+                ", valid=" + isValid +
+                ", preferredEdges=" + (preferredNeighboringEdges == null ? "null" : preferredNeighboringEdges.keySet()) +
+                ", totalPreferredScore=" + totalScoreForPreferredNeighboringEdges +
+                '}';
     }
 }

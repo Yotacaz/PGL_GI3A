@@ -24,4 +24,9 @@ public class AgentGenerator {
 		double crowdingTolerance = RNG.nextDouble();
 		return new Agent(name, maxSpeed, stressTolerance, crowdingTolerance);
 	}
+
+	@Override
+	public String toString() {
+		return "AgentGenerator{}";
+	}
 }

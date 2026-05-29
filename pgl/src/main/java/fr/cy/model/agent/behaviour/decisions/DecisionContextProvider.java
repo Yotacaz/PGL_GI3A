@@ -84,4 +84,13 @@ public class DecisionContextProvider {
 
     }
 
+    @Override
+    public String toString() {
+        return "DecisionContextProvider{" +
+                "graph=" + (graph == null ? "null" : graph.toString()) +
+                ", pathFinder=" + (pathFinder == null ? "null" : pathFinder.toString()) +
+                ", cachedContexts=" + (cachedContexts == null ? 0 : cachedContexts.size()) +
+                '}';
+    }
+
 }
