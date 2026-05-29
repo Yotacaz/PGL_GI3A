@@ -3,13 +3,8 @@ package fr.cy.view;
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.behaviour.properties.EmotionalState;
 import fr.cy.model.graph.element.Node;
-import javafx.geometry.Insets;
 import javafx.scene.control.Label;
-import javafx.scene.control.Separator;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
 
 import java.util.List;
 
@@ -171,31 +166,44 @@ public class NodeInfoPanel extends VBox {
             fireSpreadLabel.setText("Propagation : " + String.format("%.2f", node.getFire().getSpreadRate()));
             fireTicksLabel.setText("Brûle depuis : " + node.getFire().getBurningTicks() + " ticks");
         } else {
-            setFireVisible(false);
-            fireLabel.setText("Pas de feu ✅");
-            fireLabel.setTextFill(Color.GREEN);
-            setFireVisible(true); // on affiche juste "Pas de feu"
-            fireIntensityLabel.setVisible(false);
-            fireSmokeLabel.setVisible(false);
-            fireSpreadLabel.setVisible(false);
-            fireTicksLabel.setVisible(false);
+            setFireDetailsVisible(false);
+            fireLabel.setVisible(true);
+            fireLabel.setText("Pas de feu ✓");
+            fireLabel.setStyle("-fx-text-fill: " + GREEN + "; -fx-font-size: 12; -fx-padding: 3 16;");
         }
     }
 
-    /**
-     * Détermine l'état le plus fréquent parmi les agents.
-     */
-    private AgentState getDominantState(List<Agent> agents) {
+    private String congestionColor(double cong) {
+        if (cong > 0.7) return RED;
+        if (cong > 0.4) return ORANGE;
+        return GREEN;
+    }
+
+    private String stressColor(double stress) {
+        if (stress > 0.7) return RED;
+        if (stress > 0.4) return ORANGE;
+        return GREEN;
+    }
+
+    private String stateColor(EmotionalState state) {
+        return switch (state) {
+            case CALM      -> GREEN;
+            case SELFISH   -> ORANGE;
+            case PANICKING -> RED;
+        };
+    }
+
+    private EmotionalState getDominantState(List<Agent> agents) {
         int calm = 0, selfish = 0, panicking = 0;
         for (Agent a : agents) {
             switch (a.getState()) {
-                case CALM -> calm++;
-                case SELFISH -> selfish++;
+                case CALM      -> calm++;
+                case SELFISH   -> selfish++;
                 case PANICKING -> panicking++;
             }
         }
         if (panicking >= calm && panicking >= selfish) return EmotionalState.PANICKING;
-        if (selfish >= calm) return EmotionalState.SELFISH;
+        if (selfish >= calm)                           return EmotionalState.SELFISH;
         return EmotionalState.CALM;
     }
 

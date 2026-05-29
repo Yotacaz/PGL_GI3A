@@ -1,7 +1,7 @@
 package fr.cy.view;
 
 import fr.cy.model.agent.Agent;
-import fr.cy.model.agent.behaviour.AgentState;
+import fr.cy.model.agent.behaviour.properties.EmotionalState;
 import javafx.scene.Cursor;
 import javafx.scene.control.Tooltip;
 import javafx.scene.paint.Color;
@@ -40,7 +40,7 @@ public class AgentView extends Circle {
         Tooltip.install(this, tooltip);
     }
 
-    private Color colorForState(AgentState state) {
+    private Color colorForState(EmotionalState state) {
         return switch (state) {
             case CALM      -> Color.YELLOW;
             case SELFISH   -> Color.ORANGE;
