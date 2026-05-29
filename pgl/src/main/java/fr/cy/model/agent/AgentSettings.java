@@ -14,9 +14,11 @@ public class AgentSettings {
     {
         // Initialize decision-making factors for each decision type
         defaultDecisionMakingFactors.put(AgentPossibleDecision.FOLLOW_CROWD, 2.0);
-        defaultDecisionMakingFactors.put(AgentPossibleDecision.RANDOM, 1.0);
+        defaultDecisionMakingFactors.put(AgentPossibleDecision.FOLLOW_LESS_CROWDED_PATH, 0.1);
         defaultDecisionMakingFactors.put(AgentPossibleDecision.FOLLOW_RECOMMENDED_PATH, 1.5);
         defaultDecisionMakingFactors.put(AgentPossibleDecision.FOLLOW_SHORTEST_PATH, 0.05);
+        defaultDecisionMakingFactors.put(AgentPossibleDecision.NICEST_PATH, 0.2);
+        defaultDecisionMakingFactors.put(AgentPossibleDecision.RANDOM, 1.0);
         // decisionMakingFactors.put(FollowShortestPathAction.class, 0.2);
         // decisionMakingFactors.put(NicestPathAction.class, 0.5);
     }
@@ -35,7 +37,7 @@ public class AgentSettings {
      * @return The decision-making factor associated with the specified decision type
      */
     public double getDecisionMakingFactor(AgentPossibleDecision decision) {
-        return defaultDecisionMakingFactors.getOrDefault(decision, Double.NEGATIVE_INFINITY);
+        return defaultDecisionMakingFactors.get(decision);
     }
 
     public double getRUNNING_SPEED() {

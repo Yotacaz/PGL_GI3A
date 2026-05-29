@@ -21,13 +21,14 @@ public enum AgentPossibleDecision {
             Map<Edge, Double> preferredNeighboringEdges = new HashMap<>();
             double totalScoreForPreferredNeighboringEdges = 0.0;
             for (Edge edge : context.getOutgoingEdges()) {
+                //edgeScore is 0 if no one on edge
                 double edgeScore = edge.getCongestion()
                         / (1.0 + edge.getTotalStressInducedIncludingNeighbors() * 0.125); //prefer more crowded edges
                 preferredNeighboringEdges.put(edge, edgeScore);
                 totalScoreForPreferredNeighboringEdges += edgeScore;
             }
             double decisionScore = (congestionStats.getAverageCongestionLevel()
-                    - agentState.getCurrentOwnDecisionMakingFactor()) * decisionMakingFactor;
+                    - agentState.getCurrentOwnDecisionMakingFactor()) * decisionMakingFactor;   //can be 0 if no crowd
             return new AgentDecisionScore(decisionScore, preferredNeighboringEdges,
                     totalScoreForPreferredNeighboringEdges);
         }
