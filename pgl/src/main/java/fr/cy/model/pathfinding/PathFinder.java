@@ -1,22 +1,22 @@
 package fr.cy.model.pathfinding;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
 
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 
 /**
- * Classe de pathfinding utilisant l'algorithme de Dijkstra.
+ * Classe de pathfinding utilisant l'algorithme Min-Cost Max-Flow.
  *
  * Le coût d'un chemin dépend :
  * - de la longueur des arêtes
  * - du danger des éléments traversés
+ * - de la congestion des arêtes (capacité et flux)
+ *
+ * Cet algorithme est optimal pour gérer les goulots d'étranglement
+ * et la distribution des agents dans le réseau.
  *
  * @author GI3A
  * @version 1.0
@@ -24,70 +24,34 @@ import fr.cy.model.graph.element.Node;
 public class PathFinder {
 
     private final Graph graph;
+    private final MinCostMaxFlow flowAlgorithm;
 
     public PathFinder(Graph graph) {
         this.graph = graph;
+        this.flowAlgorithm = new MinCostMaxFlow(graph);
     }
 
-    private double computeCost(Edge edge) {
-        double cost = edge.getLength();
-
-        cost += edge.getStressInducingFactor() * 100;
-
-        return cost;
-    }
-    
-
-    public List<Node> reconstructPath(Map<Node, Node> previous, Node goal) {
-        List<Node> path = new ArrayList<>();
-        Node current = goal;
-
-        while (current != null) {
-            path.add(current);
-            current = previous.get(current);
-        }
-
-        Collections.reverse(path);
-        return path;
-    }
-
+    /**
+     * Trouve le chemin le plus court entre deux nœuds en utilisant
+     * l'algorithme Min-Cost Max-Flow avec un flux de 1 unité.
+     *
+     * @param start le nœud de départ
+     * @param goal  le nœud d'arrivée
+     * @return liste des nœuds du chemin optimal
+     */
     public List<Node> shortestPath(Node start, Node goal) {
-        Map<Node, Double> distances = new HashMap<>();
-        Map<Node, Node> previous = new HashMap<>();
-        PriorityQueue<NodeDistance> queue = new PriorityQueue<>();
+        // Construire le graphe de flux basé sur l'état actuel du graphe
+        flowAlgorithm.buildFlowGraph(start, goal, 1.0);
 
-        /** Initialisaiton */
-        for (Node node : graph.getNodes()) {
-            distances.put(node, Double.POSITIVE_INFINITY);
-        }
-        distances.put(start, 0.0);
-        queue.add(new NodeDistance(start, 0));
+        // Calculer le chemin optimal avec coût minimum et flux maximum
+        List<Node> path = flowAlgorithm.computeMinCostMaxFlow(start, goal, 1.0);
 
-        /** Djisktra */
-        while (!queue.isEmpty()) {
-            Node current = queue.poll().node();
-
-            if (current.equals(goal)) {
-                break;
-            }
-
-            for (Edge edge : graph.getAdjacentEdges(current)) {
-                Node neighbor = edge.getOppositeNode(current);
-
-                double cost = computeCost(edge);
-                double newDistance = distances.get(current) + cost;
-
-                if (newDistance < distances.get(neighbor)) {
-                    distances.put(neighbor, newDistance);
-
-                    previous.put(neighbor, current);
-
-                    queue.add(new NodeDistance(neighbor, newDistance));
-                }
-            }
+        // Si aucun chemin trouvé, retourner une liste vide
+        if (path.isEmpty()) {
+            return new ArrayList<>();
         }
 
-        return reconstructPath(previous, goal);
+        return path;
     }
 
 

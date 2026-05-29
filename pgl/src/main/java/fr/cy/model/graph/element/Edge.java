@@ -192,6 +192,10 @@ public class Edge extends GraphElement {
         return Math.min(stress, 1.0);
     }
 
+    public boolean isCongested() {
+        return getCongestion() > 0.7;
+    }
+
     @Override
     public List<GraphElement> getNeighbors() {
         List<GraphElement> neighbors = new ArrayList<>();
