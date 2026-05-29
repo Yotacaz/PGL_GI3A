@@ -134,7 +134,10 @@ public class NodeInfoPanel extends VBox {
 
         accessibleLabel.setText("Accessible : " + (!node.isFull() ? "Oui ✓" : "Plein ✗"));
         accessibleLabel.setStyle(data + "-fx-text-fill: " + (!node.isFull() ? GREEN : RED) + ";");
-
+        
+        
+        
+        
         // --- Agents ---
         if (agents.isEmpty()) {
             avgSpeedLabel.setText("Vitesse moy. : —");
@@ -153,7 +156,7 @@ public class NodeInfoPanel extends VBox {
 
             EmotionalState dominant = getDominantState(agents);
             dominantStateLabel.setText("État dominant : " + dominant.name());
-            dominantStateLabel.setStyle(data + "-fx-text-fill: " + stateColor(dominant) + ";");
+            dominantStateLabel.setStyle(data + "-fx-text-fill: " + GREEN + ";");
         }
 
         // --- Stress global ---
@@ -171,17 +174,31 @@ public class NodeInfoPanel extends VBox {
             fireSpreadLabel.setText("Propagation : " + String.format("%.2f", node.getFire().getSpreadRate()));
             fireTicksLabel.setText("Brûle depuis : " + node.getFire().getBurningTicks() + " ticks");
         } else {
-            setFireVisible(false);
+            setFireDetailsVisible(false);
             fireLabel.setText("Pas de feu ✅");
             fireLabel.setTextFill(Color.GREEN);
-            setFireVisible(true); // on affiche juste "Pas de feu"
+            setFireDetailsVisible(true); // on affiche juste "Pas de feu"
             fireIntensityLabel.setVisible(false);
             fireSmokeLabel.setVisible(false);
             fireSpreadLabel.setVisible(false);
             fireTicksLabel.setVisible(false);
         }
     }
+    
+    private String congestionColor(double cong) {
+        if (cong > 0.7) return RED;
+        if (cong > 0.4) return ORANGE;
+        return GREEN;
+    }
+    private String stressColor(double stress) {
+        if (stress > 0.7) return RED;
+        if (stress > 0.4) return ORANGE;
+        return GREEN;
+    }
 
+    
+    
+    
     /**
      * Détermine l'état le plus fréquent parmi les agents.
      */
