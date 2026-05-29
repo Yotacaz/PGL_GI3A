@@ -185,7 +185,7 @@ public class NodeInfoPanel extends VBox {
     /**
      * Détermine l'état le plus fréquent parmi les agents.
      */
-    private AgentState getDominantState(List<Agent> agents) {
+    private EmotionalState getDominantState(List<Agent> agents) {
         int calm = 0, selfish = 0, panicking = 0;
         for (Agent a : agents) {
             switch (a.getState()) {
