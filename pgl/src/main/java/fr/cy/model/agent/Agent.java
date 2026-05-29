@@ -2,6 +2,7 @@ package fr.cy.model.agent;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.agent.behaviour.decisions.AgentDecisionScore;
@@ -280,5 +281,50 @@ public class Agent implements StressInducing {
                 throw new IllegalStateException("Unexpected emotional state: " + behavioralState.getEmotionnalState());
         }
         return speed;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        Agent other = (Agent) obj;
+        return this.id == other.id;
+    }
+
+    @Override
+    public String toString() {
+        String position;
+        if (isOnNode) {
+            position = previousNode == null ? "Node[?]" : "Node[" + previousNode.getId() + "]";
+        } else {
+            position = currentEdge == null ? "Edge[?]" : "Edge[" + currentEdge.getId() + "]";
+        }
+        String state = behavioralState == null ? "unknown" : behavioralState.getEmotionnalState().name();
+        double stress = behavioralState == null ? 0.0 : behavioralState.getStressLevel();
+        String action = currentAction == null ? "idle" : currentAction.getClass().getSimpleName();
+        return String.format("Agent[%d] %s — %s | state=%s (%.0f%%) action=%s pos=%s progress=%.1f%% visited=%d",
+                id,
+                name == null ? "<unnamed>" : name,
+                isAlive ? "alive" : "dead",
+                state,
+                stress * 100.0,
+                action,
+                position,
+                travelProgressPercentageInComponent * 100.0,
+                nOfNodeVisited);
+    }
+
+    public static void main(String[] args) {
+        Agent agent = new Agent("TestAgent", 1, 0.5, 0.5);
+        System.out.println(agent.toString());
     }
 }
