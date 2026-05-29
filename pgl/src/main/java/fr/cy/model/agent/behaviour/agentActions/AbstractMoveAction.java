@@ -44,7 +44,8 @@ public abstract class AbstractMoveAction extends AgentAction {
         double newProgress = 1.0 - (remainingDistance / edgeLength);
         setEdgeProgress(newProgress);
         if (isEdgeCompleted()) {
-            agent.setPreviousNode(edge.getOppositeNode(agent.getCurrentNode()));
+            agent.incrementNodeVisited();
+            agent.setPreviousOrCurrentNode(edge.getOppositeNode(agent.getCurrentNode()));
             agent.setCurrentEdge(null); // Agent has reached the end of the edge
             agent.setIsOnNode(true);
         }

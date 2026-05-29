@@ -1,5 +1,6 @@
 package fr.cy.model.agent;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -16,15 +17,18 @@ public class AgentManager {
     private AgentSettings agentSettings = new AgentSettings();
     private List<Agent> agents;
     private DecisionContextProvider decisionContextProvider;
+    private AgentGenerator agentGenerator;
     // private Map<Agent, AgentAction> agentActionsPreviousTick = new HashMap<>();
 
-    public AgentManager(List<Agent> agents, DecisionContextProvider decisionContextProvider) {
+    public AgentManager(List<Agent> agents, DecisionContextProvider decisionContextProvider,
+            AgentGenerator agentGenerator) {
         this.agents = agents;
         this.decisionContextProvider = decisionContextProvider;
+        this.agentGenerator = agentGenerator;
     }
 
-    public AgentManager(DecisionContextProvider decisionContextProvider) {
-        this(null, decisionContextProvider);
+    public AgentManager(DecisionContextProvider decisionContextProvider, AgentGenerator agentGenerator) {
+        this(new ArrayList<>(), decisionContextProvider, agentGenerator);
     }
 
     private class AgentByOwnDecisionMakingComparator implements Comparator<Agent> {
@@ -42,15 +46,27 @@ public class AgentManager {
      * @param factor The decision-making factor to filter agents, typically between 0 and 1
      * @return A list of agents that match the specified decision-making factor (never null)
      */
-    public void sortAgentsByOwnDecisionMakingFactor() {
+    private void sortAgentsByOwnDecisionMakingFactor() {
         agents.sort(new AgentByOwnDecisionMakingComparator());
+    }
+
+    public AgentSettings getAgentSettings() {
+        return agentSettings;
+    }
+
+    public void generateRandomsAgents(int count) {
+        for (int i = 0; i < count; i++) {
+            Agent newAgent = agentGenerator.generateRandomAgent("Agent" + (agents.size() + 1));
+            agents.add(newAgent);
+        }
     }
 
     public void tick() {
         updateStress();
         moveAgents();
     }
-    public void moveAgents(){
+
+    public void moveAgents() {
         decisionContextProvider.clearCache();
         sortAgentsByOwnDecisionMakingFactor(); //should be relatively fast since the list is almost sorted
 
@@ -58,11 +74,13 @@ public class AgentManager {
             if (agent.isOnNode()) {
                 DecisionNodeContext decisionContext = decisionContextProvider.getContext(agent);
                 AgentAction action = agent.makeDecision(decisionContext, agentSettings);
+                // System.out.println("Agent " + agent.getName() + " decided to perform action: " + (action == null ? "null" : action.toString()));
             }
         }
 
         for (Agent agent : agents) {
             double performed = agent.performCurrentAction(agentSettings);
+            System.out.println(performed);
         }
 
     }
@@ -82,8 +100,10 @@ public class AgentManager {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
+        if (this == obj)
+            return true;
+        if (obj == null || getClass() != obj.getClass())
+            return false;
         AgentManager other = (AgentManager) obj;
         return Objects.equals(agentSettings, other.agentSettings) && Objects.equals(agents, other.agents)
                 && Objects.equals(decisionContextProvider, other.decisionContextProvider);
