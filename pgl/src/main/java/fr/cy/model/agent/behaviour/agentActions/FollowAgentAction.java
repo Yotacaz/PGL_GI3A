@@ -33,4 +33,25 @@ public class FollowAgentAction extends AgentAction {
 		//TODO
 		return targetAgent.getCurrentEdgeOrNextEdgeIfOnNode();
 	}
+
+	@Override
+	public int hashCode() {
+		return java.util.Objects.hash(super.hashCode(), targetAgent == null ? null : targetAgent.getId());
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) return true;
+		if (!super.equals(obj)) return false;
+		if (getClass() != obj.getClass()) return false;
+		FollowAgentAction other = (FollowAgentAction) obj;
+		Integer t1 = targetAgent == null ? null : targetAgent.getId();
+		Integer t2 = other.targetAgent == null ? null : other.targetAgent.getId();
+		return java.util.Objects.equals(t1, t2);
+	}
+
+	@Override
+	public String toString() {
+		return super.toString().replace("}", "") + ", targetAgentId=" + (targetAgent == null ? "null" : targetAgent.getId()) + '}';
+	}
 }

@@ -1,6 +1,7 @@
 package fr.cy.model.agent.behaviour.personalityTraits;
 
 import java.util.Map;
+import java.util.Objects;
 
 import fr.cy.model.agent.behaviour.decisions.AgentPossibleDecision;
 
@@ -17,5 +18,20 @@ public class AgentPersonalityTrait {
     public boolean evaluatePossibleDecision(Map<AgentPossibleDecision, Double> decisionScores) {
         // Default implementation: always return true
         return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.getClass());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return this == obj || (obj != null && this.getClass() == obj.getClass());
+    }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName();
     }
 }

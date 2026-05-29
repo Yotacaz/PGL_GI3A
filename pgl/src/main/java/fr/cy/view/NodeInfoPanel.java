@@ -8,25 +8,19 @@ import javafx.scene.layout.VBox;
 
 import java.util.List;
 
-/**
- * Panneau d'informations d'un nœud — thème sombre moderne.
- * S'affiche à droite quand on clique sur un nœud.
- */
 public class NodeInfoPanel extends VBox {
 
-    // ---- Couleurs du thème ----
-    private static final String BG          = "#0F0F1A";
-    private static final String HEADER_BG   = "#141428";
-    private static final String SECTION_BG  = "#1C1C32";
-    private static final String ACCENT      = "#5B7FFF";
-    private static final String TEXT        = "#E8E8FF";
-    private static final String TEXT_DIM    = "#888AB0";
-    private static final String GREEN       = "#4ADE80";
-    private static final String ORANGE      = "#FFA94D";
-    private static final String RED         = "#FF6B6B";
+    private static final String BG         = "#0F0F1A";
+    private static final String HEADER_BG  = "#141428";
+    private static final String SECTION_BG = "#1C1C32";
+    private static final String ACCENT     = "#5B7FFF";
+    private static final String TEXT       = "#E8E8FF";
+    private static final String TEXT_DIM   = "#888AB0";
+    private static final String GREEN      = "#4ADE80";
+    private static final String ORANGE     = "#FFA94D";
+    private static final String RED        = "#FF6B6B";
 
-    // ---- Labels ----
-    private final Label titleLabel         = new Label("Cliquez sur un nœud");
+    private final Label titleLabel         = new Label("Cliquez sur un noeud");
     private final Label coordLabel         = new Label();
     private final Label exitLabel          = new Label();
     private final Label edgesLabel         = new Label();
@@ -50,7 +44,6 @@ public class NodeInfoPanel extends VBox {
         setSpacing(0);
         setStyle("-fx-background-color: " + BG + "; -fx-border-color: " + ACCENT + "; -fx-border-width: 0 0 0 3;");
 
-        // Titre
         titleLabel.setMaxWidth(Double.MAX_VALUE);
         titleLabel.setStyle(
             "-fx-background-color: " + HEADER_BG + "; " +
@@ -58,7 +51,6 @@ public class NodeInfoPanel extends VBox {
             "-fx-padding: 16 16 14 16;"
         );
 
-        // Style des données
         String dataStyle = "-fx-text-fill: " + TEXT + "; -fx-font-size: 12; -fx-padding: 3 16;";
         for (Label l : new Label[]{
                 coordLabel, exitLabel, edgesLabel,
@@ -72,7 +64,7 @@ public class NodeInfoPanel extends VBox {
 
         getChildren().addAll(
             titleLabel,
-            sectionHeader("GÉNÉRAL"),
+            sectionHeader("GENERAL"),
             coordLabel, exitLabel, edgesLabel,
             sectionHeader("OCCUPATION"),
             agentsLabel, capacityLabel, occupiedLabel, congestionLabel, accessibleLabel,
@@ -87,9 +79,6 @@ public class NodeInfoPanel extends VBox {
         setFireDetailsVisible(false);
     }
 
-    // -----------------------------------------------------------------------
-
-    /** Crée un label de section avec fond coloré, style "badge". */
     private Label sectionHeader(String text) {
         Label l = new Label(text);
         l.setMaxWidth(Double.MAX_VALUE);
@@ -102,39 +91,33 @@ public class NodeInfoPanel extends VBox {
         return l;
     }
 
-    // -----------------------------------------------------------------------
-
     public void display(Node node) {
         List<Agent> agents = node.getAgents();
         String data = "-fx-text-fill: " + TEXT + "; -fx-font-size: 12; -fx-padding: 3 16;";
 
-        // --- Titre ---
-        titleLabel.setText((node.isExit() ? "Sortie" : "Nœud") + "  #" + node.getId());
+        titleLabel.setText((node.isExit() ? "Sortie" : "Noeud") + "  #" + node.getId());
 
-        // --- Général ---
         coordLabel.setText("Position : (" + (int)node.getX() + ", " + (int)node.getY() + ")");
-        exitLabel.setText("Sortie : " + (node.isExit() ? "Oui ✓" : "Non"));
+        exitLabel.setText("Sortie : " + (node.isExit() ? "Oui" : "Non"));
         exitLabel.setStyle(data + "-fx-text-fill: " + (node.isExit() ? GREEN : TEXT_DIM) + ";");
-        edgesLabel.setText("Arêtes connectées : " + node.getEdges().size());
+        edgesLabel.setText("Aretes connectees : " + node.getEdges().size());
 
-        // --- Occupation ---
-        agentsLabel.setText("Agents présents : " + agents.size());
+        agentsLabel.setText("Agents presents : " + agents.size());
         agentsLabel.setStyle(data + "-fx-text-fill: " + (agents.size() > 0 ? TEXT : TEXT_DIM) + ";");
-        capacityLabel.setText("Capacité : " + String.format("%.1f", node.getCapacity()));
-        occupiedLabel.setText("Espace occupé : " + String.format("%.1f", node.getOccupiedSpace()));
+        capacityLabel.setText("Capacite : " + String.format("%.1f", node.getCapacity()));
+        occupiedLabel.setText("Espace occupe : " + String.format("%.1f", node.getOccupiedSpace()));
 
         double cong = node.getCongestion();
         congestionLabel.setText("Congestion : " + String.format("%.0f%%", cong * 100));
         congestionLabel.setStyle(data + "-fx-text-fill: " + congestionColor(cong) + ";");
 
-        accessibleLabel.setText("Accessible : " + (!node.isFull() ? "Oui ✓" : "Plein ✗"));
+        accessibleLabel.setText("Accessible : " + (!node.isFull() ? "Oui" : "Plein"));
         accessibleLabel.setStyle(data + "-fx-text-fill: " + (!node.isFull() ? GREEN : RED) + ";");
 
-        // --- Agents ---
         if (agents.isEmpty()) {
-            avgSpeedLabel.setText("Vitesse moy. : —");
-            avgStressLabel.setText("Stress moy. : —");
-            dominantStateLabel.setText("État dominant : —");
+            avgSpeedLabel.setText("Vitesse moy. : -");
+            avgStressLabel.setText("Stress moy. : -");
+            dominantStateLabel.setText("Etat dominant : -");
             for (Label l : new Label[]{avgSpeedLabel, avgStressLabel, dominantStateLabel})
                 l.setStyle(data + "-fx-text-fill: " + TEXT_DIM + ";");
         } else {
@@ -147,29 +130,27 @@ public class NodeInfoPanel extends VBox {
             avgStressLabel.setStyle(data + "-fx-text-fill: " + stressColor(avgStress) + ";");
 
             EmotionalState dominant = getDominantState(agents);
-            dominantStateLabel.setText("État dominant : " + dominant.name());
+            dominantStateLabel.setText("Etat dominant : " + dominant.name());
             dominantStateLabel.setStyle(data + "-fx-text-fill: " + stateColor(dominant) + ";");
         }
 
-        // --- Stress global ---
         double gs = node.getTotalStressInducedIncludingNeighbors();
         globalStressLabel.setText("Stress (+ voisins) : " + String.format("%.0f%%", gs * 100));
         globalStressLabel.setStyle(data + "-fx-text-fill: " + stressColor(gs) + ";");
 
-        // --- Feu ---
         if (node.isOnFire()) {
             setFireDetailsVisible(true);
             fireLabel.setText("EN FEU");
             fireLabel.setStyle(data + "-fx-text-fill: " + RED + "; -fx-font-weight: bold;");
-            fireIntensityLabel.setText("Intensité : " + String.format("%.2f", node.getFire().getIntensity()));
-            fireSmokeLabel.setText("Fumée : " + String.format("%.2f", node.getFire().getSmokeLevel()));
+            fireIntensityLabel.setText("Intensite : " + String.format("%.2f", node.getFire().getIntensity()));
+            fireSmokeLabel.setText("Fumee : " + String.format("%.2f", node.getFire().getSmokeLevel()));
             fireSpreadLabel.setText("Propagation : " + String.format("%.2f", node.getFire().getSpreadRate()));
-            fireTicksLabel.setText("Brûle depuis : " + node.getFire().getBurningTicks() + " ticks");
+            fireTicksLabel.setText("Brule depuis : " + node.getFire().getBurningTicks() + " ticks");
         } else {
             setFireDetailsVisible(false);
             fireLabel.setVisible(true);
-            fireLabel.setText("Pas de feu ✓");
-            fireLabel.setStyle("-fx-text-fill: " + GREEN + "; -fx-font-size: 12; -fx-padding: 3 16;");
+            fireLabel.setText("Pas de feu");
+            fireLabel.setStyle(data + "-fx-text-fill: " + GREEN + ";");
         }
     }
 

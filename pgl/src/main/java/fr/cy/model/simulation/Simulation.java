@@ -1,6 +1,5 @@
 package fr.cy.model.simulation;
 
-
 import fr.cy.model.agent.AgentManager;
 import fr.cy.model.agent.behaviour.decisions.DecisionContextProvider;
 import fr.cy.model.fire.FireService;
@@ -14,15 +13,15 @@ public class Simulation {
     private final FireService fireService;
 
     private int currentTick;
-    public static final double TICK_DURATION = 1.0; 
+    public static final double TICK_DURATION = 1.0;
     private boolean running;
 
     public Simulation(Graph graph) {
         this.graph = graph;
         this.pathFinder = new PathFinder(graph);
         this.fireService = new FireService();
-        // DecisionContextProvider decisionContextProvider = new DecisionContextProvider(graph, pathFinder);
-        this.agentManager = new AgentManager();
+        DecisionContextProvider decisionContextProvider = new DecisionContextProvider(graph, pathFinder);
+        this.agentManager = new AgentManager(decisionContextProvider); //NO AGENT IS GENERATED YET
 
         this.currentTick = 0;
         this.running = false;
@@ -35,7 +34,6 @@ public class Simulation {
     public void stop() {
         running = false;
     }
-
 
     public void tick() {
         if (!running) {
@@ -70,6 +68,5 @@ public class Simulation {
     public FireService getFireService() {
         return fireService;
     }
-
 
 }
