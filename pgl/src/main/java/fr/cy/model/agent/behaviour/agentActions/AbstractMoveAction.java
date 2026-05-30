@@ -5,6 +5,7 @@ import java.util.Objects;
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.graph.element.Edge;
+import fr.cy.model.graph.element.Node;
 import fr.cy.model.simulation.Simulation;
 
 public abstract class AbstractMoveAction extends AgentAction {
@@ -33,8 +34,7 @@ public abstract class AbstractMoveAction extends AgentAction {
     protected double travelAlongEdge(AgentSettings agentSettings, Edge edge) {
         Agent agent = getAgent();
 
-        agent.setCurrentEdge(edge);
-        agent.setIsOnNode(false);
+        agent.putOnEdge(edge);
 
         double speed = agent.getEffectiveSpeed(agentSettings);
         double edgeLength = edge.getLength();
@@ -45,9 +45,8 @@ public abstract class AbstractMoveAction extends AgentAction {
         setEdgeProgress(newProgress);
         if (isEdgeCompleted()) {
             agent.incrementNodeVisited();
-            agent.setPreviousOrCurrentNode(edge.getOppositeNode(agent.getCurrentNode()));
-            agent.setCurrentEdge(null); // Agent has reached the end of the edge
-            agent.setIsOnNode(true);
+            Node nextNode = edge.getOppositeNode(agent.getPreviousOrCurrentNode());
+            agent.putOnNode(nextNode);
         }
 
         double timeConsumed = Simulation.TICK_DURATION;

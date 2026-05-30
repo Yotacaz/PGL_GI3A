@@ -30,6 +30,8 @@ public class AgentGenerator {
 		int maxSpeed = 1 + RNG.nextInt(5); // 1..5 units
 		double stressTolerance = RNG.nextDouble();
 		double crowdingTolerance = RNG.nextDouble();
+		double repeatLastDecisionTendency = 0.875 + RNG.nextDouble(); // Between 0.875 and 1.875
+		double baseOwnDecisionMakingFactor = RNG.nextDouble(); // Between 0 and 1
 		//get a random node from the graph and put the agent on it (or null if no node is available)
 		Node randomNode = null;
 		if (graph != null && !graph.getNodes().isEmpty()) {
@@ -37,8 +39,8 @@ public class AgentGenerator {
 			randomNode = graph.getNodes().get(randomNodeIndex);
 		}
 
-		Agent agent = new Agent(name, maxSpeed, stressTolerance, crowdingTolerance);
-		agent.putOnNode(randomNode);
+		Agent agent = new Agent(name, randomNode, maxSpeed, stressTolerance, crowdingTolerance,
+				baseOwnDecisionMakingFactor, repeatLastDecisionTendency);
 		return agent;
 	}
 

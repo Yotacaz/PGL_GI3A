@@ -24,7 +24,7 @@ public class Node extends GraphElement {
 
     /** Liste des arêtes connectées à ce nœud */
     private final List<Edge> connectedEdges;
-
+    
     /**
      * Constructeur créant un nouveau nœud avec une position spécifiée.
      * 
@@ -155,7 +155,6 @@ public class Node extends GraphElement {
         return outgoingEdges;
     }
 
-    // public List<Edge> getIncomingEdges() {
 
     /**
      * Retourne toutes les arêtes connectées à ce nœud.

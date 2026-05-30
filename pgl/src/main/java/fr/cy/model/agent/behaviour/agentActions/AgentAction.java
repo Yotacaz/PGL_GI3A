@@ -23,6 +23,10 @@ public abstract class AgentAction {
 		return agent;
 	}
 
+	public double getEdgeProgress() {
+		return -1.0; // Default implementation returns -1, meaning not applicable
+	}
+
 	public double getProgress() {
 		return progress;
 	}

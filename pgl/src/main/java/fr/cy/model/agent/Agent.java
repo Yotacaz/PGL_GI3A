@@ -37,21 +37,18 @@ public class Agent implements StressInducing {
     /** Surface area taken by the agent, used to calculate crowding effects */
     private double surfaceAreaTakenByAgent = 0.5;
 
-    /** Progress of the agent in the current component (either a node or an edge), in units */
-    private double travelProgressPercentageInComponent;
     /** Number of nodes visited by the agent, used for statistics */
     private int nOfNodeVisited;
 
     /** Map to store the scores of different possible decisions for the agent, used in decision-making
      * This is a class attribute in order to avoid creating a new map for each agent at each decision step*/
     private final Map<AgentPossibleDecision, AgentDecisionScore> decisionsScore = new HashMap<>();
+
     /** The last selected decision by the agent */
     private AgentPossibleDecision lastSelectedDecision = null;
     /** Current behavioral state of the agent, used to influence decision-making and stress levels */
     private AgentDecisionalProperties behavioralState;
 
-    /** Tolerance to crowding, between 0 and 1, above which the agent starts panicking */
-    private double crowdingTolerance;
     /** Current edge of the graph where the agent is located */
     private Edge currentEdge;
     private boolean isOnNode = true; // True if the agent is currently on a node, false if on an edge
@@ -66,13 +63,13 @@ public class Agent implements StressInducing {
     private static IdManager idManager = new IdManager();
 
     public Agent(String name, Node startingNode, double maxSpeed, double stressTolerance, double crowdingTolerance,
-            double baseOwnDecisionMakingFactor) {
+            double baseOwnDecisionMakingFactor, double repeatLastDecisionTendency) {
         this.id = idManager.generateId();
         this.name = name;
         this.maxSpeed = maxSpeed;
-        this.crowdingTolerance = crowdingTolerance;
         putOnNode(startingNode);
-        this.behavioralState = new AgentDecisionalProperties(this.id, stressTolerance, baseOwnDecisionMakingFactor);
+        this.behavioralState = new AgentDecisionalProperties(this.id, stressTolerance, baseOwnDecisionMakingFactor,
+                repeatLastDecisionTendency, crowdingTolerance);
     }
 
     /**
@@ -88,7 +85,7 @@ public class Agent implements StressInducing {
      * @apiNote should not be multithreaded, as it uses a static IdManager
      */
     public Agent(String name, double maxSpeed, double stressTolerance, double crowdingTolerance) {
-        this(name, null, maxSpeed, stressTolerance, crowdingTolerance, 0.5);
+        this(name, null, maxSpeed, stressTolerance, crowdingTolerance, 0.5, 1.25);
     }
 
     AgentAction makeDecision(DecisionNodeContext decisionContext, AgentSettings agentSettings) {
@@ -115,7 +112,8 @@ public class Agent implements StressInducing {
         double totalScore = 0.0;
         for (AgentPossibleDecision possibleDecision : AgentPossibleDecision.values()) {
             double factor = agentSettings.getDecisionMakingFactor(possibleDecision);
-            AgentDecisionScore decisionScore = possibleDecision.computeScore(decisionContext, behavioralState, factor);
+            AgentDecisionScore decisionScore = possibleDecision.computeScore(decisionContext, behavioralState, factor,
+                    lastSelectedDecision, currentAction);
             decisionsScore.put(possibleDecision, decisionScore);
             totalScore += decisionScore.getScore();
         }
@@ -164,6 +162,14 @@ public class Agent implements StressInducing {
         return behavioralState.getStressLevel();
     }
 
+    public void setStressLevel(double stressLevel) {
+        behavioralState.setStressLevel(stressLevel);
+    }
+
+    public void addStress(double stress) {
+        setStressLevel(getStressLevel() + stress);
+    }
+
     public EmotionalState getState() {
         return behavioralState.getEmotionnalState();
     }
@@ -203,6 +209,9 @@ public class Agent implements StressInducing {
         setIsOnNode(true);
     }
 
+    /**
+     * @return the current node the agent is on, or {@code null} if the agent is not on a node
+     */
     public Node getCurrentNode() {
         return isOnNode ? getPreviousOrCurrentNode() : null;
     }
@@ -245,8 +254,12 @@ public class Agent implements StressInducing {
         return isOnNode ? getCurrentNode() : getCurrentEdge();
     }
 
-    public double getCrowdingTolerance() {
-        return crowdingTolerance;
+    public double getCongestionTolerance() {
+        return behavioralState.getCongestionTolerance();
+    }
+
+    public void setCongestionTolerance(double congestionTolerance) {
+        behavioralState.setCongestionTolerance(congestionTolerance);
     }
 
     public double getCurrentOwnDecisionMakingFactor() {
@@ -266,21 +279,14 @@ public class Agent implements StressInducing {
         return distance; // Return the actual distance traveled, which may be less than the requested distance if the agent reaches the end of the edge
     }
 
-    public double getTravelProgressPercentageInComponent() {
-        return travelProgressPercentageInComponent;
-    }
-
-    public double setTravelProgressPercentageInComponent(double newTravelProgressInComponent) {
-        this.travelProgressPercentageInComponent = newTravelProgressInComponent;
-        return this.travelProgressPercentageInComponent;
+    /** Returns the progress of the agent along the current edge, between 0 and 1, or -1 if not applicable */
+    public double getTravelProgressPercentageOnEdge() {
+        AgentAction action = getCurrentAction();
+        return action != null ? action.getEdgeProgress() : -1.0;
     }
 
     public double getSurfaceAreaTakenByAgent() {
         return surfaceAreaTakenByAgent;
-    }
-
-    public void setStressLevel(double stressLevel) {
-        behavioralState.setStressLevel(stressLevel);
     }
 
     /**
@@ -379,7 +385,7 @@ public class Agent implements StressInducing {
                 stress * 100.0,
                 action,
                 position,
-                travelProgressPercentageInComponent * 100.0,
+                getTravelProgressPercentageOnEdge() == -1.0 ? 0.0 : getTravelProgressPercentageOnEdge() * 100.0,
                 nOfNodeVisited);
     }
 

@@ -94,7 +94,6 @@ public class AgentManager {
             double stressLevel = agent.getStressLevel();
 
             //TODO: Update stress level based on current conditions (e.g., proximity to fire, congestion, etc.)
-
         }
     }
 
