@@ -273,19 +273,6 @@ public class Edge extends GraphElement {
         return speed;
     }
 
-    @Override
-    public double getStressInducingFactor() {
-        double stress = 0;
-
-        stress += getCongestion() * 0.5;
-
-        if (isOnFire()) {
-            stress += 0.2 * getFire().getIntensity();
-        }
-
-        return Math.min(stress, 1.0);
-    }
-
     public boolean isCongested() {
         return getCongestion() > 0.7;
     }

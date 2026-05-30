@@ -24,7 +24,9 @@ public class Node extends GraphElement {
 
     /** Liste des arêtes connectées à ce nœud */
     private final List<Edge> connectedEdges;
-    
+    /** Liste des arêtes sortantes */
+    private final List<Edge> outgoingEdges;
+
     /**
      * Constructeur créant un nouveau nœud avec une position spécifiée.
      * 
@@ -39,6 +41,7 @@ public class Node extends GraphElement {
         this.y = y;
 
         connectedEdges = new ArrayList<>();
+        outgoingEdges = new ArrayList<>();
     }
 
     /**
@@ -104,19 +107,6 @@ public class Node extends GraphElement {
         isExit = exit;
     }
 
-    /** TODO */
-    @Override
-    public double getStressInducingFactor() {
-
-        if (isOnFire()) {
-            return 0.7;
-        }
-        
-        return 0.1;
-    }
-
-    
-
     @Override
     public List<GraphElement> getNeighbors() {
         return new ArrayList<>(connectedEdges);
@@ -139,24 +129,33 @@ public class Node extends GraphElement {
     public void addEdge(Edge edge) {
         if (edge != null) {
             connectedEdges.add(edge);
-        }
-    }
 
-    /**
-     * Return all outgoing edges from this node. For undirected edges, they are considered outgoing from both nodes.
-     * @return list of outgoing edges
-     */
-    public List<Edge> getOutgoingEdges() {
-        //FIXME: It is not efficient to compute outgoing edges every time
-        List<Edge> outgoingEdges = new ArrayList<>();
-        for (Edge edge : connectedEdges) {
             if (!edge.isDirected() || edge.getStart().equals(this)) {
                 outgoingEdges.add(edge);
             }
         }
-        return outgoingEdges;
     }
 
+    /**
+     * Supprime une arête connectée à ce nœud
+     * * @param edge l'arête à supprimer
+     */
+    public void removeEdge(Edge edge) {
+        if (edge != null) {
+            connectedEdges.remove(edge);
+            outgoingEdges.remove(edge);
+        }
+    }
+
+    /**
+     * Return all outgoing edges from this node. For undirected edges, they are
+     * considered outgoing from both nodes.
+     * 
+     * @return list of outgoing edges
+     */
+    public List<Edge> getOutgoingEdges() {
+        return outgoingEdges;
+    }
 
     /**
      * Retourne toutes les arêtes connectées à ce nœud.

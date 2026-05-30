@@ -26,9 +26,15 @@ public abstract class GraphElement implements StressInducing {
     private double capacity;
 
     // STRESS :
-    /** Total stress induced by this element and its neighbors, it is a cached value and should be updated each tick */
+    /**
+     * Total stress induced by this element and its neighbors, it is a cached value
+     * and should be updated each tick
+     */
     private double cachedTotalStressInducedIncludingNeighbors = 0;
-    /** Total stress induced by this element alone (without neighbors), it is a cached value and should be updated each tick */
+    /**
+     * Total stress induced by this element alone (without neighbors), it is a
+     * cached value and should be updated each tick
+     */
     private double cachedTotalStressInducedByThisElement = 0;
 
     private Fire fire;
@@ -143,11 +149,14 @@ public abstract class GraphElement implements StressInducing {
     }
 
     /**
-     * Update the total stress induced by this element alone (without neighbors), which is a value between 0 and 1, and cache it.
-     * @return the total stress induced by this element alone (without neighbors) after update
+     * Update the total stress induced by this element alone (without neighbors),
+     * which is a value between 0 and 1, and cache it.
+     * 
+     * @return the total stress induced by this element alone (without neighbors)
+     *         after update
      */
     public double updateStressGeneratedByThisElement() {
-        //If we want differents calculation for node and edge, we could use protected
+        // If we want differents calculation for node and edge, we could use protected
         // constants like CONGESTION_STRESS_FACTOR and AGENT_STRESS_FACTOR ...
         double stress = 0;
         double congestion = getCongestion();
@@ -155,16 +164,18 @@ public abstract class GraphElement implements StressInducing {
         double meanStressFromAgents = getAgentsTotalStress() / Math.max(1, getAgents().size());
         stress += meanStressFromAgents * meanStressFromAgents * 0.4;
         if (isOnFire()) {
-            stress += 0.5;
+            stress += 0.2 * getFire().getIntensity();
         }
+
         cachedTotalStressInducedByThisElement = Math.min(stress, 1.0);
         return cachedTotalStressInducedByThisElement;
     }
-     
 
     /**
-     * Get the total stress induced by this element alone (without neighbors), which is a value between 0 and 1.
+     * Get the total stress induced by this element alone (without neighbors), which
+     * is a value between 0 and 1.
      * This is a cached value that should be updated each tick.
+     * 
      * @return the total stress induced by this element alone (without neighbors)
      */
     public double getCachedTotalStressInducedByThisElement() {
@@ -182,10 +193,12 @@ public abstract class GraphElement implements StressInducing {
         return totalStress;
     }
 
-    /** 
-     * Sommate the stress level of all agents present on this element, (a single agent has a value between 0 and 1)
+    /**
+     * Sommate the stress level of all agents present on this element, (a single
+     * agent has a value between 0 and 1)
+     * 
      * @return the total stress level of agents on this element
-    */
+     */
     public double getAgentsTotalStress() {
         double totalStress = 0;
         for (Agent agent : agents) {
