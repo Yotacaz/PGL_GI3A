@@ -332,7 +332,7 @@ public class ConsoleUI {
 
         // --- Stress global ---
         System.out.println("\n   ── Stress global ──");
-        double globalStress = node.getTotalStressInducedIncludingNeighbors();
+        double globalStress = node.getCachedTotalStressInducedIncludingNeighbors();
         System.out.println("   Stress (+ voisins): " + String.format("%.0f%%", globalStress * 100));
 
         // --- Feu ---
@@ -392,7 +392,7 @@ public class ConsoleUI {
 
         // --- Stress global ---
         System.out.println("\n   ── Stress global ──");
-        double globalStress = edge.getTotalStressInducedIncludingNeighbors();
+        double globalStress = edge.getCachedTotalStressInducedIncludingNeighbors();
         System.out.println("   Stress (+ voisins): " + String.format("%.0f%%", globalStress * 100));
 
         // --- Feu ---
@@ -684,7 +684,7 @@ public class ConsoleUI {
 
         // Stress moyen
         double avgStress = nodes.stream()
-                .mapToDouble(Node::getTotalStressInducedIncludingNeighbors)
+                .mapToDouble(Node::getCachedTotalStressInducedIncludingNeighbors)
                 .average()
                 .orElse(0);
         System.out.println("   Stress moyen: " + String.format("%.0f%%", avgStress * 100));
