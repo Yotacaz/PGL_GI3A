@@ -45,6 +45,7 @@ public class Simulation {
         }
 
         fireService.updateFires(graph);
+        graph.tick();
         agentManager.tick();
         currentTick++;
     }

@@ -61,12 +61,16 @@ public class AgentManager {
         }
     }
 
+    /**
+      * Main update method for the agent manager, called at each tick of the simulation.
+      * It updates the stress levels of agents and processes their decisions and actions.
+      */
     public void tick() {
         updateStress();
         moveAgents();
     }
 
-    public void moveAgents() {
+    private void moveAgents() {
         decisionContextProvider.clearCache();
         sortAgentsByOwnDecisionMakingFactor(); //should be relatively fast since the list is almost sorted
 
@@ -82,18 +86,19 @@ public class AgentManager {
             double performed = agent.performCurrentAction(agentSettings);
             System.out.println(performed);
         }
-
     }
 
     public List<Agent> getAgents() {
         return agents;
     }
 
-    public void updateStress() {
+    /**
+     * Updates the stress levels of all agents in the simulation.
+     * This method requires that the graph elements have their stress-inducing factors updated beforehand
+     */
+    private void updateStress() {
         for (Agent agent : agents) {
-            double stressLevel = agent.getStressLevel();
-
-            //TODO: Update stress level based on current conditions (e.g., proximity to fire, congestion, etc.)
+            agent.updateStressLevel();
         }
     }
 
