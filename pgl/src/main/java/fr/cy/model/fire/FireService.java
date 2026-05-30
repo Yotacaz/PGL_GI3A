@@ -22,67 +22,70 @@ public class FireService {
     }
 
     public void updateFires(Graph graph) {
-        /** Elements qui prendront feu */
-        Set<GraphElement> newFires = new HashSet<>();
 
-        /** Update des nodes */
+        // UPDATE DES NŒUDS
         for (Node node : graph.getNodes()) {
-            if (!node.isOnFire()) {
+            if (!node.isOnFire())
                 continue;
-            }
 
             node.getFire().update();
 
-            /** Propagation aux arrêtes */
-            for (Edge edge : graph.getAdjacentEdges(node)) {
-                if (edge.isOnFire()) {
-                    continue;
+            for (Edge edge : node.getEdges()) {
+                // Calcul de la probabilité que le feu prenne sur cette arête
+                double probability = computeSpreadProbability(edge);
+
+                // Si l'arête est totalement intacte
+                if (!edge.isOnFire()) {
+                    if (random.nextDouble() < probability) {
+                        // spreadRate dynamique
+                        double dynamicSpreadRate = computeSpreadRate(edge);
+                        edge.igniteFrom(node, new Fire(1.0, 1.0, dynamicSpreadRate));
+                    }
                 }
+                // Si l'arête brûle déjà, mais qu'elle n'est pas consumée
+                else if (!edge.isFullyBurned()) {
+                    // On vérifie que le feu ne vient pas DÉJÀ de ce nœud précis
+                    boolean alreadyBurningFromHere = (node.equals(edge.getStart()) && edge.isBurningFromStart()) ||
+                            (node.equals(edge.getEnd()) && edge.isBurningFromEnd());
 
-                double probability = computeSpreadPropability(edge);
-
-                if (random.nextDouble() < probability) {
-                    newFires.add(edge);
+                    // Si le feu vient d'arriver sur ce nœud via un autre chemin,
+                    // il "tente" d'allumer un 2ème front de flammes sur l'arête
+                    if (!alreadyBurningFromHere && random.nextDouble() < probability) {
+                        edge.igniteFrom(node, edge.getFire());
+                    }
                 }
-
             }
         }
 
-        /** Update des arrêtes */
+        // UPDATE DES ARÊTES
         for (Edge edge : graph.getEdges()) {
-
-            if (!edge.isOnFire()) {
+            if (!edge.isOnFire())
                 continue;
-            }
+
             edge.getFire().update();
 
-            /** Propagation aux nodes */
-            Node start = edge.getStart();
-            Node end = edge.getEnd();
+            // Si l'arête n'est pas encore 100% cramée, on regarde si un front atteint un
+            if (!edge.isFullyBurned()) {
+                double distance = edge.getBurnedDistance();
 
-            if (!start.isOnFire() &&
-                    random.nextDouble() < edge.getFire().getSpreadRate()) {
+                // Le feu vient du Start et touche le End
+                if (edge.isBurningFromStart() && distance >= edge.getLength()) {
+                    if (!edge.getEnd().isOnFire()) {
+                        edge.getEnd().setFire(new Fire(1.0, 1.0, 0.5));
+                    }
+                }
 
-                newFires.add(start);
+                // Le feu vient du End et touche le Start
+                if (edge.isBurningFromEnd() && distance >= edge.getLength()) {
+                    if (!edge.getStart().isOnFire()) {
+                        edge.getStart().setFire(new Fire(1.0, 1.0, 0.5));
+                    }
+                }
             }
-
-            if (!end.isOnFire()
-                    &&
-                    random.nextDouble() < edge.getFire()
-                            .getSpreadRate()) {
-
-                newFires.add(end);
-            }
-        }
-
-        /** Application des nouveaux feux */
-        for (GraphElement graphElement : newFires) {
-            /** TEMPORAIRE: A paufiner */
-            graphElement.setFire(new Fire(1, 1, 0.2));
         }
     }
 
-    private double computeSpreadPropability(Edge edge) {
+    private double computeSpreadProbability(Edge edge) {
         double probability = 0.2;
 
         /** Couloirs étroits */
@@ -96,5 +99,23 @@ public class FireService {
         }
 
         return Math.max(0, Math.min(1, probability));
+    }
+
+    private double computeSpreadRate(Edge edge) {
+        // Vitesse de base (ex: 0.2 mètres par tick)
+        double rate = 0.2;
+
+        // Effet cheminée : les flammes accélèrent dans les endroits étroits
+        if (edge.getWidth() < 2.0) {
+            rate += 0.3;
+        }
+        // Dispersion : les flammes avancent moins vite en ligne droite dans les
+        // endroits larges
+        else if (edge.getWidth() > 5.0) {
+            rate -= 0.1;
+        }
+
+        // On s'assure que le feu avance toujours un minimum
+        return Math.max(0.1, rate);
     }
 }

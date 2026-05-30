@@ -10,10 +10,12 @@ package fr.cy.model.fire;
  * intensity and smoke level according to fixed multipliers.
  */
 public class Fire {
+    /** Sert a faire peur aux Agents, influence le stress */
     private double intensity;
+    // TODO: prendre en compte smoke
     private double smokeLevel;
-    private double spreadRate;
 
+    private double spreadRate;
     private int burningTicks;
 
     /**
@@ -39,8 +41,8 @@ public class Fire {
     public void update() {
         burningTicks++;
 
-        intensity *= 1.05;
-        smokeLevel *= 1.03;
+        intensity *= 1.005;
+        smokeLevel *= 1.003;
     }
 
     /**
