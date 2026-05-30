@@ -87,7 +87,7 @@ public class Simulation {
     }
 
     public static void main(String[] args) {
-        // Example usage
+        // test code
         Graph graph = new Graph();
         // List<Node> nodes = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
@@ -110,7 +110,7 @@ public class Simulation {
         }
         // Initialize graph with nodes and edges
         Simulation simulation = new Simulation(graph);
-        simulation.getAgentManager().generateRandomsAgents(10); // Generate 10 agents
+        simulation.getAgentManager().generateRandomsAgents(1); // Generate 1 agent
         simulation.start();
 
         // Run the simulation for a certain number of ticks

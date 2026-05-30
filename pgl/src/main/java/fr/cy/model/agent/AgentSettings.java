@@ -19,6 +19,7 @@ public class AgentSettings {
         defaultDecisionMakingFactors.put(AgentPossibleDecision.FOLLOW_SHORTEST_PATH, 0.05);
         defaultDecisionMakingFactors.put(AgentPossibleDecision.NICEST_PATH, 0.2);
         defaultDecisionMakingFactors.put(AgentPossibleDecision.RANDOM, 1.0);
+        defaultDecisionMakingFactors.put(AgentPossibleDecision.CONTINUE_LAST_ACTION, 1.5);
         // decisionMakingFactors.put(FollowShortestPathAction.class, 0.2);
         // decisionMakingFactors.put(NicestPathAction.class, 0.5);
     }
