@@ -162,6 +162,14 @@ public class Agent implements StressInducing {
         return behavioralState.getStressLevel();
     }
 
+    public double updateStressLevel(){
+        GraphElement position = getPosition();
+        double stressFromPosition = position != null ? position.getStressInducingFactor() : 0.0;
+        double newStressLevel = getStressLevel() *  (0.5 + stressFromPosition);
+        setStressLevel(newStressLevel);
+        return newStressLevel;
+    }
+
     public void setStressLevel(double stressLevel) {
         behavioralState.setStressLevel(stressLevel);
     }

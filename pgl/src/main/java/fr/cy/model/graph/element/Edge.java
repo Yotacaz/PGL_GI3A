@@ -165,12 +165,12 @@ public class Edge extends GraphElement {
         return Math.max(calculatedSpeed, 0.0);
     }
 
-    public double getMaxAgentSpeedInDirection(Node fromNode) {  //TODO
+    public double getMaxAgentSpeedInDirection(Node fromNode) { //TODO
         if (directed) {
             if (fromNode.equals(start)) {
                 return getMaxAgentSpeed();
             } else if (fromNode.equals(end)) {
-                return getMaxAgentSpeed(); 
+                return getMaxAgentSpeed();
             } else {
                 throw new IllegalArgumentException("Le nœud spécifié n'est pas connecté à cette arête");
             }
@@ -179,18 +179,6 @@ public class Edge extends GraphElement {
         }
     }
 
-    @Override
-    public double getStressInducingFactor() {
-        double stress = 0;
-
-        stress += getCongestion() * 0.5;
-
-        if (isOnFire()) {
-            stress += 0.5;
-        }
-
-        return Math.min(stress, 1.0);
-    }
 
     public boolean isCongested() {
         return getCongestion() > 0.7;

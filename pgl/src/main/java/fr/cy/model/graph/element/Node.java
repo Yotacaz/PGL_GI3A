@@ -111,9 +111,11 @@ public class Node extends GraphElement {
         if (isOnFire()) {
             return 0.7;
         }
-
+        
         return 0.1;
     }
+
+    
 
     @Override
     public List<GraphElement> getNeighbors() {

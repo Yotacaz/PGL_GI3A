@@ -25,8 +25,11 @@ public abstract class GraphElement implements StressInducing {
     private final List<Agent> agents;
     private double capacity;
 
-    /** Total stress induced by this element and its neighbors */
-    private double totalStressInducedIncludingNeighbors = 0;
+    // STRESS :
+    /** Total stress induced by this element and its neighbors, it is a cached value and should be updated each tick */
+    private double cachedTotalStressInducedIncludingNeighbors = 0;
+    /** Total stress induced by this element alone (without neighbors), it is a cached value and should be updated each tick */
+    private double cachedTotalStressInducedByThisElement = 0;
 
     private Fire fire;
 
@@ -57,9 +60,6 @@ public abstract class GraphElement implements StressInducing {
         this.capacity = Math.max(0.1, capacity);
         removeFire();
     }
-
-    @Override
-    public abstract double getStressInducingFactor();
 
     /***
      * Determine la liste des elements voisins
@@ -143,6 +143,63 @@ public abstract class GraphElement implements StressInducing {
     }
 
     /**
+     * Update the total stress induced by this element alone (without neighbors), which is a value between 0 and 1, and cache it.
+     * @return the total stress induced by this element alone (without neighbors) after update
+     */
+    public double updateStressGeneratedByThisElement() {
+        //If we want differents calculation for node and edge, we could use protected
+        // constants like CONGESTION_STRESS_FACTOR and AGENT_STRESS_FACTOR ...
+        double stress = 0;
+        double congestion = getCongestion();
+        stress += congestion * congestion * 0.4;
+        double meanStressFromAgents = getAgentsTotalStress() / Math.max(1, getAgents().size());
+        stress += meanStressFromAgents * meanStressFromAgents * 0.4;
+        if (isOnFire()) {
+            stress += 0.5;
+        }
+        cachedTotalStressInducedByThisElement = Math.min(stress, 1.0);
+        return cachedTotalStressInducedByThisElement;
+    }
+     
+
+    /**
+     * Get the total stress induced by this element alone (without neighbors), which is a value between 0 and 1.
+     * This is a cached value that should be updated each tick.
+     * @return the total stress induced by this element alone (without neighbors)
+     */
+    public double getCachedTotalStressInducedByThisElement() {
+        return cachedTotalStressInducedByThisElement;
+    }
+
+    public double updateCachedTotalStressInducedIncludingNeighbors() {
+        double neighbouringStress = 0;
+        for (GraphElement neighbor : getNeighbors()) {
+            neighbouringStress += neighbor.getCachedTotalStressInducedByThisElement();
+        }
+        double thisElementStress = getCachedTotalStressInducedByThisElement();
+        double totalStress = Math.min(thisElementStress + neighbouringStress * neighbouringStress * 0.4, 1.0);
+        cachedTotalStressInducedIncludingNeighbors = totalStress;
+        return totalStress;
+    }
+
+    /** 
+     * Sommate the stress level of all agents present on this element, (a single agent has a value between 0 and 1)
+     * @return the total stress level of agents on this element
+    */
+    public double getAgentsTotalStress() {
+        double totalStress = 0;
+        for (Agent agent : agents) {
+            totalStress += agent.getStressLevel();
+        }
+        return totalStress;
+    }
+
+    @Override
+    public double getStressInducingFactor() {
+        return getCachedTotalStressInducedIncludingNeighbors();
+    }
+
+    /**
      * Enleve un agent
      * 
      * @param a agent
@@ -194,23 +251,8 @@ public abstract class GraphElement implements StressInducing {
      * @return the total stress induced by this element and its neighbors, which is
      *         a value between 0 and 1
      */
-    public double getTotalStressInducedIncludingNeighbors() {
-        return totalStressInducedIncludingNeighbors;
-    }
-
-    /**
-     * Set the total stress induced by this element and its neighbors.
-     * 
-     * @param totalStressInducedIncludingNeighbors the new total stress induced by
-     *                                             this element and its neighbors,
-     *                                             which should be a value between 0
-     *                                             and 1
-     */
-    public void setTotalStressInducedIncludingNeighbors(double totalStressInducedIncludingNeighbors) {
-        if (totalStressInducedIncludingNeighbors < 0 || totalStressInducedIncludingNeighbors > 1) {
-            throw new IllegalArgumentException("Total stress induced including neighbors must be between 0 and 1");
-        }
-        this.totalStressInducedIncludingNeighbors = totalStressInducedIncludingNeighbors;
+    public double getCachedTotalStressInducedIncludingNeighbors() {
+        return cachedTotalStressInducedIncludingNeighbors;
     }
 
     // ===== STATISTIQUES =====
