@@ -155,7 +155,7 @@ public class EdgeInfoPanel extends VBox {
         }
 
         // --- Stress global ---
-        double gs = edge.getTotalStressInducedIncludingNeighbors();
+        double gs = edge.getCachedTotalStressInducedIncludingNeighbors();
         globalStressLabel.setText("Stress (+ voisins) : " + String.format("%.0f%%", gs * 100));
         globalStressLabel.setStyle(data + "-fx-text-fill: " + stressColor(gs) + ";");
 

@@ -134,7 +134,7 @@ public class NodeInfoPanel extends VBox {
             dominantStateLabel.setStyle(data + "-fx-text-fill: " + stateColor(dominant) + ";");
         }
 
-        double gs = node.getTotalStressInducedIncludingNeighbors();
+        double gs = node.getCachedTotalStressInducedIncludingNeighbors();
         globalStressLabel.setText("Stress (+ voisins) : " + String.format("%.0f%%", gs * 100));
         globalStressLabel.setStyle(data + "-fx-text-fill: " + stressColor(gs) + ";");
 

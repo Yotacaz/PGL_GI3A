@@ -26,7 +26,7 @@ public enum AgentPossibleDecision {
             for (Edge edge : context.getOutgoingEdges()) {
                 //edgeScore is 0 if no one on edge
                 double edgeScore = edge.getCongestion()
-                        / (1.0 + edge.getTotalStressInducedIncludingNeighbors() * 0.125); //prefer more crowded edges
+                        / (1.0 + edge.getCachedTotalStressInducedIncludingNeighbors() * 0.125); //prefer more crowded edges
                 preferredNeighboringEdges.put(edge, edgeScore);
                 totalScoreForPreferredNeighboringEdges += edgeScore;
             }
@@ -57,7 +57,7 @@ public enum AgentPossibleDecision {
             double totalScoreForPreferredNeighboringEdges = 0.0;
             for (Edge edge : context.getOutgoingEdges()) {
                 double edgeScore = (1.0 - edge.getCongestion())
-                        / (1.0 + edge.getTotalStressInducedIncludingNeighbors() * 0.125); //prefer less crowded edges
+                        / (1.0 + edge.getCachedTotalStressInducedIncludingNeighbors() * 0.125); //prefer less crowded edges
                 preferredNeighboringEdges.put(edge, edgeScore);
                 totalScoreForPreferredNeighboringEdges += edgeScore;
             }
