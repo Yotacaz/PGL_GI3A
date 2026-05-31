@@ -13,6 +13,17 @@ public class FollowSingleEdgeAction extends AbstractMoveAction {
         this.edgeToFollow = Objects.requireNonNull(edgeToFollow);
     }
 
+    public FollowSingleEdgeAction(Agent agent, Edge edgeToFollow, double initialProgress) {
+        this(agent, edgeToFollow);
+        setProgress(initialProgress);
+    }
+
+    @Override
+    public void setProgress(double newProgress) {
+        super.setProgress(newProgress);
+        setEdgeProgress(newProgress); // keep edge progress in sync with overall action progress
+    }
+
     @Override
     public Edge getClosestTargetGraphElement() {
         return edgeToFollow;

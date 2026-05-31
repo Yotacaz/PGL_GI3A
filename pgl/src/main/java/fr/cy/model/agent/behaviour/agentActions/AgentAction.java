@@ -5,7 +5,6 @@ import java.util.Objects;
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.graph.element.Edge;
-import fr.cy.model.simulation.SimulationSettings;
 
 /**
  * Represents an action that an {@link Agent} can perform.
@@ -38,19 +37,7 @@ public abstract class AgentAction {
 		}
 		progress = Math.min(newProgress, 1.0);
 	}
-
-	protected void incrementProgress(double delta) {
-		setProgress(progress + delta);
-	}
-
-	/**
-	 * Execute the action for the given agent.
-	 * @return the consumed time after performing the action for this tick, 0 if a whole tick is left to be consumed.
-	 */
-	public double perform(AgentSettings agentSettings) {
-		return perform(agentSettings, SimulationSettings.getDefaultTickDuration());
-	}
-
+	
 	/**
 	 * Execute the action with a limited time budget.
 	 * @param availableTime remaining time available for the current tick, in tick units
@@ -63,10 +50,14 @@ public abstract class AgentAction {
 	}
 
 	/**
-	 * Get the next graph element that the agent is targeting with this action, or null if none.
+	 * @return the next graph element that the agent is targeting with this action, or null if none.
 	 * This is used for conflict resolution and should reflect the agent's intentions as closely as possible.
 	 */
 	public abstract Edge getClosestTargetGraphElement();
+
+	//TODO
+	/** @return the final destination graph element of this action, or null if none. For visualization purposes.*/
+	// public abstract GraphElement getCurrentTargetGraphElement();
 
 	@Override
 	public int hashCode() {
@@ -75,11 +66,14 @@ public abstract class AgentAction {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj) return true;
-		if (obj == null || getClass() != obj.getClass()) return false;
+		if (this == obj)
+			return true;
+		if (obj == null || getClass() != obj.getClass())
+			return false;
 		AgentAction other = (AgentAction) obj;
 		return Double.compare(progress, other.progress) == 0
-				&& Objects.equals(agent == null ? null : agent.getId(), other.agent == null ? null : other.agent.getId());
+				&& Objects.equals(agent == null ? null : agent.getId(),
+						other.agent == null ? null : other.agent.getId());
 	}
 
 	@Override

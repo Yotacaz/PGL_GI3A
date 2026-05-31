@@ -1,4 +1,4 @@
-package fr.cy.model.agent.behaviour.personalityTraits;
+package fr.cy.model.agent.behaviour.properties.personalityTraits;
 
 import java.util.Map;
 import java.util.Objects;
