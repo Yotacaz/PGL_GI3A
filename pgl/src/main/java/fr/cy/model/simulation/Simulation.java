@@ -40,10 +40,8 @@ public class Simulation implements Serializable {
         DecisionContextProvider decisionContextProvider = new DecisionContextProvider(graph, pathFinder);
         AgentGenerator agentGenerator = new AgentGenerator(graph);
 
-        this.agentManager = new AgentManager(decisionContextProvider, agentGenerator, simulationSettings); // NO AGENT
-                                                                                                           // IS
-                                                                                                           // GENERATED
-                                                                                                           // YET
+        this.agentManager = new AgentManager(decisionContextProvider, agentGenerator, simulationSettings);
+        // NO AGENT IS GENERATED YET
 
         this.currentTick = 0;
         this.running = false;

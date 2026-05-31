@@ -118,16 +118,12 @@ public class Agent implements StressInducing, Serializable {
         return totalScore;
     }
 
-    /** Performs the current action of the agent, if any, and returns the amount of time consumed */
-    double performCurrentAction(AgentSettings agentSettings) {
-        double consumed = performCurrentAction(agentSettings, SimulationSettings.getDefaultTickDuration());
-        AgentAction action = getCurrentAction();
-        if (action != null && action.isCompleted()) {
-            setCurrentAction(null);
-        }
-        return consumed;
-    }
-
+    /**
+     * Perform the current action of the agent for a given duration, updating the agent's position and state accordingly.
+     * @param agentSettings the general  agent's settings, used to determine effective speed and other factors influencing the action performance
+     * @param availableTime the remaining time available for the current tick, in tick units
+     * @return the time effectively consumed by performing the action, which may be less than the available time if the action completes or if the agent reaches the end of an edge
+     */
     double performCurrentAction(AgentSettings agentSettings, double availableTime) {
         GraphElement position = getCurrentGraphElement();
         if (position == null || currentAction == null) {
@@ -162,7 +158,8 @@ public class Agent implements StressInducing, Serializable {
 
     @Override
     public double getStressInducingImpact() {
-        return Math.max(-0.5, Math.min(behavioralState.getStressLevel() * 0.1 + getEmotionalState().getStressInducedToOthers(), 1.0)); // FIXME: temporary
+        return Math.max(-0.5,
+                Math.min(behavioralState.getStressLevel() * 0.1 + getEmotionalState().getStressInducedToOthers(), 1.0)); // FIXME: temporary
     }
 
     /**
@@ -202,6 +199,10 @@ public class Agent implements StressInducing, Serializable {
     }
 
     private void updateHealth() {
+        GraphElement current = getCurrentGraphElement();
+        if (current == null) {
+            return;
+        }
         //TODO + should this be before or after action
     }
 

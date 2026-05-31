@@ -10,6 +10,8 @@ import java.io.*;
 
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.agent.behaviour.decisions.DecisionNodeContext;
+import fr.cy.model.graph.element.Edge;
+import fr.cy.model.graph.element.Node;
 import fr.cy.model.agent.behaviour.decisions.DecisionContextProvider;
 import fr.cy.model.simulation.SimulationSettings;
 
@@ -17,10 +19,10 @@ import fr.cy.model.simulation.SimulationSettings;
  * Manager responsible for higher-level operations on {@link Agent} instances.
  * Currently holds configuration values used when evaluating decisions.
  */
-public class AgentManager implements Serializable{
-    
+public class AgentManager implements Serializable {
+
     private static final long serialVersionUID = 1L;
-    
+
     private AgentSettings agentSettings = new AgentSettings();
     private List<Agent> agents;
     private List<Agent> deadAgents = new ArrayList<>();
@@ -67,9 +69,19 @@ public class AgentManager implements Serializable{
 
     public void generateRandomsAgents(int count) {
         for (int i = 0; i < count; i++) {
-            Agent newAgent = agentGenerator.generateRandomAgent("Agent" + (agents.size() + 1));
+            Agent newAgent = agentGenerator.generateRandomAgentOnRandomNode("Agent" + (agents.size() + 1));
             agents.add(newAgent);
         }
+    }
+
+    public void generateAgentOnEdge(String baseName, Edge edge, double edgeProgress) {
+        Agent newAgent = agentGenerator.generateAgent(baseName, edge, edgeProgress);
+        agents.add(newAgent);
+    }
+
+    public void generateAgentOnNode(String baseName, Node node) {
+        Agent newAgent = agentGenerator.generateAgent(baseName, node);
+        agents.add(newAgent);
     }
 
     /**
@@ -103,6 +115,9 @@ public class AgentManager implements Serializable{
             double remainingTime = tickDuration;
             while (remainingTime > 0.0) {
                 if (agent.getCurrentAction() == null || (agent.getCurrentAction().isCompleted() && agent.isOnNode())) {
+                    if (agent.getCurrentAction() != null) {
+                        System.out.println(" completed action " + agent.getCurrentAction());
+                    }
                     if (!agent.isOnNode()) {
                         break;
                     }
@@ -118,12 +133,13 @@ public class AgentManager implements Serializable{
                 }
 
                 double consumed = agent.performCurrentAction(agentSettings, remainingTime);
-                if (consumed <= 0.000000001) {
+                if (consumed <= 1E-10) {
                     break;
                 }
                 remainingTime -= consumed;
 
                 if (agent.getCurrentAction() != null && agent.getCurrentAction().isCompleted()) {
+                    System.out.println("HEY");
                     agent.setCurrentAction(null);
                 }
 
@@ -152,11 +168,12 @@ public class AgentManager implements Serializable{
         return agent;
     }
 
-    /** Kills the agent and removes it from the graph, but keeps it in the list of dead agents for statistics purposes */
+    /** Kills the agent and removes the main agent list, but keeps it in the list of dead agents for statistics purposes */
     public Agent killAgent(Agent agent) {
         agent.kill();
         deadAgents.add(agent);
-        return removeAgentFromGraph(agent);
+        agents.remove(agent);
+        return agent;
     }
 
     /** @return the unmodifiable list of dead agents */

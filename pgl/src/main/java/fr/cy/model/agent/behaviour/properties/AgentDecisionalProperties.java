@@ -5,7 +5,7 @@ import java.util.Optional;
 import java.util.Objects;
 import java.util.Set;
 
-import fr.cy.model.agent.behaviour.personalityTraits.AgentPersonalityTrait;
+import fr.cy.model.agent.behaviour.properties.personalityTraits.AgentPersonalityTrait;
 
 public class AgentDecisionalProperties {
     private int id;
