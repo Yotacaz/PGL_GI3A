@@ -25,7 +25,6 @@ public class MainController {
         root.setRight(infoPanel);
 
         GraphView graphView = new GraphView(graph);
-        graphView.setOnNodeClicked(infoPanel::display);
         graphContainer.getChildren().add(graphView);
     }
 
