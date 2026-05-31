@@ -15,6 +15,7 @@ public class SimulationController {
     private final GraphCanvas canvas;
     private AnimationTimer timer;
     private boolean isRunning = false;
+    private Runnable onRender = null;
 
     public SimulationController(Simulation simulation, GraphCanvas canvas) {
         this.simulation = simulation;
@@ -36,8 +37,15 @@ public class SimulationController {
 
                 // Pour utiliser la caméra, on la passe via le canvas au renderer
                 renderer.render(simulation, canvas);
+
+                // Notifie le contrôleur principal pour mettre à jour les stats
+                if (onRender != null) onRender.run();
             }
         };
+    }
+
+    public void setOnRender(Runnable onRender) {
+        this.onRender = onRender;
     }
 
     public void startLoop() {

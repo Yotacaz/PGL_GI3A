@@ -82,8 +82,6 @@ public abstract class AgentAction implements Serializable {
 		return Double.compare(progress, other.progress) == 0
 				&& Objects.equals(agent == null ? null : agent.getId(),
 						other.agent == null ? null : other.agent.getId());
-				&& Objects.equals(agent == null ? null : agent.getId(),
-						other.agent == null ? null : other.agent.getId());
 	}
 
 	@Override

@@ -343,7 +343,7 @@ public class ConsoleUI {
                 System.out.println("   Intensité: " + String.format("%.2f", node.getFire().getIntensity()));
                 System.out.println("   Fumée: " + String.format("%.2f", node.getFire().getSmokeLevel()));
                 System.out.println("   Propagation: " + String.format("%.2f", node.getFire().getSpreadRate()));
-                System.out.println("   Brûle depuis: " + node.getFire().getBurningTicks() + " ticks");
+                System.out.println("   Brûle depuis: " + node.getFire().getBurningTime() + " ticks");
             }
         } else {
             System.out.println("   Pas de feu ✅");
@@ -403,7 +403,7 @@ public class ConsoleUI {
                 System.out.println("   Intensité: " + String.format("%.2f", edge.getFire().getIntensity()));
                 System.out.println("   Fumée: " + String.format("%.2f", edge.getFire().getSmokeLevel()));
                 System.out.println("   Propagation: " + String.format("%.2f", edge.getFire().getSpreadRate()));
-                System.out.println("   Brûle depuis: " + edge.getFire().getBurningTicks() + " ticks");
+                System.out.println("   Brûle depuis: " + edge.getFire().getBurningTime() + " ticks");
             }
         } else {
             System.out.println("   Pas de feu ✅");

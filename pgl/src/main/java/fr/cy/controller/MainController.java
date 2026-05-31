@@ -1,10 +1,14 @@
 package fr.cy.controller;
 
+import fr.cy.model.agent.Agent;
+import fr.cy.model.agent.behaviour.properties.EmotionalState;
+import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.GraphElement;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.simulation.Simulation;
 import fr.cy.view.GraphCanvas;
+import fr.cy.view.SimulationStatsPanel;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
@@ -12,7 +16,6 @@ import javafx.scene.control.Separator;
 import javafx.scene.control.ToolBar;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -30,8 +33,12 @@ public class MainController {
     private VBox detailsPanel;
     private Label panelTitle;
     private Label stressValue, fireValue, agentsValue, capacityValue, congestionValue, widthValue, lengthValue;
+    private Label avgStressValue, dominantStateValue, histTotalValue, histMaxCongValue, histAvgCongValue;
+    private Label nodeInfoValue; // position + exit status pour les nœuds
     private ProgressBar stressBar, fireBar, congestionBar;
-    private VBox widthBox, lengthBox;
+    private VBox widthBox, lengthBox, agentStatsBox, historyBox, nodeInfoBox;
+
+    private SimulationStatsPanel statsPanel;
 
     public MainController(Simulation simulation) {
         this.root = new BorderPane();
@@ -41,8 +48,13 @@ public class MainController {
         initCenterPane();
         initDetailsPanel();
 
+        // Panneau de statistiques globales à gauche
+        statsPanel = new SimulationStatsPanel();
+        root.setLeft(statsPanel);
+
         // Initialisation de la boucle (qui injecte au canvas le rendu)
         this.simController = new SimulationController(simulation, graphCanvas);
+        this.simController.setOnRender(this::refreshStatsPanel);
         this.simController.startLoop(); // Démarre l'update Graphique, la simu elle, reste en Pause !
     }
 
@@ -139,11 +151,37 @@ public class MainController {
         widthBox = createStatBox("WIDTH", widthValue);
         lengthBox = createStatBox("LENGTH", lengthValue);
 
-        // Hide width and length boxes initially
-        widthBox.setVisible(false);
-        widthBox.setManaged(false);
-        lengthBox.setVisible(false);
-        lengthBox.setManaged(false);
+        // Nouvelles cartes : info nœud, stats agents, historique
+        nodeInfoValue = new Label("--");
+        nodeInfoValue.getStyleClass().add("stat-value");
+        nodeInfoBox = createStatBox("NODE INFO", nodeInfoValue);
+
+        avgStressValue = new Label("--");
+        avgStressValue.getStyleClass().add("stat-value");
+        dominantStateValue = new Label("--");
+        dominantStateValue.getStyleClass().add("stat-value");
+        agentStatsBox = new VBox(8);
+        agentStatsBox.getStyleClass().add("stat-box");
+        Label agentStatsTitle = new Label("AGENT STATS");
+        agentStatsTitle.getStyleClass().add("stat-title");
+        agentStatsBox.getChildren().addAll(agentStatsTitle, avgStressValue, dominantStateValue);
+
+        histTotalValue    = new Label("--");
+        histMaxCongValue  = new Label("--");
+        histAvgCongValue  = new Label("--");
+        for (Label l : new Label[]{histTotalValue, histMaxCongValue, histAvgCongValue})
+            l.getStyleClass().add("stat-value");
+        historyBox = new VBox(8);
+        historyBox.getStyleClass().add("stat-box");
+        Label histTitle = new Label("HISTORY");
+        histTitle.getStyleClass().add("stat-title");
+        historyBox.getChildren().addAll(histTitle, histTotalValue, histMaxCongValue, histAvgCongValue);
+
+        // Masquer toutes les nouvelles cartes par défaut
+        for (VBox box : new VBox[]{widthBox, lengthBox, nodeInfoBox, agentStatsBox, historyBox}) {
+            box.setVisible(false);
+            box.setManaged(false);
+        }
 
         // Spacer pour pousser les panels
         Pane spacer = new Pane();
@@ -151,8 +189,11 @@ public class MainController {
 
         detailsPanel.getChildren().addAll(
                 panelTitle, new Separator(),
+                nodeInfoBox,
                 capacityBox, congestionBox, stressBox, fireBox, agentsBox,
+                agentStatsBox,
                 widthBox, lengthBox,
+                historyBox,
                 spacer);
         root.setRight(detailsPanel);
     }
@@ -337,9 +378,15 @@ public class MainController {
     }
 
     /**
-     * Met à jour dynamiquement la section de droite.
+     * Met à jour dynamiquement le panneau de détails de droite.
      */
     private void updateDetailsPanel(GraphElement element) {
+        // Masquer toutes les boites optionnelles par défaut
+        for (VBox box : new VBox[]{widthBox, lengthBox, nodeInfoBox, agentStatsBox, historyBox}) {
+            box.setVisible(false);
+            box.setManaged(false);
+        }
+
         if (element == null) {
             panelTitle.setText("ELEMENT DETAILS");
             capacityValue.setText("--");
@@ -350,48 +397,117 @@ public class MainController {
             fireValue.setText("--");
             fireBar.setProgress(0);
             agentsValue.setText("--");
-            widthBox.setVisible(false);
-            widthBox.setManaged(false);
-            lengthBox.setVisible(false);
-            lengthBox.setManaged(false);
             return;
         }
 
+        // Titre
         String typeName = element instanceof Node ? "NODE" : "EDGE";
         panelTitle.setText(typeName + " #" + element.getId());
 
-        capacityValue.setText(String.valueOf(element.getCapacity()));
-
-        // Calculate congestion
-        double congestion = element.getCapacity() > 0 ? (double) element.getAgents().size() / element.getCapacity() : 0;
+        // Capacité et congestion (formule corrigée)
+        capacityValue.setText(String.format("%.1f", element.getCapacity()));
+        double congestion = element.getCongestion();
         congestionValue.setText(String.format("%.1f%%", congestion * 100));
         congestionBar.setProgress(Math.min(1.0, congestion));
 
-        if (element instanceof Edge) {
-            Edge edge = (Edge) element;
-            widthBox.setVisible(true);
-            widthBox.setManaged(true);
-            widthValue.setText(String.format("%.2f", edge.getWidth()));
-            lengthBox.setVisible(true);
-            lengthBox.setManaged(true);
-            lengthValue.setText(String.format("%.2f", edge.getLength()));
+        // Stress
+        double stress = element.getStressInducingImpact();
+        stressValue.setText(String.format("%.0f%%", stress * 100));
+        stressBar.setProgress(Math.min(1.0, stress));
+
+        // Feu
+        if (element.isOnFire()) {
+            fireValue.setText(String.format("%.2f (fumée %.2f)",
+                    element.getFire().getIntensity(), element.getFire().getSmokeLevel()));
+            fireBar.setProgress(Math.min(1.0, element.getFire().getIntensity()));
         } else {
+            fireValue.setText("None");
+            fireBar.setProgress(0);
+        }
+
+        // Agents présents
+        java.util.List<Agent> agents = element.getAgents();
+        agentsValue.setText(String.valueOf(agents.size()));
+
+        // Infos spécifiques nœud
+        if (element instanceof Node node) {
+            nodeInfoValue.setText(String.format("(%.0f, %.0f)  %s",
+                    node.getX(), node.getY(), node.isExit() ? "★ SORTIE" : "nœud"));
+            setBoxVisible(nodeInfoBox, true);
+
             widthBox.setVisible(false);
             widthBox.setManaged(false);
             lengthBox.setVisible(false);
             lengthBox.setManaged(false);
         }
 
-        // Arrondi du stress à deux décimales pour un affichage propre
-        double stress = Math.round(element.getStressInducingImpact() * 100.0) / 100.0;
-        stressValue.setText(String.valueOf(stress));
-        stressBar.setProgress(stress);
+        // Infos spécifiques arête
+        if (element instanceof Edge edge) {
+            widthValue.setText(String.format("%.2f", edge.getWidth()));
+            lengthValue.setText(String.format("%.2f", edge.getLength()));
+            setBoxVisible(widthBox, true);
+            setBoxVisible(lengthBox, true);
+            nodeInfoBox.setVisible(false);
+            nodeInfoBox.setManaged(false);
+        }
 
-        String fireTxt = element.isOnFire() ? String.format("%.2f", element.getFire().getIntensity()) : "None";
-        fireValue.setText(fireTxt);
-        fireBar.setProgress(element.isOnFire() ? element.getFire().getIntensity() : 0);
+        // Stats agents (stress moyen + état dominant)
+        if (!agents.isEmpty()) {
+            double avgStress = agents.stream().mapToDouble(Agent::getStressLevel).average().orElse(0);
+            avgStressValue.setText("Stress moy. : " + String.format("%.0f%%", avgStress * 100));
+            EmotionalState dominant = dominantState(agents);
+            dominantStateValue.setText("État : " + dominant.name());
+            setBoxVisible(agentStatsBox, true);
+        }
 
-        agentsValue.setText(String.valueOf(element.getAgents().size()));
+        // Historique cumulé
+        histTotalValue.setText("Total passés : " + element.getTotalAgentsCount());
+        histMaxCongValue.setText("Congestion max : " + String.format("%.0f%%", element.getMaxCongestion() * 100));
+        histAvgCongValue.setText("Congestion moy. : " + String.format("%.0f%%", element.getAverageCongestion() * 100));
+        setBoxVisible(historyBox, true);
+    }
+
+    private void setBoxVisible(VBox box, boolean visible) {
+        box.setVisible(visible);
+        box.setManaged(visible);
+    }
+
+    private EmotionalState dominantState(java.util.List<Agent> agents) {
+        int calm = 0, selfish = 0, panicking = 0;
+        for (Agent a : agents) {
+            switch (a.getEmotionalState()) {
+                case CALM      -> calm++;
+                case SELFISH   -> selfish++;
+                case PANICKING -> panicking++;
+            }
+        }
+        if (panicking >= calm && panicking >= selfish) return EmotionalState.PANICKING;
+        if (selfish >= calm)                           return EmotionalState.SELFISH;
+        return EmotionalState.CALM;
+    }
+
+    /**
+     * Calcule les statistiques globales et met à jour le panneau gauche.
+     * Appelé par le game loop à chaque frame.
+     */
+    private void refreshStatsPanel() {
+        Graph graph = simController.getSimulation().getGraph();
+        int totalAgents = simController.getSimulation().getAgentManager().getAgents().size();
+        int onNodes  = graph.getNodes().stream().mapToInt(n -> n.getAgents().size()).sum();
+        int onEdges  = graph.getEdges().stream().mapToInt(e -> e.getAgents().size()).sum();
+        int fireNodes = (int) graph.getNodes().stream().filter(Node::isOnFire).count();
+        int fireEdges = (int) graph.getEdges().stream().filter(Edge::isOnFire).count();
+        double avgCong = graph.getNodes().stream()
+                .mapToDouble(n -> n.getCongestion()).average().orElse(0);
+
+        statsPanel.update(
+            simController.getSimulation().getCurrentTick(),
+            simController.isRunning(),
+            totalAgents, onNodes, onEdges,
+            fireNodes, fireEdges,
+            graph.getNodes().size(), graph.getEdges().size(), graph.getExits().size(),
+            avgCong
+        );
     }
 
     public BorderPane getRoot() {

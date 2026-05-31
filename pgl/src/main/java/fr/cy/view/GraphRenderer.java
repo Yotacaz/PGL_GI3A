@@ -1,6 +1,7 @@
 package fr.cy.view;
 
 import fr.cy.model.agent.Agent;
+import fr.cy.model.agent.behaviour.properties.EmotionalState;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
@@ -8,6 +9,9 @@ import fr.cy.model.simulation.Simulation;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.TextAlignment;
 
 /**
  * Moteur de rendu graphique. Dessine le réseau de graphe et les agents.
@@ -17,12 +21,17 @@ public class GraphRenderer {
     private final GraphicsContext gc;
 
     // Palette de couleurs Modern Dark Theme
-    private static final Color BG_COLOR = Color.web("#121212");
-    private static final Color EDGE_COLOR = Color.web("#424242");
-    private static final Color FIRE_COLOR = Color.web("#FF5722");
+    private static final Color BG_COLOR        = Color.web("#121212");
+    private static final Color EDGE_COLOR      = Color.web("#424242");
+    private static final Color FIRE_COLOR      = Color.web("#FF5722");
     private static final Color CALM_NODE_COLOR = Color.web("#007ACC");
-    private static final Color STRESS_COLOR = Color.web("#D32F2F");
-    private static final Color AGENT_COLOR = Color.web("#F5F5F5");
+    private static final Color EXIT_NODE_COLOR = Color.web("#2ECC71");
+    private static final Color STRESS_COLOR    = Color.web("#D32F2F");
+
+    // Couleurs agents selon état émotionnel
+    private static final Color AGENT_CALM      = Color.web("#FFD700"); // jaune
+    private static final Color AGENT_SELFISH   = Color.web("#FF8C00"); // orange
+    private static final Color AGENT_PANICKING = Color.web("#FF2020"); // rouge vif
 
     public GraphRenderer(GraphicsContext gc) {
         this.gc = gc;
@@ -113,9 +122,14 @@ public class GraphRenderer {
         double x = node.getX() - radius / 2;
         double y = node.getY() - radius / 2;
 
-        // Calcul de la couleur selon le Stress Actuel
-        double stressLvl = node.getStressInducingImpact();
-        Color nodeColor = CALM_NODE_COLOR.interpolate(STRESS_COLOR, stressLvl);
+        // Couleur de base : vert pour sortie, sinon bleu→rouge selon stress
+        Color nodeColor;
+        if (node.isExit()) {
+            nodeColor = EXIT_NODE_COLOR;
+        } else {
+            double stressLvl = node.getStressInducingImpact();
+            nodeColor = CALM_NODE_COLOR.interpolate(STRESS_COLOR, stressLvl);
+        }
 
         // Si le noeud est en feu, l'animation et l'aura rouge dominent
         if (node.isOnFire()) {
@@ -139,6 +153,13 @@ public class GraphRenderer {
 
         // Reset effet
         gc.setEffect(null);
+
+        // Label ID + indicateur sortie centré sur le nœud
+        String label = node.isExit() ? "OUT" : String.valueOf(node.getId());
+        gc.setFill(Color.WHITE);
+        gc.setFont(Font.font("System", FontWeight.BOLD, Math.max(9, radius * 0.55)));
+        gc.setTextAlign(TextAlignment.CENTER);
+        gc.fillText(label, node.getX(), node.getY() + radius * 0.2);
     }
 
     private void drawAgent(Agent agent) {
@@ -180,9 +201,17 @@ public class GraphRenderer {
             return;
         }
 
+        // Couleur selon l'état émotionnel de l'agent
+        EmotionalState state = agent.getEmotionalState();
+        Color agentColor = switch (state) {
+            case CALM      -> AGENT_CALM;
+            case SELFISH   -> AGENT_SELFISH;
+            case PANICKING -> AGENT_PANICKING;
+        };
+
         // Dessin final de l'Agent
         double agentRadius = 6;
-        gc.setFill(AGENT_COLOR);
+        gc.setFill(agentColor);
         gc.fillOval(ax - agentRadius / 2, ay - agentRadius / 2, agentRadius, agentRadius);
 
         // Bordure sombre pour bien les discerner
