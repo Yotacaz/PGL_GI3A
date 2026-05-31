@@ -1,5 +1,6 @@
 package fr.cy.model.agent;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
@@ -7,7 +8,8 @@ import java.util.Objects;
 
 import fr.cy.model.agent.behaviour.decisions.AgentPossibleDecision;
 
-public class AgentSettings {
+public class AgentSettings implements Serializable {
+    private static final long serialVersionUID = 1L;
     /** Factors used to influence agent decision-making */
     private final Map<AgentPossibleDecision, Double> defaultDecisionMakingFactors = new EnumMap<>(
             AgentPossibleDecision.class);
@@ -36,7 +38,8 @@ public class AgentSettings {
      * Retrieves the decision-making factor for a given agent decision type
      *
      * @param decision The type of agent decision to retrieve the factor for
-     * @return The decision-making factor associated with the specified decision type
+     * @return The decision-making factor associated with the specified decision
+     *         type
      */
     public double getDecisionMakingFactor(AgentPossibleDecision decision) {
         return defaultDecisionMakingFactors.get(decision);
@@ -56,8 +59,10 @@ public class AgentSettings {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
+        if (this == obj)
+            return true;
+        if (obj == null || getClass() != obj.getClass())
+            return false;
         AgentSettings other = (AgentSettings) obj;
         return Double.compare(other.WALKING_SPEED, WALKING_SPEED) == 0
                 && Double.compare(other.RUNNING_SPEED, RUNNING_SPEED) == 0

@@ -1,5 +1,6 @@
 package fr.cy.model.agent.behaviour.agentActions;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 import fr.cy.model.agent.Agent;
@@ -9,9 +10,10 @@ import fr.cy.model.graph.element.Edge;
 /**
  * Action representing behavior where an agent follows another agent.
  */
-public class FollowAgentAction extends AgentAction {
+public class FollowAgentAction extends AgentAction implements Serializable {
+	private static final long serialVersionUID = 1L;
 
-	private Agent targetAgent; 
+	private Agent targetAgent;
 
 	public FollowAgentAction(Agent agent, Agent targetAgent) {
 		super(agent);
@@ -32,7 +34,7 @@ public class FollowAgentAction extends AgentAction {
 
 	@Override
 	public Edge getClosestTargetGraphElement() {
-		//TODO
+		// TODO
 		return targetAgent.getCurrentEdgeOrNextEdgeIfOnNode();
 	}
 
@@ -43,9 +45,12 @@ public class FollowAgentAction extends AgentAction {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj) return true;
-		if (!super.equals(obj)) return false;
-		if (getClass() != obj.getClass()) return false;
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
 		FollowAgentAction other = (FollowAgentAction) obj;
 		Integer t1 = targetAgent == null ? null : targetAgent.getId();
 		Integer t2 = other.targetAgent == null ? null : other.targetAgent.getId();
@@ -54,6 +59,7 @@ public class FollowAgentAction extends AgentAction {
 
 	@Override
 	public String toString() {
-		return super.toString().replace("}", "") + ", targetAgentId=" + (targetAgent == null ? "null" : targetAgent.getId()) + '}';
+		return super.toString().replace("}", "") + ", targetAgentId="
+				+ (targetAgent == null ? "null" : targetAgent.getId()) + '}';
 	}
 }

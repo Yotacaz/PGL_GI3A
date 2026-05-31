@@ -1,5 +1,6 @@
 package fr.cy.model.pathfinding;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,7 +22,8 @@ import fr.cy.model.graph.element.Node;
  * @author GI3A
  * @version 1.0
  */
-public class PathFinder {
+public class PathFinder implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private final Graph graph;
     private final MinCostMaxFlow flowAlgorithm;
@@ -53,7 +55,6 @@ public class PathFinder {
 
         return path;
     }
-
 
     public double getDistanceToNearestExit(Node start) {
         double minDistance = Double.POSITIVE_INFINITY;

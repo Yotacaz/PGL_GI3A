@@ -13,20 +13,22 @@ import fr.cy.model.agent.behaviour.decisions.DecisionNodeContext;
 import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 import fr.cy.model.agent.behaviour.properties.AgentPhysicalProperties;
 import fr.cy.model.agent.behaviour.properties.EmotionalState;
-import fr.cy.model.graph.IdManager;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.GraphElement;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.simulation.SimulationSettings;
 import fr.cy.model.stress.StressInducing;
+import fr.cy.util.IdManager;
 
 /**
  * Represents an individual agent participating in the simulation.
  *
- * <p>The class currently stores basic physical attributes (speed, surface area),
+ * <p>
+ * The class currently stores basic physical attributes (speed, surface area),
  * behavioral parameters (stress and crowding tolerances) and decision-making
  * helpers used by the simulation. Many behavioral methods are placeholders and
- * should be implemented when simulation rules are defined.</p>
+ * should be implemented when simulation rules are defined.
+ * </p>
  */
 public class Agent implements StressInducing, Serializable {
     private static final long serialVersionUID = 1L;
@@ -40,13 +42,20 @@ public class Agent implements StressInducing, Serializable {
     /** Number of nodes visited by the agent, used for statistics */
     private int nOfNodeVisited;
 
-    /** Map to store the scores of different possible decisions for the agent, used in decision-making
-     * This is a class attribute in order to avoid creating a new map for each agent at each decision step*/
+    /**
+     * Map to store the scores of different possible decisions for the agent, used
+     * in decision-making
+     * This is a class attribute in order to avoid creating a new map for each agent
+     * at each decision step
+     */
     private final Map<AgentPossibleDecision, AgentDecisionScore> decisionsScore = new HashMap<>();
 
     /** The last selected decision by the agent */
     private AgentPossibleDecision lastSelectedDecision = null;
-    /** Current behavioral state of the agent, used to influence decision-making and stress levels */
+    /**
+     * Current behavioral state of the agent, used to influence decision-making and
+     * stress levels
+     */
     private AgentDecisionalProperties behavioralState;
 
     /** Current edge of the graph where the agent is located */
@@ -54,9 +63,12 @@ public class Agent implements StressInducing, Serializable {
     private boolean isOnNode = true; // True if the agent is currently on a node, false if on an edge
     /** Previous node visited by the agent, used in case of backtracking */
     private Node previousOrCurrentNode = null;
-    /** The current action being performed by the agent, which can be null if the agent is idle */
+    /**
+     * The current action being performed by the agent, which can be null if the
+     * agent is idle
+     */
     private AgentAction currentAction = null;
-    /**  Static IdManager to generate unique identifiers for agents */
+    /** Static IdManager to generate unique identifiers for agents */
     private static IdManager idManager = new IdManager();
 
     public Agent(String name, Node startingNode, double maxSpeed, double stressTolerance, double crowdingTolerance,
@@ -88,7 +100,8 @@ public class Agent implements StressInducing, Serializable {
 
     AgentAction makeDecision(DecisionNodeContext decisionContext, AgentSettings agentSettings) {
         double totalScore = computeAgentDecisionsScore(agentSettings, decisionContext);
-        //using the scores convert value to probabilities and select an action based on these probabilities
+        // using the scores convert value to probabilities and select an action based on
+        // these probabilities
         double randomValue = Math.random() * totalScore;
         double cumulativeProbability = 0.0;
         for (Map.Entry<AgentPossibleDecision, AgentDecisionScore> entry : decisionsScore.entrySet()) {
@@ -106,7 +119,7 @@ public class Agent implements StressInducing, Serializable {
     }
 
     private double computeAgentDecisionsScore(AgentSettings agentSettings, DecisionNodeContext decisionContext) {
-        //No need to clear the map as it is overwritten at each decision step
+        // No need to clear the map as it is overwritten at each decision step
         double totalScore = 0.0;
         for (AgentPossibleDecision possibleDecision : AgentPossibleDecision.values()) {
             double factor = agentSettings.getDecisionMakingFactor(possibleDecision);
@@ -242,7 +255,8 @@ public class Agent implements StressInducing, Serializable {
     }
 
     /**
-     * @return the current node the agent is on, or {@code null} if the agent is not on a node
+     * @return the current node the agent is on, or {@code null} if the agent is not
+     *         on a node
      */
     public Node getCurrentNode() {
         return isOnNode ? getPreviousOrCurrentNode() : null;
@@ -287,11 +301,16 @@ public class Agent implements StressInducing, Serializable {
     }
 
     public double travelBy(double distance) {
-        // Placeholder implementation - in a real implementation, this would update the agent's position along the current edge
-        return distance; // Return the actual distance traveled, which may be less than the requested distance if the agent reaches the end of the edge
+        // Placeholder implementation - in a real implementation, this would update the
+        // agent's position along the current edge
+        return distance; // Return the actual distance traveled, which may be less than the requested
+                         // distance if the agent reaches the end of the edge
     }
 
-    /** Returns the progress of the agent along the current edge, between 0 and 1, or -1 if not applicable */
+    /**
+     * Returns the progress of the agent along the current edge, between 0 and 1, or
+     * -1 if not applicable
+     */
     public double getTravelProgressPercentageOnEdge() {
         AgentAction action = getCurrentAction();
         return action != null ? action.getEdgeProgress() : -1.0;
@@ -425,7 +444,8 @@ public class Agent implements StressInducing, Serializable {
         }
         String state = behavioralState == null ? "unknown" : behavioralState.getEmotionnalState().name();
         double stress = behavioralState == null ? 0.0 : behavioralState.getStressLevel();
-        // String action = currentAction == null ? "idle" : currentAction.getClass().getSimpleName();
+        // String action = currentAction == null ? "idle" :
+        // currentAction.getClass().getSimpleName();
         String lastDecision = lastSelectedDecision == null ? "none" : lastSelectedDecision.toString();
         return String.format("Agent[%d] %s — %s | state=%s (%.0f%%) lastDecision=%s pos=%s progress=%.1f%% visited=%d",
                 id,

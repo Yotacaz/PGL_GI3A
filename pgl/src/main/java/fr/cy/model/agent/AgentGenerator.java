@@ -1,5 +1,6 @@
 package fr.cy.model.agent;
 
+import java.io.Serializable;
 import java.util.Locale;
 import java.util.Random;
 
@@ -13,7 +14,9 @@ import fr.cy.model.agent.behaviour.agentActions.FollowSingleEdgeAction;
  * prototypes and tests. The generated values are intentionally simple and
  * should be replaced by a configurable generator if needed.
  */
-public class AgentGenerator {
+public class AgentGenerator implements Serializable {
+
+	private static final long serialVersionUID = 1L;
 
 	private final Random RNG = new Random();
 	private final Graph graph;

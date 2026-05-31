@@ -1,5 +1,6 @@
 package fr.cy.model.fire;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
@@ -10,7 +11,8 @@ import fr.cy.model.graph.element.GraphElement;
 import fr.cy.model.graph.element.Node;
 
 /** TODO: VALEURS MAGIQUES: A RETRAVAILLER */
-public class FireService {
+public class FireService implements Serializable {
+    private static final long serialVersionUID = 1L;
     private final Random random;
 
     public FireService() {

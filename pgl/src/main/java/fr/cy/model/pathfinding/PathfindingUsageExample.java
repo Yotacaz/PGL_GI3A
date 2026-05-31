@@ -1,5 +1,6 @@
 package fr.cy.model.pathfinding;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,7 +16,8 @@ import fr.cy.model.graph.element.Node;
  * @author GI3A
  * @version 1.0
  */
-public class PathfindingUsageExample {
+public class PathfindingUsageExample implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     /**
      * Exemple 1 : Utilisation basique du pathfinding.
@@ -26,7 +28,7 @@ public class PathfindingUsageExample {
         Node start = graph.createNode(0, 0, 10);
         Node middle = graph.createNode(10, 0, 10);
         Node goal = graph.createNode(20, 0, 10);
-        
+
         graph.createEdge(start, middle);
         graph.createEdge(middle, goal);
 
@@ -53,7 +55,7 @@ public class PathfindingUsageExample {
         Node n1 = graph.createNode(0, 0, 10);
         Node n2 = graph.createNode(10, 0, 10);
         Node n3 = graph.createNode(20, 0, 10);
-        
+
         graph.createEdge(n1, n2);
         graph.createEdge(n2, n3);
 
@@ -64,7 +66,7 @@ public class PathfindingUsageExample {
         // Simuler le passage de plusieurs agents
         for (int i = 0; i < 5; i++) {
             List<Node> path = manager.findShortestPath(n1, n3);
-            
+
             // Enregistrer le flux
             for (Node node : path) {
                 manager.recordNodeFlow(node, 1.0);
@@ -111,7 +113,7 @@ public class PathfindingUsageExample {
         Node n1 = graph.createNode(0, 0, 10);
         Node n2 = graph.createNode(10, 0, 10);
         Node n3 = graph.createNode(20, 0, 10);
-        
+
         graph.createEdge(n1, n2);
         graph.createEdge(n2, n3);
 
@@ -171,21 +173,24 @@ public class PathfindingUsageExample {
      */
     public static void example6_PerformanceReporting() {
         PathfindingPerformanceReport report = new PathfindingPerformanceReport();
-        
+
         report.start();
-        
+
         for (int i = 0; i < 100; i++) {
             long computeStart = System.nanoTime();
             // Simulation de calcul de chemin
-            try { Thread.sleep(1); } catch (InterruptedException e) {}
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException e) {
+            }
             long computeTime = (System.nanoTime() - computeStart) / 1_000_000;
-            
+
             report.recordPathComputation(5 + (i % 5), 50 + i, computeTime);
             report.recordFlowProcessed(1.0);
         }
-        
+
         report.stop();
-        
+
         System.out.println(report.generateReport());
     }
 
@@ -197,19 +202,19 @@ public class PathfindingUsageExample {
         Node n1 = graph.createNode(0, 0, 10);
         Node n2 = graph.createNode(10, 0, 10);
         Node n3 = graph.createNode(20, 0, 10);
-        
+
         graph.createEdge(n1, n2);
         graph.createEdge(n2, n3);
 
         PathfindingManager manager = new PathfindingManager(graph);
         List<Node> path = manager.findShortestPath(n1, n3);
-        
+
         System.out.println("Original path: " + path.size() + " nodes");
 
         // Supprimer le nœud intermédiaire
         // (À adapter en fonction de votre API Graph)
         // graph.removeNode(n2);
-        
+
         // Les chemins affectés devraient être recalculés
         System.out.println("Path updated after node deletion");
     }
@@ -223,7 +228,7 @@ public class PathfindingUsageExample {
         for (int i = 0; i < 5; i++) {
             nodes.add(graph.createNode(i * 10, 0, 10));
         }
-        
+
         for (int i = 0; i < nodes.size() - 1; i++) {
             graph.createEdge(nodes.get(i), nodes.get(i + 1));
         }

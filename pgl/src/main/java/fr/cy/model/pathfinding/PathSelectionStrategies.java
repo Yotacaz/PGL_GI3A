@@ -1,6 +1,7 @@
 package fr.cy.model.pathfinding;
 
 import java.util.List;
+import java.io.Serializable;
 
 import fr.cy.model.graph.element.Node;
 
@@ -11,6 +12,7 @@ import fr.cy.model.graph.element.Node;
  * @version 1.0
  */
 public class PathSelectionStrategies {
+    private static final long serialVersionUID = 1L;
 
     /**
      * Stratégie "greedy" : sélectionne le premier chemin disponible.
@@ -31,10 +33,10 @@ public class PathSelectionStrategies {
             if (availablePaths.isEmpty()) {
                 return List.of();
             }
-            
+
             return availablePaths.stream()
-                .min((p1, p2) -> Integer.compare(p1.size(), p2.size()))
-                .orElse(List.of());
+                    .min((p1, p2) -> Integer.compare(p1.size(), p2.size()))
+                    .orElse(List.of());
         }
     }
 
@@ -47,7 +49,7 @@ public class PathSelectionStrategies {
             if (availablePaths.isEmpty()) {
                 return List.of();
             }
-            
+
             int index = (int) (Math.random() * availablePaths.size());
             return availablePaths.get(index);
         }
@@ -62,7 +64,7 @@ public class PathSelectionStrategies {
             if (availablePaths.isEmpty()) {
                 return List.of();
             }
-            
+
             // Sélectionner le chemin avec le stress minimum
             // (À améliorer avec accès aux données de stress des arêtes)
             return availablePaths.get(0);
@@ -70,7 +72,8 @@ public class PathSelectionStrategies {
     }
 
     /**
-     * Stratégie "risk-taker" : prend les chemins les plus rapides malgré les risques.
+     * Stratégie "risk-taker" : prend les chemins les plus rapides malgré les
+     * risques.
      */
     public static class RiskTakerStrategy implements PathSelectionStrategy {
         @Override
@@ -78,11 +81,11 @@ public class PathSelectionStrategies {
             if (availablePaths.isEmpty()) {
                 return List.of();
             }
-            
+
             // Sélectionner le chemin le plus court (prenant des risques)
             return availablePaths.stream()
-                .min((p1, p2) -> Integer.compare(p1.size(), p2.size()))
-                .orElse(List.of());
+                    .min((p1, p2) -> Integer.compare(p1.size(), p2.size()))
+                    .orElse(List.of());
         }
     }
 }

@@ -2,6 +2,7 @@ package fr.cy.model.pathfinding;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.io.Serializable;
 
 /**
  * Rapport de performance du système de pathfinding.
@@ -13,6 +14,7 @@ import java.util.Map;
  * @version 1.0
  */
 public class PathfindingPerformanceReport {
+    private static final long serialVersionUID = 1L;
     private final Map<String, Double> metrics;
     private long startTime;
     private long endTime;
@@ -49,14 +51,14 @@ public class PathfindingPerformanceReport {
     /**
      * Enregistre un chemin calculé.
      *
-     * @param pathLength longueur du chemin
-     * @param cost       coût du chemin
+     * @param pathLength  longueur du chemin
+     * @param cost        coût du chemin
      * @param computeTime temps de calcul en ms
      */
     public void recordPathComputation(int pathLength, double cost, long computeTime) {
         pathsComputed++;
         totalNodesVisited += pathLength;
-        
+
         metrics.put("paths_computed", (double) pathsComputed);
         metrics.put("avg_path_length", (double) totalNodesVisited / pathsComputed);
         metrics.put("last_compute_time_ms", (double) computeTime);
@@ -111,18 +113,18 @@ public class PathfindingPerformanceReport {
         StringBuilder report = new StringBuilder();
         report.append("=== Pathfinding Performance Report ===\n");
         report.append(String.format("Paths computed: %d\n", pathsComputed));
-        report.append(String.format("Average path length: %.2f nodes\n", 
-            getMetric("avg_path_length")));
+        report.append(String.format("Average path length: %.2f nodes\n",
+                getMetric("avg_path_length")));
         report.append(String.format("Total cost: %.2f\n", getMetric("total_cost")));
         report.append(String.format("Total flow: %.2f\n", totalFlowProcessed));
-        report.append(String.format("Total computation time: %.2f ms\n", 
-            getMetric("total_time_ms")));
-        
+        report.append(String.format("Total computation time: %.2f ms\n",
+                getMetric("total_time_ms")));
+
         if (pathsComputed > 0) {
             double avgTime = getMetric("total_time_ms") / pathsComputed;
             report.append(String.format("Average time per path: %.4f ms\n", avgTime));
         }
-        
+
         report.append("=====================================\n");
         return report.toString();
     }

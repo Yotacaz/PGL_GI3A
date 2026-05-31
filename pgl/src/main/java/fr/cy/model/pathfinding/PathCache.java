@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.io.Serializable;
 
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Node;
@@ -12,12 +13,14 @@ import fr.cy.model.graph.element.Node;
  * Cache pour les chemins et optimisations de performance.
  *
  * Cette classe optimise le pathfinding en mettant en cache les chemins
- * calculés et en permettant une réutilisation rapide pour des requêtes similaires.
+ * calculés et en permettant une réutilisation rapide pour des requêtes
+ * similaires.
  *
  * @author GI3A
  * @version 1.0
  */
 public class PathCache {
+    private static final long serialVersionUID = 1L;
     private final Map<String, List<Node>> cache;
     private final Graph graph;
     private int cacheHits;
@@ -59,12 +62,12 @@ public class PathCache {
     public List<Node> getCachedPath(Node source, Node destination) {
         String key = generateCacheKey(source, destination);
         List<Node> path = cache.get(key);
-        
+
         if (path != null) {
             cacheHits++;
             return new ArrayList<>(path); // Retourner une copie
         }
-        
+
         cacheMisses++;
         return null;
     }
@@ -81,7 +84,7 @@ public class PathCache {
             // Nettoyer le cache en supprimant une entrée aléatoire
             cache.remove(cache.keySet().iterator().next());
         }
-        
+
         String key = generateCacheKey(source, destination);
         cache.put(key, new ArrayList<>(path));
     }
@@ -120,7 +123,7 @@ public class PathCache {
             List<Node> path = entry.getValue();
             for (int i = 0; i < path.size() - 1; i++) {
                 if ((path.get(i).equals(sourceNode) && path.get(i + 1).equals(destinationNode)) ||
-                    (path.get(i).equals(destinationNode) && path.get(i + 1).equals(sourceNode))) {
+                        (path.get(i).equals(destinationNode) && path.get(i + 1).equals(sourceNode))) {
                     return true;
                 }
             }
@@ -143,7 +146,7 @@ public class PathCache {
     public double[] getStatistics() {
         double total = cacheHits + cacheMisses;
         double hitRate = total > 0 ? (double) cacheHits / total : 0;
-        return new double[]{cacheHits, cacheMisses, hitRate};
+        return new double[] { cacheHits, cacheMisses, hitRate };
     }
 
     /**
