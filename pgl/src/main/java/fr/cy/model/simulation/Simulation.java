@@ -11,9 +11,11 @@ import fr.cy.model.pathfinding.PathFinder;
 
 import java.io.*;
 
-public class Simulation implements Serializable{
+public class Simulation implements Serializable {
     private static final long serialVersionUID = 1L;
-    
+
+    private final String name;
+
     private final Graph graph;
     private final AgentManager agentManager;
     private final PathFinder pathFinder;
@@ -23,17 +25,21 @@ public class Simulation implements Serializable{
     private int currentTick;
     private boolean running;
 
-    public Simulation(Graph graph) {
-        this(graph, new SimulationSettings());
+    public Simulation(String name, Graph graph) {
+        this(name, graph, new SimulationSettings());
     }
 
-    public Simulation(Graph graph, SimulationSettings simulationSettings) {
+    public Simulation(String name, Graph graph, SimulationSettings simulationSettings) {
         this.graph = graph;
         this.simulationSettings = simulationSettings;
+        this.name = name;
+
         this.pathFinder = new PathFinder(graph);
         this.fireService = new FireService();
+
         DecisionContextProvider decisionContextProvider = new DecisionContextProvider(graph, pathFinder);
         AgentGenerator agentGenerator = new AgentGenerator(graph);
+
         this.agentManager = new AgentManager(decisionContextProvider, agentGenerator, simulationSettings); // NO AGENT
                                                                                                            // IS
                                                                                                            // GENERATED
@@ -41,6 +47,10 @@ public class Simulation implements Serializable{
 
         this.currentTick = 0;
         this.running = false;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public void start() {
@@ -126,7 +136,7 @@ public class Simulation implements Serializable{
             }
         }
         // Initialize graph with nodes and edges
-        Simulation simulation = new Simulation(graph);
+        Simulation simulation = new Simulation("TEST", graph);
         simulation.getAgentManager().generateRandomsAgents(1); // Generate 1 agent
         simulation.start();
 
