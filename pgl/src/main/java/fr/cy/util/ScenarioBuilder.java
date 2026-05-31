@@ -34,7 +34,7 @@ public class ScenarioBuilder {
         graph.createEdge(n3, sortie1);
         graph.createEdge(n4, sortie2);
 
-        Simulation simulation = new Simulation(graph);
+        Simulation simulation = new Simulation("Demo", graph);
 
         if (simulation.getAgentManager() != null) {
             simulation.getAgentManager().generateRandomsAgents(30);
