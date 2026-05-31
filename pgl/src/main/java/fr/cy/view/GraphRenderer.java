@@ -1,6 +1,7 @@
 package fr.cy.view;
 
 import fr.cy.model.agent.Agent;
+import fr.cy.model.agent.behaviour.properties.EmotionalState;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
@@ -21,8 +22,13 @@ public class GraphRenderer {
     private static final Color EDGE_COLOR      = Color.web("#5A5A8A");
     private static final Color FIRE_COLOR      = Color.web("#FF5722");
     private static final Color CALM_NODE_COLOR = Color.web("#007ACC");
+    private static final Color EXIT_NODE_COLOR = Color.web("#2ECC71"); // vert = sortie
     private static final Color STRESS_COLOR    = Color.web("#D32F2F");
-    private static final Color AGENT_COLOR     = Color.web("#F5F5F5");
+
+    // Couleurs agents selon EmotionalState (système du groupe)
+    private static final Color AGENT_CALM      = Color.web("#FFD700"); // jaune  = calme
+    private static final Color AGENT_SELFISH   = Color.web("#FF8C00"); // orange = égoïste
+    private static final Color AGENT_PANICKING = Color.web("#FF2020"); // rouge  = panique
 
     // Taille fixe des nœuds (en pixels dans les coordonnées du monde)
     private static final double NODE_RADIUS    = 22.0;
@@ -117,9 +123,10 @@ public class GraphRenderer {
         double x = node.getX() - radius / 2;
         double y = node.getY() - radius / 2;
 
-        // Calcul de la couleur selon le Stress Actuel
-        double stressLvl = node.getStressInducingImpact();
-        Color nodeColor = CALM_NODE_COLOR.interpolate(STRESS_COLOR, stressLvl);
+        // Sortie = vert fixe, sinon bleu→rouge selon le stress
+        Color nodeColor = node.isExit()
+                ? EXIT_NODE_COLOR
+                : CALM_NODE_COLOR.interpolate(STRESS_COLOR, node.getStressInducingImpact());
 
         // Si le noeud est en feu, l'animation et l'aura rouge dominent
         if (node.isOnFire()) {
@@ -183,9 +190,17 @@ public class GraphRenderer {
             return;
         }
 
+        // Couleur selon l'état émotionnel (EmotionalState du groupe)
+        EmotionalState state = agent.getEmotionalState();
+        Color agentColor = switch (state) {
+            case CALM      -> AGENT_CALM;
+            case SELFISH   -> AGENT_SELFISH;
+            case PANICKING -> AGENT_PANICKING;
+        };
+
         // Dessin final de l'Agent
         double agentRadius = 6;
-        gc.setFill(AGENT_COLOR);
+        gc.setFill(agentColor);
         gc.fillOval(ax - agentRadius / 2, ay - agentRadius / 2, agentRadius, agentRadius);
 
         // Bordure sombre pour bien les discerner

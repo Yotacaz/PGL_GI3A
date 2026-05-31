@@ -123,7 +123,7 @@ public class AgentManager implements Serializable {
             while (remainingTime > 0.0) {
                 if (agent.getCurrentAction() == null || (agent.getCurrentAction().isCompleted() && agent.isOnNode())) {
                     if (agent.getCurrentAction() != null) {
-                        System.out.println(" completed action " + agent.getCurrentAction());
+                        agent.setCurrentAction(null);
                     }
                     if (!agent.isOnNode()) {
                         break;
@@ -146,7 +146,6 @@ public class AgentManager implements Serializable {
                 remainingTime -= consumed;
 
                 if (agent.getCurrentAction() != null && agent.getCurrentAction().isCompleted()) {
-                    System.out.println("HEY");
                     agent.setCurrentAction(null);
                 }
 
