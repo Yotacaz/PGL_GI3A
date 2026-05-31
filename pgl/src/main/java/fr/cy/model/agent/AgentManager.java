@@ -7,6 +7,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
+import java.io.*;
+
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.agent.behaviour.decisions.DecisionNodeContext;
 import fr.cy.model.agent.behaviour.decisions.DecisionContextProvider;
@@ -18,6 +20,7 @@ import fr.cy.model.simulation.SimulationSettings;
  */
 public class AgentManager implements Serializable {
     private static final long serialVersionUID = 1L;
+
     private AgentSettings agentSettings = new AgentSettings();
     private List<Agent> agents;
     private List<Agent> deadAgents = new ArrayList<>();
