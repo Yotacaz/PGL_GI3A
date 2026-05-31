@@ -1,11 +1,13 @@
 package fr.cy.model.graph;
 
+import java.io.Serializable;
 import java.util.Comparator;
 import java.util.List;
 
 import fr.cy.model.graph.element.GraphElement;
 
-public class CongestionStats<T extends GraphElement> {
+public class CongestionStats<T extends GraphElement> implements Serializable {
+    private static final long serialVersionUID = 1L;
     private double maxCongestionLevel;
     private T mostCongestedElement;
     private double minCongestionLevel;
@@ -28,8 +30,10 @@ public class CongestionStats<T extends GraphElement> {
         this.count = count;
     }
 
-    /** A comparator for comparing graph elements based on their congestion levels.
-     *  From the most to the least congested. */
+    /**
+     * A comparator for comparing graph elements based on their congestion levels.
+     * From the most to the least congested.
+     */
     private static class CongestionsGraphElementComparator implements Comparator<GraphElement> {
         @Override
         public int compare(GraphElement e1, GraphElement e2) {
@@ -38,11 +42,16 @@ public class CongestionStats<T extends GraphElement> {
     }
 
     /**
-     * Computes congestion statistics for a list of graph elements, including maximum, minimum, average, and total congestion levels, as well as identifying the most and least congested elements.
-     * @param graphElements the list of graph elements to analyze for congestion statistics **WARNING: the list will be sorted in place**.
+     * Computes congestion statistics for a list of graph elements, including
+     * maximum, minimum, average, and total congestion levels, as well as
+     * identifying the most and least congested elements.
+     * 
+     * @param graphElements the list of graph elements to analyze for congestion
+     *                      statistics **WARNING: the list will be sorted in
+     *                      place**.
      * @return the congestion statistics for the provided graph elements
      */
-    public static <T extends GraphElement> CongestionStats<T> computeCongestionStats(List<T> graphElements) { 
+    public static <T extends GraphElement> CongestionStats<T> computeCongestionStats(List<T> graphElements) {
         // sorted by congestion level, from the most to the least congested
         graphElements.sort(new CongestionsGraphElementComparator());
         double totalCongestionLevel = graphElements.stream().mapToDouble(T::getCongestion).sum();
@@ -51,7 +60,8 @@ public class CongestionStats<T extends GraphElement> {
         double minCongestionLevel = count > 0 ? graphElements.get(count - 1).getCongestion() : 0.0;
 
         double averageCongestionLevel = count > 0 ? totalCongestionLevel / count : 0.0;
-        return new CongestionStats<>(maxCongestionLevel, minCongestionLevel, averageCongestionLevel, totalCongestionLevel,
+        return new CongestionStats<>(maxCongestionLevel, minCongestionLevel, averageCongestionLevel,
+                totalCongestionLevel,
                 graphElements.get(0), graphElements.get(count - 1), graphElements, count);
     }
 

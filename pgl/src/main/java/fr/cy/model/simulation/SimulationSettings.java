@@ -1,9 +1,11 @@
 package fr.cy.model.simulation;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /** Shared settings for simulation-wide behavior. */
-public class SimulationSettings {
+public class SimulationSettings implements Serializable {
+    private static final long serialVersionUID = 1L;
     private static final double DEFAULT_TICK_DURATION = 1.0;
 
     private double tickDuration = DEFAULT_TICK_DURATION;

@@ -1,5 +1,6 @@
 package fr.cy.model.agent.behaviour.agentActions;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 import fr.cy.model.agent.Agent;
@@ -10,7 +11,8 @@ import fr.cy.model.graph.element.Edge;
  * Represents an action that an {@link Agent} can perform.
  * Implementations should encapsulate a single, well-named behavior.
  */
-public abstract class AgentAction {
+public abstract class AgentAction implements Serializable {
+	private static final long serialVersionUID = 1L;
 	private Agent agent;
 	/** The progress of the action, between 0 and 1 */
 	private double progress = 0.0;
@@ -40,7 +42,9 @@ public abstract class AgentAction {
 	
 	/**
 	 * Execute the action with a limited time budget.
-	 * @param availableTime remaining time available for the current tick, in tick units
+	 * 
+	 * @param availableTime remaining time available for the current tick, in tick
+	 *                      units
 	 * @return the time effectively consumed by the action
 	 */
 	public abstract double perform(AgentSettings agentSettings, double availableTime);
@@ -70,8 +74,14 @@ public abstract class AgentAction {
 			return true;
 		if (obj == null || getClass() != obj.getClass())
 			return false;
+		if (this == obj)
+			return true;
+		if (obj == null || getClass() != obj.getClass())
+			return false;
 		AgentAction other = (AgentAction) obj;
 		return Double.compare(progress, other.progress) == 0
+				&& Objects.equals(agent == null ? null : agent.getId(),
+						other.agent == null ? null : other.agent.getId());
 				&& Objects.equals(agent == null ? null : agent.getId(),
 						other.agent == null ? null : other.agent.getId());
 	}

@@ -1,5 +1,6 @@
 package fr.cy.model.pathfinding;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -21,7 +22,8 @@ import fr.cy.model.graph.element.Node;
  * @author GI3A
  * @version 1.0
  */
-public class MinCostMaxFlow {
+public class MinCostMaxFlow implements Serializable {
+    private static final long serialVersionUID = 1L;
     private final Graph graph;
     private final Map<Node, List<FlowEdge>> flowGraph;
     private final Map<Node, Double> potentials;
@@ -68,8 +70,8 @@ public class MinCostMaxFlow {
     /**
      * Construit le graphe de flux à partir du graphe réel avec congestion.
      *
-     * @param startNode nœud de départ
-     * @param goalNode  nœud d'arrivée
+     * @param startNode  nœud de départ
+     * @param goalNode   nœud d'arrivée
      * @param flowAmount montant de flux à envoyer
      */
     public void buildFlowGraph(Node startNode, Node goalNode, double flowAmount) {
@@ -84,7 +86,7 @@ public class MinCostMaxFlow {
                 if (neighbor != null) {
                     double cost = computeEdgeCost(edge);
                     double capacity = computeEdgeCapacity(edge);
-                    
+
                     addFlowEdge(node, neighbor, capacity, cost);
                 }
             }
@@ -92,7 +94,8 @@ public class MinCostMaxFlow {
     }
 
     /**
-     * Calcule le coût d'une arête en fonction de sa longueur et son facteur de stress.
+     * Calcule le coût d'une arête en fonction de sa longueur et son facteur de
+     * stress.
      *
      * @param edge l'arête du graphe
      * @return le coût de l'arête

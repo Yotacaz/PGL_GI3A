@@ -1,5 +1,6 @@
 package fr.cy.model.agent.behaviour.decisions;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -11,7 +12,8 @@ import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.pathfinding.GraphPath;
 
-public class DecisionNodeContext {
+public class DecisionNodeContext implements Serializable {
+    private static final long serialVersionUID = 1L;
     /** The node from which the decision is made */
     private Node sourceNode;
     private GraphPath recommendedPath;
@@ -20,7 +22,10 @@ public class DecisionNodeContext {
     private Map<Edge, List<Agent>> incomingNearbyAgents;
     private Map<Edge, List<Agent>> outgoingNearbyAgents;
     private CongestionStats<Edge> congestionStatsForOutgoingEdges;
-    /* Map of edges to the number of agents currently taking or planning to next take that edge */
+    /*
+     * Map of edges to the number of agents currently taking or planning to next
+     * take that edge
+     */
 
     DecisionNodeContext(Node sourceNode, GraphPath recommendedPath, GraphPath shortestPathToExit,
             List<Edge> outgoingEdges,
@@ -36,11 +41,10 @@ public class DecisionNodeContext {
     }
 
     // public void clear() {
-    //     incomingNearbyAgents.clear();
-    //     outgoingNearbyAgents.clear();
-    //     outgoingEdges.clear();
+    // incomingNearbyAgents.clear();
+    // outgoingNearbyAgents.clear();
+    // outgoingEdges.clear();
     // }
-
 
     public List<Edge> getOutgoingEdges() {
         return Collections.unmodifiableList(outgoingEdges);
@@ -56,8 +60,14 @@ public class DecisionNodeContext {
     }
 
     /**
-     * Returns the modifiable map of nearby agents on incoming edges and nodes. The keys are the graph elements (edges or nodes) that are adjacent to the source node, and the values are lists of agents that are currently on those elements or planning to move onto them.
-     * This method should stays package-private to prevent external modification of the map structure, but allows modification of the lists of agents for each graph element.
+     * Returns the modifiable map of nearby agents on incoming edges and nodes. The
+     * keys are the graph elements (edges or nodes) that are adjacent to the source
+     * node, and the values are lists of agents that are currently on those elements
+     * or planning to move onto them.
+     * This method should stays package-private to prevent external modification of
+     * the map structure, but allows modification of the lists of agents for each
+     * graph element.
+     * 
      * @return the map of nearby agents on incoming edges and nodes
      */
     Map<Edge, List<Agent>> getIncomingNearbyAgents() {
@@ -65,8 +75,14 @@ public class DecisionNodeContext {
     }
 
     /**
-     * Returns the modifiable map of nearby agents on outgoing edges and nodes. The keys are the graph elements (edges or nodes) that are adjacent to the source node, and the values are lists of agents that are currently on those elements or planning to move onto them.
-     * This method should stays package-private to prevent external modification of the map structure, but allows modification of the lists of agents for each graph element.
+     * Returns the modifiable map of nearby agents on outgoing edges and nodes. The
+     * keys are the graph elements (edges or nodes) that are adjacent to the source
+     * node, and the values are lists of agents that are currently on those elements
+     * or planning to move onto them.
+     * This method should stays package-private to prevent external modification of
+     * the map structure, but allows modification of the lists of agents for each
+     * graph element.
+     * 
      * @return the map of nearby agents on outgoing edges and nodes
      */
     Map<Edge, List<Agent>> getOutgoingNearbyAgents() {
@@ -85,12 +101,12 @@ public class DecisionNodeContext {
     }
 
     // void removeOutgoingIntent(Agent agent) {
-    //     if (agent == null) {
-    //         return;
-    //     }
-    //     for (List<Agent> agents : outgoingNearbyAgents.values()) {
-    //         agents.remove(agent);
-    //     }
+    // if (agent == null) {
+    // return;
+    // }
+    // for (List<Agent> agents : outgoingNearbyAgents.values()) {
+    // agents.remove(agent);
+    // }
     // }
 
     public GraphPath getRecommendedPath() {

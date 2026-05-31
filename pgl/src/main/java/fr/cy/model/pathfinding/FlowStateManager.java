@@ -1,5 +1,6 @@
 package fr.cy.model.pathfinding;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,7 +18,8 @@ import fr.cy.model.graph.element.Node;
  * @author GI3A
  * @version 1.0
  */
-public class FlowStateManager {
+public class FlowStateManager implements Serializable {
+    private static final long serialVersionUID = 1L;
     private final Graph graph;
     private final Map<Edge, Double> edgeFlows;
     private final Map<Node, Double> nodeFlows;
@@ -31,7 +33,7 @@ public class FlowStateManager {
         this.graph = graph;
         this.edgeFlows = new HashMap<>();
         this.nodeFlows = new HashMap<>();
-        
+
         initializeFlows();
     }
 

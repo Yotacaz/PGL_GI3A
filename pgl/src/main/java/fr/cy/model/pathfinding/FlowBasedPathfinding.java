@@ -1,5 +1,6 @@
 package fr.cy.model.pathfinding;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,7 +21,8 @@ import fr.cy.model.graph.element.Node;
  * @author GI3A
  * @version 1.0
  */
-public class FlowBasedPathfinding {
+public class FlowBasedPathfinding implements Serializable {
+    private static final long serialVersionUID = 1L;
     private final Graph graph;
     private final MinCostMaxFlow flowAlgorithm;
     private final Map<Integer, List<Node>> pathCache;
@@ -71,7 +73,7 @@ public class FlowBasedPathfinding {
     /**
      * Calcule le flux global pour l'ensemble des demandes de chemin.
      *
-     * @param requests liste de paires (source, destination)
+     * @param requests   liste de paires (source, destination)
      * @param flowAmount montant de flux par demande
      * @return le flux total distribué dans le réseau
      */
@@ -82,10 +84,9 @@ public class FlowBasedPathfinding {
 
         for (Pair<Node, Node> request : requests) {
             List<Node> path = flowAlgorithm.computeMinCostMaxFlow(
-                request.getFirst(),
-                request.getSecond(),
-                flowAmount
-            );
+                    request.getFirst(),
+                    request.getSecond(),
+                    flowAmount);
 
             if (!path.isEmpty()) {
                 totalFlow += flowAmount;
