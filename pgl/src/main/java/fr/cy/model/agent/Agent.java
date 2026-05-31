@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import java.io.*;
+
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.agent.behaviour.decisions.AgentDecisionScore;
 import fr.cy.model.agent.behaviour.decisions.AgentPossibleDecision;
@@ -26,7 +28,8 @@ import fr.cy.model.stress.StressInducing;
  * helpers used by the simulation. Many behavioral methods are placeholders and
  * should be implemented when simulation rules are defined.</p>
  */
-public class Agent implements StressInducing {
+public class Agent implements StressInducing, Serializable {
+    private static final long serialVersionUID = 1L;
     /** Unique identifier for the agent */
     private final int id;
     /** Name of the agent, for easier identification */
