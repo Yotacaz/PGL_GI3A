@@ -18,6 +18,7 @@ public class SimulationController {
 
     public SimulationController(Simulation simulation, GraphCanvas canvas) {
         this.simulation = simulation;
+        simulation.getSimulationSettings().setTickDuration(0.016); // 60fps
         this.canvas = canvas;
         this.renderer = new GraphRenderer(canvas.getGraphicsContext2D());
 
@@ -45,10 +46,12 @@ public class SimulationController {
 
     public void play() {
         isRunning = true;
+        simulation.start();
     }
 
     public void pause() {
         isRunning = false;
+        simulation.stop();
     }
 
     public boolean isRunning() {
@@ -57,7 +60,8 @@ public class SimulationController {
 
     public void reset() {
         isRunning = false;
-        // Optionnel: simulation.reset() // si implémentée dans ton backend
+        simulation.stop();
+        // simulation.reset()
         renderer.render(simulation, canvas);
     }
 

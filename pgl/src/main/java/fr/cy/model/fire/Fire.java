@@ -1,22 +1,33 @@
 package fr.cy.model.fire;
 
-/** TODO: VALEURS MAGIQUES: A RETRAVAILLER */
-
 /**
  * Represents a dynamic fire instance in the simulation.
  * Each Fire keeps track of its current intensity, smoke level and spread rate.
- * The object also records how many update ticks it has been burning. The
- * {@link #update()} method advances the fire by one tick and modifies the
- * intensity and smoke level according to fixed multipliers.
+ * The object also records how long it has been burning in seconds.
  */
 public class Fire {
+
+    // --- CONSTANTES (Remplacement des valeurs magiques) ---
+    /**
+     * Multiplicateur de croissance de l'intensité par seconde (1.35 = +35% par sec)
+     */
+    private static final double INTENSITY_GROWTH_PER_SEC = 1.05;
+
+    /**
+     * Multiplicateur de croissance de la fumée par seconde (1.20 = +20% par sec)
+     */
+    private static final double SMOKE_GROWTH_PER_SEC = 1.05;
+
     /** Sert a faire peur aux Agents, influence le stress */
     private double intensity;
-    // TODO: prendre en compte smoke
+
+    // TODO: prendre en compte smoke dans la vision ou l'étouffement des agents
     private double smokeLevel;
 
     private double spreadRate;
-    private int burningTicks;
+
+    /** Temps total de combustion en secondes */
+    private double burningTime;
 
     /**
      * Create a new Fire.
@@ -30,19 +41,25 @@ public class Fire {
         this.smokeLevel = smokeLevel;
         this.spreadRate = spreadRate;
 
-        this.burningTicks = 0;
+        this.burningTime = 0.0;
     }
 
     /**
-     * Advance the fire by one simulation tick.
-     * This increments the burning tick counter and increases the intensity and
-     * smoke level by fixed multipliers to simulate growth over time.
+     * Advance the fire based on the actual time elapsed.
+     * Uses exponential growth scaled by the tick duration to ensure the fire
+     * grows at the exact same speed regardless of the simulation framerate.
+     * * @param tickDuration le temps écoulé depuis la dernière frame (en secondes)
      */
-    public void update() {
-        burningTicks++;
+    public void update(double tickDuration) {
+        this.burningTime += tickDuration;
 
-        intensity *= 1.005;
-        smokeLevel *= 1.003;
+        // Croissance exponentielle lissée par le temps réel
+        this.intensity *= Math.pow(INTENSITY_GROWTH_PER_SEC, tickDuration);
+        this.smokeLevel *= Math.pow(SMOKE_GROWTH_PER_SEC, tickDuration);
+    }
+
+    public void setIntensity(double intensity) {
+        this.intensity = intensity;
     }
 
     /**
@@ -68,9 +85,9 @@ public class Fire {
     }
 
     /**
-     * @return the number of update ticks this fire has been burning
+     * @return the total time this fire has been burning (in seconds)
      */
-    public int getBurningTicks() {
-        return burningTicks;
+    public double getBurningTime() {
+        return burningTime;
     }
 }

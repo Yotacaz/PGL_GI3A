@@ -336,7 +336,7 @@ public class Edge extends GraphElement {
             return 0.0;
         }
 
-        return getFire().getBurningTicks() * getFire().getSpreadRate();
+        return getFire().getBurningTime() * getFire().getSpreadRate();
     }
 
     public boolean isFullyBurned() {
@@ -364,7 +364,7 @@ public class Edge extends GraphElement {
         }
 
         // Distance = Temps (ticks) * Vitesse de propagation
-        double burnedDistance = getFire().getBurningTicks() * getFire().getSpreadRate();
+        double burnedDistance = getFire().getBurningTime() * getFire().getSpreadRate();
 
         return Math.min(1.0, burnedDistance / getLength());
     }

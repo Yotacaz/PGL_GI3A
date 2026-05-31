@@ -30,7 +30,10 @@ public class Simulation {
         this.fireService = new FireService();
         DecisionContextProvider decisionContextProvider = new DecisionContextProvider(graph, pathFinder);
         AgentGenerator agentGenerator = new AgentGenerator(graph);
-        this.agentManager = new AgentManager(decisionContextProvider, agentGenerator, simulationSettings); //NO AGENT IS GENERATED YET
+        this.agentManager = new AgentManager(decisionContextProvider, agentGenerator, simulationSettings); // NO AGENT
+                                                                                                           // IS
+                                                                                                           // GENERATED
+                                                                                                           // YET
 
         this.currentTick = 0;
         this.running = false;
@@ -49,7 +52,7 @@ public class Simulation {
             return;
         }
 
-        fireService.updateFires(graph);
+        fireService.updateFires(graph, simulationSettings.getTickDuration());
         graph.tick();
         agentManager.tick(simulationSettings.getTickDuration());
         currentTick++;
