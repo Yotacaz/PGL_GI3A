@@ -12,6 +12,7 @@ import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.graph.element.Edge;
+import fr.cy.model.pathfinding.GraphPath;
 import fr.cy.model.pathfinding.PathFinder;
 
 public class DecisionContextProvider implements Serializable {
@@ -89,15 +90,38 @@ public class DecisionContextProvider implements Serializable {
             }
         }
 
-        // double localStressLevel = 0.5; // Placeholder value
-        // double localCrowdingLevel = 0.5; // Placeholder value
+        // Chemin optimal vers la sortie la plus proche via l'algo Min-Cost Max-Flow
+        GraphPath shortestPath = computeShortestPathToNearestExit(currentNode);
 
-        // GraphPath recommendedPath = pathFinder.findPath(agent.getCurrentNode(),
-        // null);
         List<Edge> outgoingEdges = currentNode.getOutgoingEdges();
-        return new DecisionNodeContext(currentNode, null, null, outgoingEdges, nearbyIncomingAgents,
+        return new DecisionNodeContext(currentNode, shortestPath, shortestPath, outgoingEdges, nearbyIncomingAgents,
                 nearbyOutgoingAgents);
+    }
 
+    /**
+     * Cherche la sortie la plus proche depuis un nœud et retourne le chemin optimal.
+     * Utilise l'algorithme Min-Cost Max-Flow du PathFinder du groupe.
+     * Retourne null si aucune sortie n'est accessible.
+     */
+    private GraphPath computeShortestPathToNearestExit(Node from) {
+        if (pathFinder == null) return null;
+
+        List<Node> exits = graph.getExits();
+        if (exits.isEmpty()) return null;
+
+        List<Node> bestPath = null;
+        double bestCost = Double.POSITIVE_INFINITY;
+
+        for (Node exit : exits) {
+            if (exit.equals(from)) continue;
+            List<Node> path = pathFinder.shortestPath(from, exit);
+            if (!path.isEmpty() && path.size() < bestCost) {
+                bestCost = path.size();
+                bestPath = path;
+            }
+        }
+
+        return bestPath != null ? new GraphPath(bestPath) : null;
     }
 
     @Override
