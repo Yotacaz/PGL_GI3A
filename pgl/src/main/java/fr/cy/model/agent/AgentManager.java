@@ -88,16 +88,6 @@ public class AgentManager implements Serializable {
         agents.add(newAgent);
     }
 
-    public void generateAgentOnEdge(String baseName, Edge edge, double edgeProgress) {
-        Agent newAgent = agentGenerator.generateAgent(baseName, edge, edgeProgress);
-        agents.add(newAgent);
-    }
-
-    public void generateAgentOnNode(String baseName, Node node) {
-        Agent newAgent = agentGenerator.generateAgent(baseName, node);
-        agents.add(newAgent);
-    }
-
     /**
      * Main update method for the agent manager, called at each tick of the
      * simulation.
