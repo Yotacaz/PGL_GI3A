@@ -153,7 +153,7 @@ public class FlowStateManager {
         for (Map.Entry<Edge, Double> entry : edgeFlows.entrySet()) {
             Edge edge = entry.getKey();
             double flow = entry.getValue();
-            double cost = edge.getLength() + edge.getStressInducingFactor() * 100;
+            double cost = edge.getLength() + edge.getStressInducingImpact() * 100;
             totalCost += flow * cost;
         }
 

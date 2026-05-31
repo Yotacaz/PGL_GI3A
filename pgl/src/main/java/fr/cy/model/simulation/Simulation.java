@@ -14,18 +14,23 @@ public class Simulation {
     private final AgentManager agentManager;
     private final PathFinder pathFinder;
     private final FireService fireService;
+    private final SimulationSettings simulationSettings;
 
     private int currentTick;
-    public static final double TICK_DURATION = 1.0;
     private boolean running;
 
     public Simulation(Graph graph) {
+        this(graph, new SimulationSettings());
+    }
+
+    public Simulation(Graph graph, SimulationSettings simulationSettings) {
         this.graph = graph;
+        this.simulationSettings = simulationSettings;
         this.pathFinder = new PathFinder(graph);
         this.fireService = new FireService();
         DecisionContextProvider decisionContextProvider = new DecisionContextProvider(graph, pathFinder);
         AgentGenerator agentGenerator = new AgentGenerator(graph);
-        this.agentManager = new AgentManager(decisionContextProvider, agentGenerator); //NO AGENT IS GENERATED YET
+        this.agentManager = new AgentManager(decisionContextProvider, agentGenerator, simulationSettings); //NO AGENT IS GENERATED YET
 
         this.currentTick = 0;
         this.running = false;
@@ -46,7 +51,7 @@ public class Simulation {
 
         fireService.updateFires(graph);
         graph.tick();
-        agentManager.tick();
+        agentManager.tick(simulationSettings.getTickDuration());
         currentTick++;
     }
 
@@ -72,6 +77,10 @@ public class Simulation {
 
     public FireService getFireService() {
         return fireService;
+    }
+
+    public SimulationSettings getSimulationSettings() {
+        return simulationSettings;
     }
 
     @Override

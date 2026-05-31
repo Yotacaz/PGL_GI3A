@@ -27,11 +27,13 @@ public class AgentGenerator {
 	 */
 	public Agent generateRandomAgent(String baseName) {
 		String name = String.format(Locale.ROOT, "%s-%d", baseName, RNG.nextInt(1_000_000));
-		int maxSpeed = 1 + RNG.nextInt(5); // 1..5 units
+		double maxSpeed = 1 + RNG.nextDouble() * 4; // 1..5 units
 		double stressTolerance = RNG.nextDouble();
 		double crowdingTolerance = RNG.nextDouble();
 		double repeatLastDecisionTendency = 0.875 + RNG.nextDouble(); // Between 0.875 and 1.875
 		double baseOwnDecisionMakingFactor = RNG.nextDouble(); // Between 0 and 1
+		int health = 75 + RNG.nextInt(26); // Between 75 and 100
+		double surfaceAreaTakenByAgent = 0.5 + RNG.nextDouble(); // Between 0.5 and 1.5
 		//get a random node from the graph and put the agent on it (or null if no node is available)
 		Node randomNode = null;
 		if (graph != null && !graph.getNodes().isEmpty()) {
@@ -40,7 +42,7 @@ public class AgentGenerator {
 		}
 
 		Agent agent = new Agent(name, randomNode, maxSpeed, stressTolerance, crowdingTolerance,
-				baseOwnDecisionMakingFactor, repeatLastDecisionTendency);
+				baseOwnDecisionMakingFactor, repeatLastDecisionTendency, health, surfaceAreaTakenByAgent);
 		return agent;
 	}
 

@@ -6,7 +6,6 @@ import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
-import fr.cy.model.simulation.Simulation;
 
 public abstract class AbstractMoveAction extends AgentAction {
     /** The progress of the agent along the current edge, between 0 and 1 */
@@ -21,41 +20,58 @@ public abstract class AbstractMoveAction extends AgentAction {
     }
 
     public void setEdgeProgress(double edgeProgress) {
-        if (edgeProgress < 0) {
+        if (edgeProgress < 0.0) {
             throw new IllegalArgumentException("Edge progress must be positive");
         }
         this.edgeProgress = Math.min(edgeProgress, 1.0);
     }
 
     public boolean isEdgeCompleted() {
-        return edgeProgress >= 1.0;
+        return edgeProgress >= 0.999999; // consider edge completed when progress is close enough to 1.0 to avoid floating-point issues
     }
 
-    protected double travelAlongEdge(AgentSettings agentSettings, Edge edge) {
+    protected double travelAlongEdge(AgentSettings agentSettings, Edge edge, double availableTime) {
         Agent agent = getAgent();
 
         agent.putOnEdge(edge);
 
-        double speed = agent.getEffectiveSpeed(agentSettings);
-        double edgeLength = edge.getLength();
-        double progress = getEdgeProgress();
-        double remainingDistance = edgeLength * (1.0 - progress); // distance left before starting traveling
-        remainingDistance = Math.max(0, remainingDistance - speed * Simulation.TICK_DURATION); // Distance left to travel after this tick
-        double newProgress = 1.0 - (remainingDistance / edgeLength);
-        setEdgeProgress(newProgress);
-        if (isEdgeCompleted()) {
-            agent.incrementNodeVisited();
-            Node nextNode = edge.getOppositeNode(agent.getPreviousOrCurrentNode());
-            agent.putOnNode(nextNode);
+        if (availableTime <= 0.0) {
+            return 0.0;
         }
 
-        double timeConsumed = Simulation.TICK_DURATION;
-        if (speed <= 0) {
-            return timeConsumed; // If speed is zero or negative, we consider the whole tick is consumed
+        double speed = agent.getEffectiveSpeed(agentSettings);
+        double edgeLength = edge.getLength();
+        if (edgeLength <= 0.00) {
+            setEdgeProgress(1.0);
+            goToNextNodeIfEdgeCompleted();
+            return 0.0; // No time consumed if the edge has no length
         }
-        double distanceTraveled = Math.min(speed * Simulation.TICK_DURATION, remainingDistance);
-        timeConsumed = distanceTraveled / speed;
+        double progress = getEdgeProgress();
+        if (speed <= 0) {
+            return availableTime;
+        }
+
+        double remainingDistance = edgeLength * (1.0 - progress);
+        double distanceTraveled = Math.min(speed * availableTime, remainingDistance);
+        double timeConsumed = distanceTraveled / speed;
+        double newProgress = progress + (distanceTraveled / edgeLength);
+        setEdgeProgress(newProgress);
+
+        goToNextNodeIfEdgeCompleted();
+
         return timeConsumed;
+    }
+
+    private void goToNextNodeIfEdgeCompleted() {
+        if (isEdgeCompleted()) {
+            Agent agent = getAgent();
+            agent.incrementNodeVisited();
+            Edge currentEdge = agent.getCurrentEdge();
+            if (currentEdge != null) {
+                Node nextNode = currentEdge.getOppositeNode(agent.getPreviousOrCurrentNode());
+                agent.putOnNode(nextNode);
+            }
+        }
     }
 
     @Override
@@ -65,9 +81,12 @@ public abstract class AbstractMoveAction extends AgentAction {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (!super.equals(obj)) return false;
-        if (getClass() != obj.getClass()) return false;
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
         AbstractMoveAction other = (AbstractMoveAction) obj;
         return Double.compare(edgeProgress, other.edgeProgress) == 0;
     }

@@ -25,7 +25,7 @@ public class AgentView extends Circle {
         super(RADIUS);
 
         // Couleur selon l'état
-        setFill(colorForState(agent.getState()));
+        setFill(colorForState(agent.getEmotionalState()));
         setStroke(Color.BLACK);
         setStrokeWidth(1);
         setCursor(Cursor.HAND);
@@ -33,7 +33,7 @@ public class AgentView extends Circle {
         // Tooltip : infos de l'agent au survol
         Tooltip tooltip = new Tooltip(
             "Agent : " + agent.getName() +
-            "\nÉtat : " + agent.getState().name() +
+            "\nÉtat : " + agent.getEmotionalState().name() +
             "\nStress : " + String.format("%.0f%%", agent.getStressLevel() * 100) +
             "\nVitesse max : " + agent.getMaxSpeed()
         );

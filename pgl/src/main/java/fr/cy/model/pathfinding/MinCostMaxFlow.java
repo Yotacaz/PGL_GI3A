@@ -98,7 +98,7 @@ public class MinCostMaxFlow {
      * @return le coût de l'arête
      */
     private double computeEdgeCost(fr.cy.model.graph.element.Edge edge) {
-        return PathfindingConfig.computeEdgeCost(edge.getLength(), edge.getStressInducingFactor());
+        return PathfindingConfig.computeEdgeCost(edge.getLength(), edge.getStressInducingImpact());
     }
 
     /**

@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import fr.cy.model.agent.Agent;
+import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.graph.element.Edge;
@@ -25,12 +26,13 @@ public class DecisionContextProvider {
 
     public DecisionNodeContext getContext(Agent agent) {
         Node node = agent.getCurrentNode();
-        DecisionNodeContext cachedContext = cachedContexts.getOrDefault(node, null);
+        if (node == null) {
+            return null;
+        }
+        DecisionNodeContext cachedContext = cachedContexts.get(node);
         if (cachedContext == null) {
             cachedContext = constructContext(agent);
             cachedContexts.put(node, cachedContext);
-        } else {
-
         }
         return cachedContext;
     }
@@ -39,12 +41,20 @@ public class DecisionContextProvider {
         cachedContexts.clear();
     }
 
-    // private DecisionNodeContext updateContext(DecisionNodeContext context){
-    //     // Only the agent on node and their planned outgoing edge can change before tick finishes
-    //     Node node = context.getSourceNode();
-    //     Map<GraphElement, List<Agent>> incomingNearbyAgents = context.getIncomingNearbyAgents();
-    //     //TODO    
-    // }
+    public void registerChosenAction(Agent agent, AgentAction action) {
+        if (agent == null || action == null) {
+            return;
+        }
+        Node currentNode = agent.getCurrentNode();
+        if (currentNode == null) {
+            return;
+        }
+        DecisionNodeContext context = cachedContexts.get(currentNode);
+        if (context == null) {
+            return;
+        }
+        context.registerOutgoingIntent(action.getClosestTargetGraphElement(), agent);
+    }
 
     private DecisionNodeContext constructContext(Agent agent) {
         // List<Node> recommendedPath = pathFinder.findPath(agent.getCurrentNode(), agent.getDestinationNode());

@@ -107,7 +107,7 @@ public class PathfindingUtils {
                 if (edge.getOppositeNode(current).equals(next)) {
                     double edgeCost = PathfindingConfig.computeEdgeCost(
                         edge.getLength(),
-                        edge.getStressInducingFactor()
+                        edge.getStressInducingImpact()
                     );
                     cost += edgeCost;
                     break;

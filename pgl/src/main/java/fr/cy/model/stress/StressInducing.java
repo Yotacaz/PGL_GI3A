@@ -6,11 +6,11 @@ package fr.cy.model.stress;
  */
 public interface StressInducing {
     /**
-     * Calculate the stress-inducing factor of this element, which is a value
-     * between 0 and 1 representing how much stress it induces in agents.
+     * Calculate the stress-inducing impact of this element, which is a value
+     * between -0.5 and 1 representing how much stress it induces in agents.
      * It does not include stress of neighboring elements.
      *
-     * @return the stress-inducing factor of this element
+     * @return the stress-inducing impact of this element
      */
-    public double getStressInducingFactor();
+    public double getStressInducingImpact();
 }

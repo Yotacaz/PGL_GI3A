@@ -1,5 +1,7 @@
 package fr.cy.model.agent.behaviour.agentActions;
 
+import java.util.Objects;
+
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.graph.element.Edge;
@@ -17,7 +19,7 @@ public class FollowAgentAction extends AgentAction {
 	}
 
 	@Override
-	public double perform(AgentSettings agentSettings) {
+	public double perform(AgentSettings agentSettings, double availableTime) {
 		// Placeholder: implement follow-agent behavior
 		return 0.0;
 	}
@@ -29,14 +31,14 @@ public class FollowAgentAction extends AgentAction {
 	}
 
 	@Override
-	public Edge getCurrentEdgeOrNextEdgeIfOnNode() {
+	public Edge getClosestTargetGraphElement() {
 		//TODO
 		return targetAgent.getCurrentEdgeOrNextEdgeIfOnNode();
 	}
 
 	@Override
 	public int hashCode() {
-		return java.util.Objects.hash(super.hashCode(), targetAgent == null ? null : targetAgent.getId());
+		return Objects.hash(super.hashCode(), targetAgent == null ? null : targetAgent.getId());
 	}
 
 	@Override
@@ -47,7 +49,7 @@ public class FollowAgentAction extends AgentAction {
 		FollowAgentAction other = (FollowAgentAction) obj;
 		Integer t1 = targetAgent == null ? null : targetAgent.getId();
 		Integer t2 = other.targetAgent == null ? null : other.targetAgent.getId();
-		return java.util.Objects.equals(t1, t2);
+		return Objects.equals(t1, t2);
 	}
 
 	@Override

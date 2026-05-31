@@ -1,5 +1,6 @@
 package fr.cy.model.agent.behaviour.decisions;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -18,8 +19,6 @@ public class DecisionNodeContext {
     private List<Edge> outgoingEdges;
     private Map<Edge, List<Agent>> incomingNearbyAgents;
     private Map<Edge, List<Agent>> outgoingNearbyAgents;
-    /**Read only map of agent actions for this tick*/
-    private int totalNumberOfNearbyAgents;
     private CongestionStats<Edge> congestionStatsForOutgoingEdges;
     /* Map of edges to the number of agents currently taking or planning to next take that edge */
 
@@ -33,8 +32,6 @@ public class DecisionNodeContext {
         this.outgoingEdges = outgoingEdges;
         this.incomingNearbyAgents = incomingNearbyAgents;
         this.outgoingNearbyAgents = outgoingNearbyAgents;
-        this.totalNumberOfNearbyAgents = incomingNearbyAgents.values().stream().mapToInt(List::size).sum() +
-                outgoingNearbyAgents.values().stream().mapToInt(List::size).sum();
         this.congestionStatsForOutgoingEdges = CongestionStats.computeCongestionStats(outgoingEdges);
     }
 
@@ -44,9 +41,6 @@ public class DecisionNodeContext {
     //     outgoingEdges.clear();
     // }
 
-    public int getTotalNumberOfNearbyAgents() {
-        return totalNumberOfNearbyAgents;
-    }
 
     public List<Edge> getOutgoingEdges() {
         return Collections.unmodifiableList(outgoingEdges);
@@ -79,8 +73,24 @@ public class DecisionNodeContext {
         return outgoingNearbyAgents;
     }
 
-    // public Agent getRandomAgentInOutgoingEdge() {
-    //     // outgoingNearbyAgents.
+    void registerOutgoingIntent(Edge edge, Agent agent) {
+        if (edge == null || agent == null) {
+            return;
+        }
+        // removeOutgoingIntent(agent);
+        List<Agent> agents = outgoingNearbyAgents.computeIfAbsent(edge, k -> new ArrayList<>());
+        if (!agents.contains(agent)) {
+            agents.add(agent);
+        }
+    }
+
+    // void removeOutgoingIntent(Agent agent) {
+    //     if (agent == null) {
+    //         return;
+    //     }
+    //     for (List<Agent> agents : outgoingNearbyAgents.values()) {
+    //         agents.remove(agent);
+    //     }
     // }
 
     public GraphPath getRecommendedPath() {
@@ -117,7 +127,6 @@ public class DecisionNodeContext {
         return "DecisionNodeContext{" +
                 "sourceNode=" + (sourceNode == null ? "null" : sourceNode.toString()) +
                 ", outgoingEdges=" + (outgoingEdges == null ? 0 : outgoingEdges.size()) +
-                ", totalNearbyAgents=" + totalNumberOfNearbyAgents +
                 '}';
     }
 
