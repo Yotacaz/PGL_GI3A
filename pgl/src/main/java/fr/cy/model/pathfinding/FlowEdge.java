@@ -9,7 +9,7 @@ import fr.cy.model.graph.element.Node;
  * @version 1.0
  */
 public class FlowEdge {
-    private final Node from;
+    
     private final Node to;
     private final double capacity;
     private final double cost;
@@ -18,13 +18,12 @@ public class FlowEdge {
     /**
      * Constructeur d'une arête de flux.
      *
-     * @param from     nœud source
-     * @param to       nœud destination
+     *      * @param to       nœud destination
      * @param capacity capacité de l'arête
      * @param cost     coût unitaire du flux
      */
-    public FlowEdge(Node from, Node to, double capacity, double cost) {
-        this.from = from;
+    public FlowEdge( Node to, double capacity, double cost) {
+        
         this.to = to;
         this.capacity = capacity;
         this.cost = cost;
@@ -49,33 +48,17 @@ public class FlowEdge {
         this.flow += amount;
     }
 
-    /**
-     * Retrait du flux de cette arête (pour l'arête inverse).
-     *
-     * @param amount montant du flux à retirer
-     */
-    public void removeFlow(double amount) {
-        this.flow -= amount;
-    }
+    
 
     // Getters
-    public Node getFrom() {
-        return from;
-    }
+    
 
     public Node getTo() {
         return to;
     }
 
-    public double getCapacity() {
-        return capacity;
-    }
-
     public double getCost() {
         return cost;
-    }
-
-    public double getFlow() {
-        return flow;
+    
     }
 }

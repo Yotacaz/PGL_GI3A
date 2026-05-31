@@ -279,7 +279,6 @@ public class PrimaryController {
 
     /**
      * Dijkstra qui évite strictement les arêtes et noeuds en feu.
-     * Si aucun chemin libre n'existe, retourne null (l'agent reste sur place).
      * Les agents ne peuvent PAS entrer dans un noeud ou arête en feu.
      */
     private Node getNextNodeTowardExit(Node node, Graph graph) {
