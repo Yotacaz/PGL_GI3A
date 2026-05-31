@@ -7,20 +7,22 @@ import java.util.Objects;
 
 public class FollowSingleEdgeAction extends AbstractMoveAction {
     private final Edge edgeToFollow;
-    
+
     public FollowSingleEdgeAction(Agent agent, Edge edgeToFollow) {
         super(agent);
-        this.edgeToFollow = edgeToFollow;
+        this.edgeToFollow = Objects.requireNonNull(edgeToFollow);
     }
 
     @Override
-    public Edge getCurrentEdgeOrNextEdgeIfOnNode() {
+    public Edge getClosestTargetGraphElement() {
         return edgeToFollow;
     }
 
     @Override
-    public double perform(AgentSettings agentSettings) {
-        double consumedTime = travelAlongEdge(agentSettings, edgeToFollow);
+    public double perform(AgentSettings agentSettings, double availableTime) {
+        assert getProgress() < 1.0 : "Action should not be performed if already completed";
+        double consumedTime = travelAlongEdge(agentSettings, edgeToFollow, availableTime);
+        setProgress(getEdgeProgress()); // single edge progress is the overall action progress
         return consumedTime;
     }
 
@@ -35,9 +37,12 @@ public class FollowSingleEdgeAction extends AbstractMoveAction {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (!super.equals(obj)) return false;
-        if (getClass() != obj.getClass()) return false;
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
         FollowSingleEdgeAction other = (FollowSingleEdgeAction) obj;
         Integer e1 = edgeToFollow == null ? null : edgeToFollow.getId();
         Integer e2 = other.edgeToFollow == null ? null : other.edgeToFollow.getId();
@@ -46,6 +51,7 @@ public class FollowSingleEdgeAction extends AbstractMoveAction {
 
     @Override
     public String toString() {
-        return super.toString().replace("}", "") + ", edgeToFollow=" + (edgeToFollow == null ? "null" : edgeToFollow.toString()) + '}';
+        return super.toString().replace("}", "") + ", edgeToFollow="
+                + (edgeToFollow == null ? "null" : edgeToFollow.toString()) + '}';
     }
 }

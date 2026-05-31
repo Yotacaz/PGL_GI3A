@@ -487,7 +487,7 @@ public class ConsoleUI {
             System.out.println("    Nom: " + agent.getName());
             System.out.println("    Vitesse max: " + agent.getMaxSpeed());
             System.out.println("    Stress: " + String.format("%.0f%%", agent.getStressLevel() * 100));
-            System.out.println("    État: " + agent.getState().name());
+            System.out.println("    État: " + agent.getEmotionalState().name());
             System.out.println("─".repeat(80));
         }
 
@@ -634,7 +634,7 @@ public class ConsoleUI {
     private EmotionalState getDominantState(List<Agent> agents) {
         int calm = 0, selfish = 0, panicking = 0;
         for (Agent a : agents) {
-            switch (a.getState()) {
+            switch (a.getEmotionalState()) {
                 case CALM -> calm++;
                 case SELFISH -> selfish++;
                 case PANICKING -> panicking++;

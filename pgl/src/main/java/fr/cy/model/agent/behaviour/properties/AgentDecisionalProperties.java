@@ -103,6 +103,7 @@ public class AgentDecisionalProperties {
         this.repeatLastDecisionFactor = repeatLastDecisionTendency;
     }
 
+    /** @return the congestion tolerance (0..1)*/
     public double getCongestionTolerance() {
         return congestionTolerance;
     }

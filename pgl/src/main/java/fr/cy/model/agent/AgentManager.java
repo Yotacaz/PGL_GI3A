@@ -1,6 +1,7 @@
 package fr.cy.model.agent;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -8,6 +9,7 @@ import java.util.Objects;
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.agent.behaviour.decisions.DecisionNodeContext;
 import fr.cy.model.agent.behaviour.decisions.DecisionContextProvider;
+import fr.cy.model.simulation.SimulationSettings;
 
 /**
  * Manager responsible for higher-level operations on {@link Agent} instances.
@@ -16,19 +18,23 @@ import fr.cy.model.agent.behaviour.decisions.DecisionContextProvider;
 public class AgentManager {
     private AgentSettings agentSettings = new AgentSettings();
     private List<Agent> agents;
+    private List<Agent> deadAgents = new ArrayList<>();
     private DecisionContextProvider decisionContextProvider;
     private AgentGenerator agentGenerator;
+    private final SimulationSettings simulationSettings;
     // private Map<Agent, AgentAction> agentActionsPreviousTick = new HashMap<>();
 
     public AgentManager(List<Agent> agents, DecisionContextProvider decisionContextProvider,
-            AgentGenerator agentGenerator) {
+            AgentGenerator agentGenerator, SimulationSettings simulationSettings) {
         this.agents = agents;
         this.decisionContextProvider = decisionContextProvider;
         this.agentGenerator = agentGenerator;
+        this.simulationSettings = simulationSettings;
     }
 
-    public AgentManager(DecisionContextProvider decisionContextProvider, AgentGenerator agentGenerator) {
-        this(new ArrayList<>(), decisionContextProvider, agentGenerator);
+    public AgentManager(DecisionContextProvider decisionContextProvider, AgentGenerator agentGenerator,
+            SimulationSettings simulationSettings) {
+        this(new ArrayList<>(), decisionContextProvider, agentGenerator, simulationSettings);
     }
 
     private class AgentByOwnDecisionMakingComparator implements Comparator<Agent> {
@@ -66,25 +72,60 @@ public class AgentManager {
       * It updates the stress levels of agents and processes their decisions and actions.
       */
     public void tick() {
-        updateStress();
-        moveAgents();
+        tick(simulationSettings.getTickDuration());
     }
 
-    private void moveAgents() {
+    public void tick(double tickDuration) {
+        updateAgentsState();
+        moveAgents(tickDuration);
+    }
+
+    private void moveAgents(double tickDuration) {
         decisionContextProvider.clearCache();
         sortAgentsByOwnDecisionMakingFactor(); //should be relatively fast since the list is almost sorted
 
+        // generate and register decisions for all agents before performing any action, 
+        // to ensure that all agents have the same information when making their decisions
         for (Agent agent : agents) {
             if (agent.isOnNode()) {
                 DecisionNodeContext decisionContext = decisionContextProvider.getContext(agent);
                 AgentAction action = agent.makeDecision(decisionContext, agentSettings);
-                // System.out.println("Agent " + agent.getName() + " decided to perform action: " + (action == null ? "null" : action.toString()));
+                decisionContextProvider.registerChosenAction(agent, action);
             }
         }
 
         for (Agent agent : agents) {
-            double performed = agent.performCurrentAction(agentSettings);
-            System.out.println(performed);
+            double remainingTime = tickDuration;
+            while (remainingTime > 0.0) {
+                if (agent.getCurrentAction() == null || (agent.getCurrentAction().isCompleted() && agent.isOnNode())) {
+                    if (!agent.isOnNode()) {
+                        break;
+                    }
+                    DecisionNodeContext decisionContext = decisionContextProvider.getContext(agent);
+                    if (decisionContext == null) {
+                        break;
+                    }
+                    AgentAction action = agent.makeDecision(decisionContext, agentSettings);
+                    decisionContextProvider.registerChosenAction(agent, action);
+                    if (action == null) {
+                        break;
+                    }
+                }
+
+                double consumed = agent.performCurrentAction(agentSettings, remainingTime);
+                if (consumed <= 0.000000001) {
+                    break;
+                }
+                remainingTime -= consumed;
+
+                if (agent.getCurrentAction() != null && agent.getCurrentAction().isCompleted()) {
+                    agent.setCurrentAction(null);
+                }
+
+                if (remainingTime <= 0.0) {
+                    break;
+                }
+            }
         }
     }
 
@@ -92,13 +133,58 @@ public class AgentManager {
         return agents;
     }
 
+    /** Removes the specified agent from the graph and resets its state,
+     *  but does not release its ID or add it to the list of dead agents.
+     *
+     * @param agent the agent to remove
+     * @return the removed agent
+     */
+    public Agent removeAgentFromGraph(Agent agent) {
+        agents.remove(agent);
+        agent.putOnNode(null);
+        agent.setCurrentAction(null);
+        agent.setStressLevel(0);
+        return agent;
+    }
+
+    /** Kills the agent and removes it from the graph, but keeps it in the list of dead agents for statistics purposes */
+    public Agent killAgent(Agent agent) {
+        agent.kill();
+        deadAgents.add(agent);
+        return removeAgentFromGraph(agent);
+    }
+
+    /** @return the unmodifiable list of dead agents */
+    public List<Agent> getDeadAgents() {
+        return Collections.unmodifiableList(deadAgents);
+    }
+
+    /** Clears the list of dead agents and releases their IDs 
+     * <b>Agents removed with this method should not be used anymore</b>
+    */
+    public void clearDeadAgents() {
+        for (Agent agent : deadAgents) {
+            agent.releaseId();
+        }
+        deadAgents.clear();
+    }
+
+    /** Deletes the agent from the graph and releases its ID, but does not add it to the list of dead agents
+    * <b>Agents removed with this method should not be used anymore</b>
+     * @return the removed agent
+    */
+    public Agent deleteAgent(Agent agent) {
+        agent.releaseId();
+        return removeAgentFromGraph(agent);
+    }
+
     /**
-     * Updates the stress levels of all agents in the simulation.
+     * Updates the state of all agents in the simulation (including stress levels).
      * This method requires that the graph elements have their stress-inducing factors updated beforehand
      */
-    private void updateStress() {
+    private void updateAgentsState() {
         for (Agent agent : agents) {
-            agent.updateStressLevel();
+            agent.updateState();
         }
     }
 

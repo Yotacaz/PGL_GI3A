@@ -17,7 +17,7 @@ public class FollowPathAction extends AbstractMoveAction {
     }
 
     @Override
-    public Edge getCurrentEdgeOrNextEdgeIfOnNode() {
+    public Edge getClosestTargetGraphElement() {
         if (path == null || currentEdgeIndex >= path.getEdges().size()) {
             return null; // No more edges to follow
         }
@@ -30,17 +30,18 @@ public class FollowPathAction extends AbstractMoveAction {
     }
 
     @Override
-    public double perform(AgentSettings agentSettings) {
-        double consumedTime = 1.0;
-        Edge currentEdge = getCurrentEdgeOrNextEdgeIfOnNode();
+    public double perform(AgentSettings agentSettings, double availableTime) {
+        Edge currentEdge = getClosestTargetGraphElement();
         if (currentEdge == null) {
-            setEdgeProgress(1.0);
+            setProgress(1.0);   //no more edge
             return 0.0; //nothing done = no time consumed
         }
         //no looping done for each edge of the path because we want to allow the agent to make another decision
-        consumedTime = travelAlongEdge(agentSettings, currentEdge);
-        if (consumedTime > 0) {
+        double consumedTime = travelAlongEdge(agentSettings, currentEdge, availableTime);
+        if (isEdgeCompleted()) {
+            setEdgeProgress(0.0);
             currentEdgeIndex++;
+            setProgress((double) currentEdgeIndex / path.getEdges().size());
         }
         return consumedTime;
     }

@@ -18,15 +18,16 @@ public class AgentSettings {
         defaultDecisionMakingFactors.put(AgentPossibleDecision.FOLLOW_RECOMMENDED_PATH, 1.5);
         defaultDecisionMakingFactors.put(AgentPossibleDecision.FOLLOW_SHORTEST_PATH, 0.05);
         defaultDecisionMakingFactors.put(AgentPossibleDecision.NICEST_PATH, 0.2);
-        defaultDecisionMakingFactors.put(AgentPossibleDecision.RANDOM, 1.0);
-        defaultDecisionMakingFactors.put(AgentPossibleDecision.CONTINUE_LAST_ACTION, 1.5);
+        defaultDecisionMakingFactors.put(AgentPossibleDecision.RANDOM, 0.5);
+        defaultDecisionMakingFactors.put(AgentPossibleDecision.CONTINUE_LAST_ACTION, 2.5);
         // decisionMakingFactors.put(FollowShortestPathAction.class, 0.2);
         // decisionMakingFactors.put(NicestPathAction.class, 0.5);
     }
 
     private double WALKING_SPEED = 1.0;
     private double RUNNING_SPEED = 2.0;
-    private double WALK_SPEED_REDUCTION_FACTOR = RUNNING_SPEED / WALKING_SPEED; 
+    private double WALK_SPEED_REDUCTION_FACTOR = RUNNING_SPEED / WALKING_SPEED;
+
     public Map<AgentPossibleDecision, Double> getImmutableDecisionMakingFactors() {
         return Collections.unmodifiableMap(defaultDecisionMakingFactors);
     }

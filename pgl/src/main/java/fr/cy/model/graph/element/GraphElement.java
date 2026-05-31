@@ -208,7 +208,7 @@ public abstract class GraphElement implements StressInducing {
     }
 
     @Override
-    public double getStressInducingFactor() {
+    public double getStressInducingImpact() {
         return getCachedTotalStressInducedIncludingNeighbors();
     }
 

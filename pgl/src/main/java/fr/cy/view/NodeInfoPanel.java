@@ -177,7 +177,7 @@ public class NodeInfoPanel extends VBox {
     private EmotionalState getDominantState(List<Agent> agents) {
         int calm = 0, selfish = 0, panicking = 0;
         for (Agent a : agents) {
-            switch (a.getState()) {
+            switch (a.getEmotionalState()) {
                 case CALM      -> calm++;
                 case SELFISH   -> selfish++;
                 case PANICKING -> panicking++;

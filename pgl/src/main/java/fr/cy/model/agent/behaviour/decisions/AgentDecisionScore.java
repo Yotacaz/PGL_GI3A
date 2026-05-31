@@ -16,7 +16,7 @@ public class AgentDecisionScore {
     private Map<Edge, Double> preferredNeighboringEdges;
     private double totalScoreForPreferredNeighboringEdges;
     public AgentDecisionScore(double totalScore, Map<Edge, Double> preferredNeighboringEdges, double totalScoreForPreferredNeighboringEdges) {
-        this.decisionScore = totalScore;
+        this.decisionScore = Math.max(0.0, totalScore);
         this.preferredNeighboringEdges = preferredNeighboringEdges;
         this.totalScoreForPreferredNeighboringEdges = totalScoreForPreferredNeighboringEdges;
     }

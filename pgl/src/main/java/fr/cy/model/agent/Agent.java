@@ -9,11 +9,13 @@ import fr.cy.model.agent.behaviour.decisions.AgentDecisionScore;
 import fr.cy.model.agent.behaviour.decisions.AgentPossibleDecision;
 import fr.cy.model.agent.behaviour.decisions.DecisionNodeContext;
 import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
+import fr.cy.model.agent.behaviour.properties.AgentPhysicalProperties;
 import fr.cy.model.agent.behaviour.properties.EmotionalState;
 import fr.cy.model.graph.IdManager;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.GraphElement;
 import fr.cy.model.graph.element.Node;
+import fr.cy.model.simulation.SimulationSettings;
 import fr.cy.model.stress.StressInducing;
 
 /**
@@ -29,13 +31,8 @@ public class Agent implements StressInducing {
     private final int id;
     /** Name of the agent, for easier identification */
     private String name;
-    /** Maximum speed of the agent, in units per time step */
-    private double maxSpeed;
-    /** Current speed of the agent, which may be reduced due to stress or crowding */
-    // private double currentSpeed;
 
-    /** Surface area taken by the agent, used to calculate crowding effects */
-    private double surfaceAreaTakenByAgent = 0.5;
+    private AgentPhysicalProperties physicalProperties;
 
     /** Number of nodes visited by the agent, used for statistics */
     private int nOfNodeVisited;
@@ -54,22 +51,20 @@ public class Agent implements StressInducing {
     private boolean isOnNode = true; // True if the agent is currently on a node, false if on an edge
     /** Previous node visited by the agent, used in case of backtracking */
     private Node previousOrCurrentNode = null;
-    private AgentAction currentAction = null; // The path the agent is currently following, if any
-
-    /** Flag indicating whether the agent is alive or has been removed from the simulation */
-    private boolean isAlive = true;
-
+    /** The current action being performed by the agent, which can be null if the agent is idle */
+    private AgentAction currentAction = null;
     /**  Static IdManager to generate unique identifiers for agents */
     private static IdManager idManager = new IdManager();
 
     public Agent(String name, Node startingNode, double maxSpeed, double stressTolerance, double crowdingTolerance,
-            double baseOwnDecisionMakingFactor, double repeatLastDecisionTendency) {
+            double baseOwnDecisionMakingFactor, double repeatLastDecisionTendency, int health,
+            double surfaceAreaTakenByAgent) {
         this.id = idManager.generateId();
         this.name = name;
-        this.maxSpeed = maxSpeed;
-        putOnNode(startingNode);
         this.behavioralState = new AgentDecisionalProperties(this.id, stressTolerance, baseOwnDecisionMakingFactor,
                 repeatLastDecisionTendency, crowdingTolerance);
+        this.physicalProperties = new AgentPhysicalProperties(maxSpeed, health, health, surfaceAreaTakenByAgent);
+        putOnNode(startingNode);
     }
 
     /**
@@ -85,7 +80,7 @@ public class Agent implements StressInducing {
      * @apiNote should not be multithreaded, as it uses a static IdManager
      */
     public Agent(String name, double maxSpeed, double stressTolerance, double crowdingTolerance) {
-        this(name, null, maxSpeed, stressTolerance, crowdingTolerance, 0.5, 1.25);
+        this(name, null, maxSpeed, stressTolerance, crowdingTolerance, 0.5, 1.25, 100, 0.5);
     }
 
     AgentAction makeDecision(DecisionNodeContext decisionContext, AgentSettings agentSettings) {
@@ -120,16 +115,51 @@ public class Agent implements StressInducing {
         return totalScore;
     }
 
+    /** Performs the current action of the agent, if any, and returns the amount of time consumed */
     double performCurrentAction(AgentSettings agentSettings) {
-        if (currentAction != null) {
-            return currentAction.perform(agentSettings);
+        double consumed = performCurrentAction(agentSettings, SimulationSettings.getDefaultTickDuration());
+        AgentAction action = getCurrentAction();
+        if (action != null && action.isCompleted()) {
+            setCurrentAction(null);
         }
-        return 0.0;
+        return consumed;
+    }
+
+    double performCurrentAction(AgentSettings agentSettings, double availableTime) {
+        GraphElement position = getCurrentGraphElement();
+        if (position == null || currentAction == null) {
+            return 0.0;
+        }
+        return currentAction.perform(agentSettings, availableTime);
+    }
+
+    public double getEffectiveSpeed(AgentSettings agentSettings) {
+        double maxEdgeSpeed = currentEdge != null ? currentEdge.getMaxAgentSpeedInDirection(previousOrCurrentNode)
+                : Double.POSITIVE_INFINITY;
+        double agentMaxSpeed = getMaxSpeed();
+        double effectiveMaxSpeed = Math.min(agentMaxSpeed, maxEdgeSpeed);
+        assert effectiveMaxSpeed >= 0 : "Effective max speed should be non-negative";
+        double speed = 0.0;
+        double walkSpeedReductionFactor = agentSettings.getWALK_SPEED_REDUCTION_FACTOR();
+        switch (behavioralState.getEmotionnalState()) {
+            case CALM:
+                speed = Math.min(agentMaxSpeed * walkSpeedReductionFactor, effectiveMaxSpeed);
+                break;
+            case SELFISH:
+                speed = Math.min(agentMaxSpeed * walkSpeedReductionFactor * 1.5, effectiveMaxSpeed);
+                break;
+            case PANICKING:
+                speed = effectiveMaxSpeed;
+                break;
+            default:
+                throw new IllegalStateException("Unexpected emotional state: " + behavioralState.getEmotionnalState());
+        }
+        return speed;
     }
 
     @Override
-    public double getStressInducingFactor() {
-        return behavioralState.getStressLevel() * 0.5; // FIXME: temporary
+    public double getStressInducingImpact() {
+        return Math.max(-0.5, Math.min(behavioralState.getStressLevel() * 0.1 + getEmotionalState().getStressInducedToOthers(), 1.0)); // FIXME: temporary
     }
 
     /**
@@ -154,32 +184,22 @@ public class Agent implements StressInducing {
         return name;
     }
 
-    public GraphElement getPosition() {
-        return isOnNode ? getPreviousOrCurrentNode() : getCurrentEdge();
+    public void updateState() {
+        updateStressLevel();
+        behavioralState.updateEmotionnalState();
+        updateHealth();
     }
 
-    public double getStressLevel() {
-        return behavioralState.getStressLevel();
-    }
-
-    public double updateStressLevel(){
-        GraphElement position = getPosition();
-        double stressFromPosition = position != null ? position.getStressInducingFactor() : 0.0;
-        double newStressLevel = getStressLevel() *  (0.5 + stressFromPosition);
+    private double updateStressLevel() {
+        GraphElement position = getCurrentGraphElement();
+        double stressFromPosition = position != null ? position.getStressInducingImpact() : 0.0;
+        double newStressLevel = getStressLevel() * (0.5 + stressFromPosition);
         setStressLevel(newStressLevel);
         return newStressLevel;
     }
 
-    public void setStressLevel(double stressLevel) {
-        behavioralState.setStressLevel(stressLevel);
-    }
-
-    public void addStress(double stress) {
-        setStressLevel(getStressLevel() + stress);
-    }
-
-    public EmotionalState getState() {
-        return behavioralState.getEmotionnalState();
+    private void updateHealth() {
+        //TODO + should this be before or after action
     }
 
     public int getnOfNodeVisited() {
@@ -255,31 +275,11 @@ public class Agent implements StressInducing {
         if (currentAction == null) {
             return null;
         }
-        return currentAction.getCurrentEdgeOrNextEdgeIfOnNode();
+        return currentAction.getClosestTargetGraphElement();
     }
 
     public GraphElement getCurrentGraphElement() {
         return isOnNode ? getCurrentNode() : getCurrentEdge();
-    }
-
-    public double getCongestionTolerance() {
-        return behavioralState.getCongestionTolerance();
-    }
-
-    public void setCongestionTolerance(double congestionTolerance) {
-        behavioralState.setCongestionTolerance(congestionTolerance);
-    }
-
-    public double getCurrentOwnDecisionMakingFactor() {
-        return behavioralState.getCurrentOwnDecisionMakingFactor();
-    }
-
-    public double getMaxSpeed() {
-        return maxSpeed;
-    }
-
-    public double getMaxAccumulatedStress() {
-        return behavioralState.getMaxAccumulatedStress();
     }
 
     public double travelBy(double distance) {
@@ -291,21 +291,6 @@ public class Agent implements StressInducing {
     public double getTravelProgressPercentageOnEdge() {
         AgentAction action = getCurrentAction();
         return action != null ? action.getEdgeProgress() : -1.0;
-    }
-
-    public double getSurfaceAreaTakenByAgent() {
-        return surfaceAreaTakenByAgent;
-    }
-
-    /**
-     * @return the base own decision-making factor (0..1)
-     */
-    public double getBaseOwnDecisionMakingFactor() {
-        return behavioralState.getBaseOwnDecisionMakingFactor();
-    }
-
-    public boolean isAlive() {
-        return isAlive;
     }
 
     public boolean isOnNode() {
@@ -332,29 +317,81 @@ public class Agent implements StressInducing {
         return lastSelectedDecision;
     }
 
-    public double getEffectiveSpeed(AgentSettings agentSettings) {
-        double maxEdgeSpeed = currentEdge != null ? currentEdge.getMaxAgentSpeedInDirection(previousOrCurrentNode)
-                : Double.POSITIVE_INFINITY;
-        double agentMaxSpeed = getMaxSpeed();
-        double effectiveMaxSpeed = Math.min(agentMaxSpeed, maxEdgeSpeed);
-        assert effectiveMaxSpeed >= 0 : "Effective max speed should be non-negative";
-        double speed = 0.0;
-        behavioralState.updateEmotionnalState();
-        double walkSpeedReductionFactor = agentSettings.getWALK_SPEED_REDUCTION_FACTOR();
-        switch (behavioralState.getEmotionnalState()) {
-            case CALM:
-                speed = Math.min(agentMaxSpeed * walkSpeedReductionFactor, effectiveMaxSpeed);
-                break;
-            case SELFISH:
-                speed = Math.min(agentMaxSpeed * walkSpeedReductionFactor * 1.5, effectiveMaxSpeed);
-                break;
-            case PANICKING:
-                speed = effectiveMaxSpeed;
-                break;
-            default:
-                throw new IllegalStateException("Unexpected emotional state: " + behavioralState.getEmotionnalState());
-        }
-        return speed;
+    // Behavioral properties related methods
+
+    /** @return the base own decision-making factor (0..1) */
+    public double getBaseOwnDecisionMakingFactor() {
+        return behavioralState.getBaseOwnDecisionMakingFactor();
+    }
+
+    public double getCongestionTolerance() {
+        return behavioralState.getCongestionTolerance();
+    }
+
+    public void setCongestionTolerance(double congestionTolerance) {
+        behavioralState.setCongestionTolerance(congestionTolerance);
+    }
+
+    public double getCurrentOwnDecisionMakingFactor() {
+        return behavioralState.getCurrentOwnDecisionMakingFactor();
+    }
+
+    public double getMaxAccumulatedStress() {
+        return behavioralState.getMaxAccumulatedStress();
+    }
+
+    public void setStressLevel(double stressLevel) {
+        behavioralState.setStressLevel(stressLevel);
+    }
+
+    public double getStressLevel() {
+        return behavioralState.getStressLevel();
+    }
+
+    public void addStress(double stress) {
+        setStressLevel(getStressLevel() + stress);
+    }
+
+    public EmotionalState getEmotionalState() {
+        return behavioralState.getEmotionnalState();
+    }
+
+    // Physical properties related methods
+
+    public double getSurfaceAreaTakenByAgent() {
+        return physicalProperties.getSurfaceAreaTakenByAgent();
+    }
+
+    public double getMaxSpeed() {
+        return physicalProperties.getMaxSpeed();
+    }
+
+    public void setHealth(int health) {
+        physicalProperties.setHealth(health);
+    }
+
+    public int getHealth() {
+        return physicalProperties.getHealth();
+    }
+
+    public void decreaseHealth(int amount) {
+        physicalProperties.decreaseHealth(amount);
+    }
+
+    public void restoreHealth(int amount) {
+        physicalProperties.restoreHealth(amount);
+    }
+
+    void kill() {
+        physicalProperties.kill();
+    }
+
+    public double getHealthPercentage() {
+        return physicalProperties.getHealthPercentage();
+    }
+
+    public boolean isAlive() {
+        return physicalProperties.isAlive();
     }
 
     @Override
@@ -384,14 +421,15 @@ public class Agent implements StressInducing {
         }
         String state = behavioralState == null ? "unknown" : behavioralState.getEmotionnalState().name();
         double stress = behavioralState == null ? 0.0 : behavioralState.getStressLevel();
-        String action = currentAction == null ? "idle" : currentAction.getClass().getSimpleName();
-        return String.format("Agent[%d] %s — %s | state=%s (%.0f%%) action=%s pos=%s progress=%.1f%% visited=%d",
+        // String action = currentAction == null ? "idle" : currentAction.getClass().getSimpleName();
+        String lastDecision = lastSelectedDecision == null ? "none" : lastSelectedDecision.toString();
+        return String.format("Agent[%d] %s — %s | state=%s (%.0f%%) lastDecision=%s pos=%s progress=%.1f%% visited=%d",
                 id,
                 name == null ? "<unnamed>" : name,
-                isAlive ? "alive" : "dead",
+                isAlive() ? "alive" : "dead",
                 state,
                 stress * 100.0,
-                action,
+                lastDecision,
                 position,
                 getTravelProgressPercentageOnEdge() == -1.0 ? 0.0 : getTravelProgressPercentageOnEdge() * 100.0,
                 nOfNodeVisited);
