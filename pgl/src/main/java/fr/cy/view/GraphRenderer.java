@@ -17,12 +17,17 @@ public class GraphRenderer {
     private final GraphicsContext gc;
 
     // Palette de couleurs Modern Dark Theme
-    private static final Color BG_COLOR = Color.web("#121212");
-    private static final Color EDGE_COLOR = Color.web("#424242");
-    private static final Color FIRE_COLOR = Color.web("#FF5722");
+    private static final Color BG_COLOR        = Color.web("#121212");
+    private static final Color EDGE_COLOR      = Color.web("#5A5A8A");
+    private static final Color FIRE_COLOR      = Color.web("#FF5722");
     private static final Color CALM_NODE_COLOR = Color.web("#007ACC");
-    private static final Color STRESS_COLOR = Color.web("#D32F2F");
-    private static final Color AGENT_COLOR = Color.web("#F5F5F5");
+    private static final Color STRESS_COLOR    = Color.web("#D32F2F");
+    private static final Color AGENT_COLOR     = Color.web("#F5F5F5");
+
+    // Taille fixe des nœuds (en pixels dans les coordonnées du monde)
+    private static final double NODE_RADIUS    = 22.0;
+    // Épaisseur minimale des arêtes
+    private static final double EDGE_MIN_WIDTH = 4.0;
 
     public GraphRenderer(GraphicsContext gc) {
         this.gc = gc;
@@ -83,9 +88,9 @@ public class GraphRenderer {
         double ex = end.getX();
         double ey = end.getY();
 
-        // Arête de base (Grise, épaisseur basée sur width)
+        // Arête de base — épaisseur basée sur la largeur du couloir, minimum EDGE_MIN_WIDTH
         gc.setStroke(EDGE_COLOR);
-        gc.setLineWidth(Math.max(2, edge.getWidth()));
+        gc.setLineWidth(Math.max(EDGE_MIN_WIDTH, edge.getWidth()));
         gc.strokeLine(sx, sy, ex, ey);
 
         // Overlay de feu en fonction du pourcentage/distance brulée
@@ -108,8 +113,7 @@ public class GraphRenderer {
     }
 
     private void drawNode(Node node) {
-        // La taille est légèrement proportionnelle à la capacité, sans devenir immense.
-        double radius = Math.min(50, 15 + (node.getCapacity() * 0.05));
+        double radius = NODE_RADIUS;
         double x = node.getX() - radius / 2;
         double y = node.getY() - radius / 2;
 
@@ -148,9 +152,8 @@ public class GraphRenderer {
         if (agent.isOnNode() && agent.getCurrentNode() != null) {
             Node node = agent.getCurrentNode();
 
-            // Jitter déterministe pour éviter le chevauchement parfait visuel (basé sur
-            // l'ID de l'agent)
-            double maxOffset = Math.min(50, 15 + (node.getCapacity() * 0.05)) * 0.4;
+            // Jitter déterministe pour éviter le chevauchement parfait visuel
+            double maxOffset = NODE_RADIUS * 0.4;
             double angle = (agent.getId() * 137.508) % 360;
             // On calcule une distance pour qu'ils remplissent un peu le nœud
             double dist = (agent.getId() * 11.3) % maxOffset;
