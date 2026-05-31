@@ -1,5 +1,6 @@
 package fr.cy.model.agent.behaviour.properties;
 
+import java.io.Serializable;
 import java.util.Optional;
 
 public enum EmotionalState {

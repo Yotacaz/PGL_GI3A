@@ -1,5 +1,6 @@
 package fr.cy.model.agent.behaviour.decisions;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,12 +14,13 @@ import fr.cy.model.graph.element.Node;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.pathfinding.PathFinder;
 
-public class DecisionContextProvider {
+public class DecisionContextProvider implements Serializable {
+    private static final long serialVersionUID = 1L;
     private final Graph graph;
     private final PathFinder pathFinder;
     private Map<Node, DecisionNodeContext> cachedContexts = new HashMap<>();
 
-    // private final 
+    // private final
     public DecisionContextProvider(Graph graph, PathFinder pathFinder) {
         this.graph = graph;
         this.pathFinder = pathFinder;
@@ -57,7 +59,8 @@ public class DecisionContextProvider {
     }
 
     private DecisionNodeContext constructContext(Agent agent) {
-        // List<Node> recommendedPath = pathFinder.findPath(agent.getCurrentNode(), agent.getDestinationNode());
+        // List<Node> recommendedPath = pathFinder.findPath(agent.getCurrentNode(),
+        // agent.getDestinationNode());
         Node currentNode = Objects.requireNonNull(agent.getCurrentNode(),
                 "Node must be valid to construct decision context");
         List<Edge> allEdges = currentNode.getEdges();
@@ -65,7 +68,8 @@ public class DecisionContextProvider {
         Map<Edge, List<Agent>> nearbyOutgoingAgents = new HashMap<>();
         for (Edge edge : allEdges) {
             for (Agent nearbyAgent : edge.getAgents()) {
-                // Determine if the nearby agent is incoming or outgoing relative to the current node
+                // Determine if the nearby agent is incoming or outgoing relative to the current
+                // node
                 Node oppositeNode = edge.getOppositeNode(currentNode);
                 if (oppositeNode.equals(nearbyAgent.getPreviousOrCurrentNode())) {
                     nearbyIncomingAgents.computeIfAbsent(edge, k -> new ArrayList<>()).add(nearbyAgent);
@@ -74,7 +78,8 @@ public class DecisionContextProvider {
                 }
             }
         }
-        // account for agents that are currently on the node and planning to take an outgoing edge
+        // account for agents that are currently on the node and planning to take an
+        // outgoing edge
         for (Agent nearbyAgent : currentNode.getAgents()) {
             if (!nearbyAgent.equals(agent)) {
                 Edge targetOutgoinEdge = nearbyAgent.getCurrentEdgeOrNextEdgeIfOnNode();
@@ -87,7 +92,8 @@ public class DecisionContextProvider {
         // double localStressLevel = 0.5; // Placeholder value
         // double localCrowdingLevel = 0.5; // Placeholder value
 
-        // GraphPath recommendedPath = pathFinder.findPath(agent.getCurrentNode(), null);
+        // GraphPath recommendedPath = pathFinder.findPath(agent.getCurrentNode(),
+        // null);
         List<Edge> outgoingEdges = currentNode.getOutgoingEdges();
         return new DecisionNodeContext(currentNode, null, null, outgoingEdges, nearbyIncomingAgents,
                 nearbyOutgoingAgents);

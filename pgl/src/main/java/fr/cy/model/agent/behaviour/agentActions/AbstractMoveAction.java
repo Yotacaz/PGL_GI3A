@@ -1,5 +1,6 @@
 package fr.cy.model.agent.behaviour.agentActions;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 import fr.cy.model.agent.Agent;
@@ -7,7 +8,8 @@ import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 
-public abstract class AbstractMoveAction extends AgentAction {
+public abstract class AbstractMoveAction extends AgentAction implements Serializable {
+    private static final long serialVersionUID = 1L;
     /** The progress of the agent along the current edge, between 0 and 1 */
     private double edgeProgress = 0.0;
 
@@ -27,7 +29,8 @@ public abstract class AbstractMoveAction extends AgentAction {
     }
 
     public boolean isEdgeCompleted() {
-        return edgeProgress >= 0.999999; // consider edge completed when progress is close enough to 1.0 to avoid floating-point issues
+        return edgeProgress >= 0.999999; // consider edge completed when progress is close enough to 1.0 to avoid
+                                         // floating-point issues
     }
 
     protected double travelAlongEdge(AgentSettings agentSettings, Edge edge, double availableTime) {

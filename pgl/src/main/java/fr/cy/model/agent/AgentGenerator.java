@@ -1,5 +1,6 @@
 package fr.cy.model.agent;
 
+import java.io.Serializable;
 import java.util.Locale;
 import java.util.Random;
 
@@ -11,7 +12,9 @@ import fr.cy.model.graph.element.Node;
  * prototypes and tests. The generated values are intentionally simple and
  * should be replaced by a configurable generator if needed.
  */
-public class AgentGenerator {
+public class AgentGenerator implements Serializable {
+
+	private static final long serialVersionUID = 1L;
 
 	private final Random RNG = new Random();
 	private final Graph graph;
@@ -34,7 +37,8 @@ public class AgentGenerator {
 		double baseOwnDecisionMakingFactor = RNG.nextDouble(); // Between 0 and 1
 		int health = 75 + RNG.nextInt(26); // Between 75 and 100
 		double surfaceAreaTakenByAgent = 0.5 + RNG.nextDouble(); // Between 0.5 and 1.5
-		//get a random node from the graph and put the agent on it (or null if no node is available)
+		// get a random node from the graph and put the agent on it (or null if no node
+		// is available)
 		Node randomNode = null;
 		if (graph != null && !graph.getNodes().isEmpty()) {
 			int randomNodeIndex = RNG.nextInt(graph.getNodes().size());

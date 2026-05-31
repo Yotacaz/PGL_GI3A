@@ -45,4 +45,8 @@ public class ScenarioBuilder {
 
         return simulation;
     }
+
+    public static void main(String[] args) {
+        FileManager.saveSimulation(buildDemoScenario());
+    }
 }

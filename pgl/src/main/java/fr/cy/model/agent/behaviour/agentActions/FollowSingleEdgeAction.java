@@ -6,6 +6,7 @@ import fr.cy.model.graph.element.Edge;
 import java.util.Objects;
 
 public class FollowSingleEdgeAction extends AbstractMoveAction {
+    private static final long serialVersionUID = 1L;
     private final Edge edgeToFollow;
 
     public FollowSingleEdgeAction(Agent agent, Edge edgeToFollow) {

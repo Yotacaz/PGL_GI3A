@@ -1,22 +1,22 @@
-package fr.cy.model.simulation;
+package fr.cy.util;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.Serializable;
 
-import java.util.Scanner;
+import fr.cy.model.simulation.Simulation;
 
-
-
-public class FileManager {
+public class FileManager implements Serializable {
+    private static final long serialVersionUID = 1L;
     private static FileManager instance;
 
     private static final String SIMULATION_FOLDER = "simulations/";
-    
 
-    private FileManager() {}
+    private FileManager() {
+    }
 
     public static FileManager getInstance() {
         if (instance == null) {
@@ -27,9 +27,8 @@ public class FileManager {
 
     public static void saveSimulation(Simulation simulation) {
         String filePath = SIMULATION_FOLDER + simulation.getName() + ".bin";
-         try (ObjectOutputStream out =
-                     new ObjectOutputStream(
-                             new FileOutputStream(filePath))) {
+        try (ObjectOutputStream out = new ObjectOutputStream(
+                new FileOutputStream(filePath))) {
 
             out.writeObject(simulation);
 
@@ -43,19 +42,17 @@ public class FileManager {
 
     public static Simulation loadSimulation(String name) {
         String filePath = SIMULATION_FOLDER + name + ".bin";
-        try (ObjectInputStream in =
-                     new ObjectInputStream(
-                             new FileInputStream(filePath))) {
+        try (ObjectInputStream in = new ObjectInputStream(
+                new FileInputStream(filePath))) {
             return (Simulation) in.readObject();
 
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
 
             System.out.println("Erreur lors du chargement de la simulation : " + e.getMessage());
-            
+
         }
         return null;
     }
-
 
 }
