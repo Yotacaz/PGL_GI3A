@@ -9,7 +9,11 @@ import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.pathfinding.PathFinder;
 
-public class Simulation {
+import java.io.*;
+
+public class Simulation implements Serializable{
+    private static final long serialVersionUID = 1L;
+    
     private final Graph graph;
     private final AgentManager agentManager;
     private final PathFinder pathFinder;
