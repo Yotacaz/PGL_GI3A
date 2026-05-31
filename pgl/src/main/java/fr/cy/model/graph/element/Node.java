@@ -79,6 +79,10 @@ public class Node extends GraphElement {
     public double getX() {
         return x;
     }
+    
+    public void setX(double x) {
+        this.x = x;
+    }
 
     /**
      * Récupère la coordonnée Y du nœud.
@@ -87,6 +91,10 @@ public class Node extends GraphElement {
      */
     public double getY() {
         return y;
+    }
+    
+    public void setY(double y) {
+        this.y = y;
     }
 
     /**
