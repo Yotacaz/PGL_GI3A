@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import java.io.*;
+
 import fr.cy.model.agent.Agent;
 import fr.cy.model.fire.Fire;
 import fr.cy.model.stress.StressInducing;
@@ -18,7 +20,8 @@ import fr.cy.model.stress.StressInducing;
  * @author GI3A
  * @version 1.0
  */
-public abstract class GraphElement implements StressInducing {
+public abstract class GraphElement implements StressInducing, Serializable {
+    private static final long serialVersionUID = 1L;
     /** Identifiant unique de l'élément du graphe */
     private final int id;
 
