@@ -3,6 +3,8 @@ package fr.cy.model.graph;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
+import java.io.Serializable;
+
 /**
  * Gère la génération et la réutilisation d'identifiants entiers.
  * <p>
@@ -10,7 +12,8 @@ import java.util.Queue;
  * priorité
  * avant de créer de nouveaux identifiants.
  */
-public class IdManager {
+public class IdManager implements Serializable {
+    private static final long serialVersionUID = 1L;
     private int nextId;
 
     private Queue<Integer> freeIds;
