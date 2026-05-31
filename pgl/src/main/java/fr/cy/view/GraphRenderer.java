@@ -26,7 +26,7 @@ public class GraphRenderer {
     private static final Color STRESS_COLOR    = Color.web("#D32F2F");
 
     // Couleurs agents selon EmotionalState (système du groupe)
-    private static final Color AGENT_CALM      = Color.web("#FFD700"); // jaune  = calme
+    private static final Color AGENT_CALM      = Color.web("#4ADE80"); // vert   = calme
     private static final Color AGENT_SELFISH   = Color.web("#FF8C00"); // orange = égoïste
     private static final Color AGENT_PANICKING = Color.web("#FF2020"); // rouge  = panique
 

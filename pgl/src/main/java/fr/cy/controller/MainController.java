@@ -12,6 +12,7 @@ import fr.cy.view.SimulationStatsPanel;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
 import javafx.scene.control.ToolBar;
 import javafx.scene.input.MouseEvent;
@@ -90,10 +91,7 @@ public class MainController {
         // Ajout de la logique de Caméra : Drag (Pan) et Scroll (Zoom)
         setupCameraControls();
 
-        // Clic → sélectionne et fige l'affichage du panneau
         graphCanvas.setOnMouseClicked(this::handleCanvasClick);
-        // Survol → met à jour le panneau en temps réel
-        graphCanvas.setOnMouseMoved(this::handleCanvasHover);
 
         canvasContainer.getChildren().add(graphCanvas);
         root.setCenter(canvasContainer);
@@ -197,7 +195,11 @@ public class MainController {
                 widthBox, lengthBox,
                 historyBox,
                 spacer);
-        root.setRight(detailsPanel);
+        ScrollPane scrollPane = new ScrollPane(detailsPanel);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        root.setRight(scrollPane);
     }
 
     private VBox createStatBox(String titleText, javafx.scene.Node valueNode) {
@@ -220,11 +222,7 @@ public class MainController {
         }
     }
 
-    private void handleCanvasHover(MouseEvent event) {
-        double mx = (event.getX() - graphCanvas.getPanX()) / graphCanvas.getZoom();
-        double my = (event.getY() - graphCanvas.getPanY()) / graphCanvas.getZoom();
-        updateDetailsPanel(findClosestElement(mx, my));
-    }
+
 
     /** Retourne le nœud ou l'arête le plus proche des coordonnées monde (mx, my). */
     private GraphElement findClosestElement(double mx, double my) {
