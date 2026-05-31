@@ -90,8 +90,10 @@ public class MainController {
         // Ajout de la logique de Caméra : Drag (Pan) et Scroll (Zoom)
         setupCameraControls();
 
-        // Ajout de la logique Clic & Sélection
+        // Clic → sélectionne et fige l'affichage du panneau
         graphCanvas.setOnMouseClicked(this::handleCanvasClick);
+        // Survol → met à jour le panneau en temps réel
+        graphCanvas.setOnMouseMoved(this::handleCanvasHover);
 
         canvasContainer.getChildren().add(graphCanvas);
         root.setCenter(canvasContainer);
@@ -211,78 +213,55 @@ public class MainController {
      * Permet de trouver l'entité la plus proche des coordonnées cliquées
      */
     private void handleCanvasClick(MouseEvent event) {
-        // Optionnel : ne pas déclencher le clic si on était en train de glisser (Drag)
         if (event.isStillSincePress()) {
-            // Conversion des coordonnées de l'écran (souris) vers les coordonnées du Monde
-            // (Modèle)
             double mx = (event.getX() - graphCanvas.getPanX()) / graphCanvas.getZoom();
             double my = (event.getY() - graphCanvas.getPanY()) / graphCanvas.getZoom();
-
-            GraphElement closestElement = null;
-            double minDistance = Double.MAX_VALUE;
-
-            // 1. Cherche dans les Nodes en priorité
-            for (Node node : simController.getSimulation().getGraph().getNodes()) {
-                double distance = Math.hypot(node.getX() - mx, node.getY() - my);
-                if (distance < 30 && distance < minDistance) { // Hitbox tolérance
-                    minDistance = distance;
-                    closestElement = node;
-                }
-            }
-
-            // 2. Si pas de nœud trouvé, on cherche dans les arêtes (Edges)
-            if (closestElement == null) {
-                for (Edge edge : simController.getSimulation().getGraph().getEdges()) {
-                    Node start = edge.getStart();
-                    Node end = edge.getEnd();
-
-                    double x1 = start.getX();
-                    double y1 = start.getY();
-                    double x2 = end.getX();
-                    double y2 = end.getY();
-
-                    // Calcul de la distance d'un point à un segment de droite.
-                    double A = mx - x1;
-                    double B = my - y1;
-                    double C = x2 - x1;
-                    double D = y2 - y1;
-
-                    double dot = A * C + B * D;
-                    double len_sq = C * C + D * D;
-                    double param = -1;
-
-                    if (len_sq != 0) { // S'assurer que le segment a une longueur
-                        param = dot / len_sq;
-                    }
-
-                    double xx, yy;
-
-                    if (param < 0) {
-                        xx = x1;
-                        yy = y1;
-                    } else if (param > 1) {
-                        xx = x2;
-                        yy = y2;
-                    } else {
-                        xx = x1 + param * C;
-                        yy = y1 + param * D;
-                    }
-
-                    double dx = mx - xx;
-                    double dy = my - yy;
-                    double distance = Math.sqrt(dx * dx + dy * dy);
-
-                    // Tolérance de clic basée sur la largeur de la route ou fixe
-                    double tolerance = Math.max(10, (edge.getWidth() / 2) + 5);
-                    if (distance < tolerance && distance < minDistance) {
-                        minDistance = distance;
-                        closestElement = edge;
-                    }
-                }
-            }
-
-            updateDetailsPanel(closestElement);
+            updateDetailsPanel(findClosestElement(mx, my));
         }
+    }
+
+    private void handleCanvasHover(MouseEvent event) {
+        double mx = (event.getX() - graphCanvas.getPanX()) / graphCanvas.getZoom();
+        double my = (event.getY() - graphCanvas.getPanY()) / graphCanvas.getZoom();
+        updateDetailsPanel(findClosestElement(mx, my));
+    }
+
+    /** Retourne le nœud ou l'arête le plus proche des coordonnées monde (mx, my). */
+    private GraphElement findClosestElement(double mx, double my) {
+        GraphElement closest = null;
+        double minDistance = Double.MAX_VALUE;
+
+        // 1. Nœuds en priorité
+        for (Node node : simController.getSimulation().getGraph().getNodes()) {
+            double distance = Math.hypot(node.getX() - mx, node.getY() - my);
+            if (distance < 30 && distance < minDistance) {
+                minDistance = distance;
+                closest = node;
+            }
+        }
+
+        // 2. Arêtes si aucun nœud trouvé
+        if (closest == null) {
+            for (Edge edge : simController.getSimulation().getGraph().getEdges()) {
+                double x1 = edge.getStart().getX(), y1 = edge.getStart().getY();
+                double x2 = edge.getEnd().getX(),   y2 = edge.getEnd().getY();
+
+                double C = x2 - x1, D = y2 - y1;
+                double len_sq = C * C + D * D;
+                double param = len_sq != 0 ? ((mx - x1) * C + (my - y1) * D) / len_sq : -1;
+
+                double xx = param < 0 ? x1 : (param > 1 ? x2 : x1 + param * C);
+                double yy = param < 0 ? y1 : (param > 1 ? y2 : y1 + param * D);
+
+                double distance = Math.hypot(mx - xx, my - yy);
+                double tolerance = Math.max(10, edge.getWidth() / 2 + 5);
+                if (distance < tolerance && distance < minDistance) {
+                    minDistance = distance;
+                    closest = edge;
+                }
+            }
+        }
+        return closest;
     }
 
     // --- VARIABLES ET METHODE POUR LA CAMÉRA & LE DRAG & DROP ---
