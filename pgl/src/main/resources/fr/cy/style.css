@@ -1,0 +1,176 @@
+/* --- Variables globales & Palette Dark Theme --- */
+* {
+    -fx-base-dark: #121212;
+    -fx-surface: #1E1E24;
+    -fx-surface-elevated: #282833;
+    -fx-text-primary: #E0E0E0;
+    -fx-text-muted: #8E8E9E;
+    
+    /* Couleurs d'accentuation */
+    -fx-accent-orange: #FF5722;
+    -fx-accent-orange-hover: #E64A19;
+    -fx-accent-blue: #007ACC;
+    -fx-accent-blue-hover: #005A9E;
+    -fx-danger: #D32F2F;
+    -fx-danger-hover: #B71C1C;
+    
+    /* Typographie */
+    -fx-font-family: "Segoe UI", "Inter", "Roboto", "Helvetica Neue", sans-serif;
+}
+
+/* --- Arrière-plan global --- */
+.main-pane {
+    -fx-background-color: -fx-base-dark;
+}
+
+/* --- ToolBar (En haut) --- */
+.custom-toolbar {
+    -fx-background-color: -fx-surface;
+    -fx-padding: 10 15 10 15px;
+    -fx-spacing: 10;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 10, 0, 0, 2);
+    -fx-border-color: transparent transparent #2A2A35 transparent;
+    -fx-border-width: 1px;
+}
+
+.custom-toolbar .separator *.line { 
+    -fx-border-color: #2A2A35;
+    -fx-border-width: 1px;
+}
+
+/* --- Boutons globaux - Flat Design --- */
+.action-btn {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-text-primary;
+    -fx-background-color: -fx-surface-elevated;
+    -fx-background-radius: 4px;
+    -fx-padding: 8 16 8 16px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 4, 0, 0, 2);
+}
+
+.action-btn:hover {
+    -fx-background-color: #353542;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 6, 0, 0, 3);
+}
+
+.action-btn:pressed {
+    -fx-background-color: #21212B;
+    -fx-translate-y: 1px;
+}
+
+/* Boutons stylisés (Play/Pause/Reset) */
+.play-btn {
+    -fx-background-color: -fx-accent-blue;
+    -fx-text-fill: white;
+}
+.play-btn:hover { -fx-background-color: -fx-accent-blue-hover; }
+
+.pause-btn { 
+    -fx-background-color: -fx-accent-orange; 
+    -fx-text-fill: white;
+}
+.pause-btn:hover { -fx-background-color: -fx-accent-orange-hover; }
+
+.danger-btn {
+    -fx-background-color: -fx-surface-elevated;
+    -fx-text-fill: #FF5252;
+}
+.danger-btn:hover {
+    -fx-background-color: -fx-danger;
+    -fx-text-fill: white;
+}
+
+/* --- Container central (Canvas) --- */
+.canvas-container {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+/* --- Panel de droite (Details) --- */
+.details-panel {
+    -fx-background-color: -fx-surface;
+    -fx-padding: 20 20 20 20px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 15, 0, -2, 0);
+    -fx-border-color: transparent transparent transparent #2A2A35;
+    -fx-border-width: 1px;
+}
+
+.panel-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-accent-orange; /* Le feu en accent */
+    -fx-padding: 0 0 10 0px;
+}
+
+/* --- Nouvelles cartes de statistiques elegantes --- */
+
+.stat-box {
+    -fx-background-color: #23232C;
+    -fx-padding: 12 15 12 15px;
+    -fx-background-radius: 8px;
+    -fx-border-color: #30303D;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 3, 0, 0, 2);
+}
+
+.stat-title {
+    -fx-text-fill: -fx-text-muted;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-opacity: 0.8;
+}
+
+.stat-value {
+    -fx-text-fill: -fx-text-primary;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.stat-value-primary {
+    -fx-text-fill: -fx-accent-blue;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.stat-value-highlight {
+    -fx-text-fill: -fx-accent-orange;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.progress-bar {
+    -fx-min-height: 8px;
+    -fx-pref-height: 8px;
+    -fx-background-color: #1E1E24;
+    -fx-background-radius: 4px;
+    -fx-border-radius: 4px;
+    -fx-control-inner-background: #1E1E24;
+    -fx-padding: 0;
+    -fx-border-color: #30303D;
+    -fx-border-width: 1px;
+}
+
+.progress-bar > .track {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.stress-bar > .bar {
+    -fx-background-color: -fx-danger;
+    -fx-background-radius: 3px;
+}
+
+.fire-bar > .bar {
+    -fx-background-color: -fx-accent-orange;
+    -fx-background-radius: 3px;
+}
+
+
+/* Couleur de remplissage spécifique (Congestion) */
+.congestion-bar > .bar {
+    -fx-background-color: -fx-accent-blue;
+    -fx-background-radius: 3px;
+}
