@@ -2,21 +2,15 @@ package fr.cy.util;
 
 import fr.cy.model.fire.Fire;
 import fr.cy.model.graph.Graph;
-import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.simulation.Simulation;
 
 /**
- * Usine (Factory) permettant de construire différents scénarios de test
+ * Factory permettant de construire différents scénarios de test
  * avec des graphes spatiaux, des incendies et des agents pré-positionnés.
  */
 public class ScenarioBuilder {
 
-    /**
-     * Construit une simulation complète avec un graphe imitant un bâtiment
-     * complexe,
-     * un départ de feu et une population d'agents aléatoires.
-     */
     public static Simulation buildDemoScenario() {
         Graph graph = new Graph();
 
@@ -45,6 +39,9 @@ public class ScenarioBuilder {
         if (simulation.getAgentManager() != null) {
             simulation.getAgentManager().generateRandomsAgents(30);
         }
+
+        n1.setFire(new Fire(0, 1, 0.01));
+        n4.setFire(new Fire(0, 0, 0));
 
         return simulation;
     }
