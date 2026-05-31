@@ -1,5 +1,6 @@
 package fr.cy.model.agent.behaviour.properties;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Objects;
@@ -7,31 +8,41 @@ import java.util.Set;
 
 import fr.cy.model.agent.behaviour.personalityTraits.AgentPersonalityTrait;
 
-public class AgentDecisionalProperties {
+public class AgentDecisionalProperties implements Serializable {
+    private static final long serialVersionUID = 1L;
     private int id;
     /** Current state of the agent, which can be CALM, SELFISH, or PANICKING */
     private EmotionalState state = EmotionalState.CALM;
     /** Stress level of the agent, between 0 and 1 */
     private double stressLevel = 0.0;
-    /** Tolerance to stress, between 0 and 1, above which the agent starts panicking */
+    /**
+     * Tolerance to stress, between 0 and 1, above which the agent starts panicking
+     */
     private double stressTolerance;
 
-    /** Tolerance to crowding, between 0 and 1, above which the agent starts panicking */
+    /**
+     * Tolerance to crowding, between 0 and 1, above which the agent starts
+     * panicking
+     */
     private double congestionTolerance;
 
-    /** Factor representing the agent's own decision-making ability, between 0 and
-     *  1, where 0 means the agent will always follow the crowd */
+    /**
+     * Factor representing the agent's own decision-making ability, between 0 and
+     * 1, where 0 means the agent will always follow the crowd
+     */
     private double baseOwnDecisionMakingFactor;
 
     /** Score multiplier for repeating the last decision */
     private double repeatLastDecisionFactor = 0.0;
 
-    /** Maximum accumulated stress experienced by the agent during its journey, used
-    for statistics */
+    /**
+     * Maximum accumulated stress experienced by the agent during its journey, used
+     * for statistics
+     */
     private double maxAccumulatedStress = 0;
 
     /** List of personality traits that can influence the agent's behavior */
-    private final Set<AgentPersonalityTrait> personalityTraits = new HashSet<>(); //TODO: implement feature
+    private final Set<AgentPersonalityTrait> personalityTraits = new HashSet<>(); // TODO: implement feature
 
     public AgentDecisionalProperties(int agentId, double stressTolerance, double baseOwnDecisionMakingFactor,
             double repeatLastDecisionTendency, double congestionTolerance) {
@@ -103,7 +114,7 @@ public class AgentDecisionalProperties {
         this.repeatLastDecisionFactor = repeatLastDecisionTendency;
     }
 
-    /** @return the congestion tolerance (0..1)*/
+    /** @return the congestion tolerance (0..1) */
     public double getCongestionTolerance() {
         return congestionTolerance;
     }

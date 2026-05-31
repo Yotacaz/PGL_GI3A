@@ -1,6 +1,9 @@
 package fr.cy.model.agent.behaviour.properties;
 
-public class AgentPhysicalProperties {
+import java.io.Serializable;
+
+public class AgentPhysicalProperties implements Serializable {
+    private static final long serialVersionUID = 1L;
     /** Maximum speed of the agent, in units per time step */
     private double maxSpeed;
 
@@ -24,6 +27,7 @@ public class AgentPhysicalProperties {
     public double getMaxSpeed() {
         return maxSpeed;
     }
+
     public double getSurfaceAreaTakenByAgent() {
         return surfaceAreaTakenByAgent;
     }
@@ -58,5 +62,5 @@ public class AgentPhysicalProperties {
     public boolean isAlive() {
         return health > 0;
     }
-    
+
 }

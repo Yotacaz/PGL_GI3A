@@ -1,11 +1,14 @@
 package fr.cy.model.fire;
 
+import java.io.Serializable;
+
 /**
  * Represents a dynamic fire instance in the simulation.
  * Each Fire keeps track of its current intensity, smoke level and spread rate.
  * The object also records how long it has been burning in seconds.
  */
-public class Fire {
+public class Fire implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     // --- CONSTANTES (Remplacement des valeurs magiques) ---
     /**

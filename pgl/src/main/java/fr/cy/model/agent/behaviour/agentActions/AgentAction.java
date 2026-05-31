@@ -1,5 +1,6 @@
 package fr.cy.model.agent.behaviour.agentActions;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 import fr.cy.model.agent.Agent;
@@ -11,7 +12,8 @@ import fr.cy.model.simulation.SimulationSettings;
  * Represents an action that an {@link Agent} can perform.
  * Implementations should encapsulate a single, well-named behavior.
  */
-public abstract class AgentAction {
+public abstract class AgentAction implements Serializable {
+	private static final long serialVersionUID = 1L;
 	private Agent agent;
 	/** The progress of the action, between 0 and 1 */
 	private double progress = 0.0;
@@ -45,7 +47,9 @@ public abstract class AgentAction {
 
 	/**
 	 * Execute the action for the given agent.
-	 * @return the consumed time after performing the action for this tick, 0 if a whole tick is left to be consumed.
+	 * 
+	 * @return the consumed time after performing the action for this tick, 0 if a
+	 *         whole tick is left to be consumed.
 	 */
 	public double perform(AgentSettings agentSettings) {
 		return perform(agentSettings, SimulationSettings.getDefaultTickDuration());
@@ -53,7 +57,9 @@ public abstract class AgentAction {
 
 	/**
 	 * Execute the action with a limited time budget.
-	 * @param availableTime remaining time available for the current tick, in tick units
+	 * 
+	 * @param availableTime remaining time available for the current tick, in tick
+	 *                      units
 	 * @return the time effectively consumed by the action
 	 */
 	public abstract double perform(AgentSettings agentSettings, double availableTime);
@@ -63,8 +69,10 @@ public abstract class AgentAction {
 	}
 
 	/**
-	 * Get the next graph element that the agent is targeting with this action, or null if none.
-	 * This is used for conflict resolution and should reflect the agent's intentions as closely as possible.
+	 * Get the next graph element that the agent is targeting with this action, or
+	 * null if none.
+	 * This is used for conflict resolution and should reflect the agent's
+	 * intentions as closely as possible.
 	 */
 	public abstract Edge getClosestTargetGraphElement();
 
@@ -75,11 +83,14 @@ public abstract class AgentAction {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj) return true;
-		if (obj == null || getClass() != obj.getClass()) return false;
+		if (this == obj)
+			return true;
+		if (obj == null || getClass() != obj.getClass())
+			return false;
 		AgentAction other = (AgentAction) obj;
 		return Double.compare(progress, other.progress) == 0
-				&& Objects.equals(agent == null ? null : agent.getId(), other.agent == null ? null : other.agent.getId());
+				&& Objects.equals(agent == null ? null : agent.getId(),
+						other.agent == null ? null : other.agent.getId());
 	}
 
 	@Override

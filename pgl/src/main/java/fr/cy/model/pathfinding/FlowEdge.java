@@ -1,14 +1,17 @@
 package fr.cy.model.pathfinding;
 
+import java.io.Serializable;
 import fr.cy.model.graph.element.Node;
 
 /**
- * Représente une arête avec flux, capacité et coût pour l'algorithme min-cost max-flow.
+ * Représente une arête avec flux, capacité et coût pour l'algorithme min-cost
+ * max-flow.
  *
  * @author GI3A
  * @version 1.0
  */
-public class FlowEdge {
+public class FlowEdge implements Serializable {
+    private static final long serialVersionUID = 1L;
     private final Node from;
     private final Node to;
     private final double capacity;

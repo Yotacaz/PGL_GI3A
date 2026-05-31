@@ -1,5 +1,6 @@
 package fr.cy.model.pathfinding;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -15,12 +16,13 @@ import fr.cy.model.graph.element.Node;
  * @author GI3A
  * @version 1.0
  */
-public class PathfindingUtils {
+public class PathfindingUtils implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     /**
      * Valide qu'un chemin est valide (tous les nœuds existent et sont connectés).
      *
-     * @param path le chemin à valider
+     * @param path  le chemin à valider
      * @param graph le graphe de référence
      * @return true si le chemin est valide
      */
@@ -41,7 +43,7 @@ public class PathfindingUtils {
         for (int i = 0; i < path.size() - 1; i++) {
             Node current = path.get(i);
             Node next = path.get(i + 1);
-            
+
             boolean connected = false;
             for (Edge edge : graph.getAdjacentEdges(current)) {
                 if (edge.getOppositeNode(current).equals(next)) {
@@ -49,7 +51,7 @@ public class PathfindingUtils {
                     break;
                 }
             }
-            
+
             if (!connected) {
                 return false;
             }
@@ -61,7 +63,7 @@ public class PathfindingUtils {
     /**
      * Calcule la longueur totale d'un chemin.
      *
-     * @param path le chemin
+     * @param path  le chemin
      * @param graph le graphe de référence
      * @return la longueur totale
      */
@@ -74,7 +76,7 @@ public class PathfindingUtils {
         for (int i = 0; i < path.size() - 1; i++) {
             Node current = path.get(i);
             Node next = path.get(i + 1);
-            
+
             for (Edge edge : graph.getAdjacentEdges(current)) {
                 if (edge.getOppositeNode(current).equals(next)) {
                     length += edge.getLength();
@@ -89,7 +91,7 @@ public class PathfindingUtils {
     /**
      * Calcule le coût total d'un chemin (longueur + stress).
      *
-     * @param path le chemin
+     * @param path  le chemin
      * @param graph le graphe de référence
      * @return le coût total
      */
@@ -102,13 +104,12 @@ public class PathfindingUtils {
         for (int i = 0; i < path.size() - 1; i++) {
             Node current = path.get(i);
             Node next = path.get(i + 1);
-            
+
             for (Edge edge : graph.getAdjacentEdges(current)) {
                 if (edge.getOppositeNode(current).equals(next)) {
                     double edgeCost = PathfindingConfig.computeEdgeCost(
-                        edge.getLength(),
-                        edge.getStressInducingImpact()
-                    );
+                            edge.getLength(),
+                            edge.getStressInducingImpact());
                     cost += edgeCost;
                     break;
                 }
@@ -121,7 +122,7 @@ public class PathfindingUtils {
     /**
      * Compte le nombre d'arêtes congestionnées dans un chemin.
      *
-     * @param path le chemin
+     * @param path  le chemin
      * @param graph le graphe de référence
      * @return le nombre d'arêtes congestionnées
      */
@@ -134,7 +135,7 @@ public class PathfindingUtils {
         for (int i = 0; i < path.size() - 1; i++) {
             Node current = path.get(i);
             Node next = path.get(i + 1);
-            
+
             for (Edge edge : graph.getAdjacentEdges(current)) {
                 if (edge.getOppositeNode(current).equals(next)) {
                     if (edge.isCongested()) {
@@ -154,14 +155,14 @@ public class PathfindingUtils {
      *
      * @param originalPath le chemin original
      * @param invalidNodes les nœuds à contourner
-     * @param graph le graphe
+     * @param graph        le graphe
      * @return un chemin alternatif sans les nœuds invalides
      */
-    public static List<Node> rebuildPathAvoidingNodes(List<Node> originalPath, 
-                                                       Set<Node> invalidNodes, 
-                                                       Graph graph) {
+    public static List<Node> rebuildPathAvoidingNodes(List<Node> originalPath,
+            Set<Node> invalidNodes,
+            Graph graph) {
         List<Node> newPath = new ArrayList<>();
-        
+
         for (Node node : originalPath) {
             if (!invalidNodes.contains(node)) {
                 newPath.add(node);
@@ -181,7 +182,7 @@ public class PathfindingUtils {
      */
     public static boolean hasLoop(List<Node> path) {
         Set<Node> visited = new HashSet<>();
-        
+
         for (Node node : path) {
             if (visited.contains(node)) {
                 return true;
@@ -195,7 +196,7 @@ public class PathfindingUtils {
     /**
      * Optimise un chemin en supprimant les détours inutiles.
      *
-     * @param path le chemin à optimiser
+     * @param path  le chemin à optimiser
      * @param graph le graphe de référence
      * @return le chemin optimisé
      */

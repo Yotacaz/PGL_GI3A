@@ -1,13 +1,15 @@
 package fr.cy.model.pathfinding;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 
-public class GraphPath {
-    //TODO: this is an example of a path class, adapt it
+public class GraphPath implements Serializable {
+    private static final long serialVersionUID = 1L;
+    // TODO: this is an example of a path class, adapt it
     private List<Node> nodes;
     private List<Edge> edges;
 
