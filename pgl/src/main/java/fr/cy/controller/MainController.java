@@ -9,6 +9,9 @@ import fr.cy.model.graph.element.Node;
 import fr.cy.model.simulation.Simulation;
 import fr.cy.view.GraphCanvas;
 import fr.cy.view.SimulationStatsPanel;
+import javafx.animation.FadeTransition;
+import javafx.animation.PauseTransition;
+import javafx.geometry.Point2D;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
@@ -17,9 +20,12 @@ import javafx.scene.control.Separator;
 import javafx.scene.control.ToolBar;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.Priority;
+import javafx.stage.Popup;
+import javafx.util.Duration;
 
 /**
  * Contrôleur principal MVC de l'Interface Utilisateur.
@@ -45,7 +51,6 @@ public class MainController {
         this.root = new BorderPane();
         this.root.getStyleClass().add("main-pane");
 
-        initToolBar();
         initCenterPane();
         initDetailsPanel();
 
@@ -57,6 +62,8 @@ public class MainController {
         this.simController = new SimulationController(simulation, graphCanvas);
         this.simController.setOnRender(this::refreshStatsPanel);
         this.simController.startLoop(); // Démarre l'update Graphique, la simu elle, reste en Pause !
+
+        initToolBar();
     }
 
     private void initToolBar() {
@@ -76,7 +83,95 @@ public class MainController {
         pauseBtn.setOnAction(e -> simController.pause());
         resetBtn.setOnAction(e -> simController.reset());
 
-        toolBar.getItems().addAll(playBtn, pauseBtn, resetBtn);
+        // Séparateur
+        Separator sep1 = new Separator();
+
+        Button stepBtn = new Button("⏭ Step");
+        stepBtn.getStyleClass().addAll("action-btn", "step-btn");
+
+        Label stepCountValue = new Label("+" + simController.getStepTicks());
+        stepCountValue.getStyleClass().add("step-count-value");
+
+        Label stepHint = new Label("Ticks/step");
+        stepHint.getStyleClass().add("step-hint");
+
+        Button stepMinusBtn = new Button("−100");
+        Button stepPlusBtn = new Button("+100");
+        stepMinusBtn.getStyleClass().addAll("action-btn", "step-adjust-btn");
+        stepPlusBtn.getStyleClass().addAll("action-btn", "step-adjust-btn");
+
+        HBox stepAdjustRow = new HBox(8, stepMinusBtn, stepCountValue, stepPlusBtn);
+        stepAdjustRow.getStyleClass().add("step-adjust-row");
+
+        VBox stepPopup = new VBox(8, stepHint, stepAdjustRow);
+        stepPopup.getStyleClass().add("step-popup");
+        Popup stepPopupWindow = new Popup();
+        stepPopupWindow.setAutoHide(true);
+        stepPopupWindow.getContent().add(stepPopup);
+
+        FadeTransition showPopup = new FadeTransition(Duration.millis(120), stepPopup);
+        showPopup.setFromValue(0);
+        showPopup.setToValue(1);
+
+        FadeTransition hidePopup = new FadeTransition(Duration.millis(90), stepPopup);
+        hidePopup.setFromValue(1);
+        hidePopup.setToValue(0);
+
+        PauseTransition hideDelay = new PauseTransition(Duration.millis(120));
+        hideDelay.setOnFinished(event -> {
+            if (stepPopupWindow.isShowing()) {
+                hidePopup.setOnFinished(e -> stepPopupWindow.hide());
+                hidePopup.playFromStart();
+            }
+        });
+
+        stepBtn.setOnMouseEntered(event -> {
+            hideDelay.stop();
+            if (!stepPopupWindow.isShowing()) {
+                Point2D anchorPoint = stepBtn.localToScreen(0, 0);
+                if (anchorPoint != null) {
+                    stepPopupWindow.show(stepBtn, anchorPoint.getX(), anchorPoint.getY() + stepBtn.getHeight() + 8);
+                }
+                stepPopup.setOpacity(0);
+                showPopup.playFromStart();
+            }
+        });
+        stepBtn.setOnMouseExited(event -> hideDelay.playFromStart());
+        stepPopup.setOnMouseEntered(event -> hideDelay.stop());
+        stepPopup.setOnMouseExited(event -> hideDelay.playFromStart());
+
+        stepBtn.setOnAction(e -> simController.stepTick());
+        stepMinusBtn.setOnAction(e -> {
+            int stepTicks = Math.max(1, simController.getStepTicks() - 100);
+            simController.setStepTicks(stepTicks);
+            stepCountValue.setText("+" + stepTicks);
+        });
+        stepPlusBtn.setOnAction(e -> {
+            int stepTicks = Math.min(1000, simController.getStepTicks() + 100);
+            simController.setStepTicks(stepTicks);
+            stepCountValue.setText("+" + stepTicks);
+        });
+
+        // Boutons de vitesse
+        Button decreaseSpeedBtn = new Button("⏪ -");
+        Button increaseSpeedBtn = new Button("+ ⏩");
+        Label speedLabel = new Label(formatSpeedMultiplier(simController.getSpeed()));
+
+        decreaseSpeedBtn.getStyleClass().addAll("action-btn", "speed-btn");
+        increaseSpeedBtn.getStyleClass().addAll("action-btn", "speed-btn");
+        speedLabel.getStyleClass().add("speed-badge");
+
+        decreaseSpeedBtn.setOnAction(e -> {
+            simController.decreaseSpeed();
+            speedLabel.setText(formatSpeedMultiplier(simController.getSpeed()));
+        });
+        increaseSpeedBtn.setOnAction(e -> {
+            simController.increaseSpeed();
+            speedLabel.setText(formatSpeedMultiplier(simController.getSpeed()));
+        });
+
+        toolBar.getItems().addAll(playBtn, pauseBtn, resetBtn, sep1, stepBtn, stepCountValue, decreaseSpeedBtn,
+                speedLabel, increaseSpeedBtn);
         root.setTop(toolBar);
     }
 
@@ -166,10 +261,10 @@ public class MainController {
         agentStatsTitle.getStyleClass().add("stat-title");
         agentStatsBox.getChildren().addAll(agentStatsTitle, avgStressValue, dominantStateValue);
 
-        histTotalValue    = new Label("--");
-        histMaxCongValue  = new Label("--");
-        histAvgCongValue  = new Label("--");
-        for (Label l : new Label[]{histTotalValue, histMaxCongValue, histAvgCongValue})
+        histTotalValue = new Label("--");
+        histMaxCongValue = new Label("--");
+        histAvgCongValue = new Label("--");
+        for (Label l : new Label[] { histTotalValue, histMaxCongValue, histAvgCongValue })
             l.getStyleClass().add("stat-value");
         historyBox = new VBox(8);
         historyBox.getStyleClass().add("stat-box");
@@ -178,7 +273,7 @@ public class MainController {
         historyBox.getChildren().addAll(histTitle, histTotalValue, histMaxCongValue, histAvgCongValue);
 
         // Masquer toutes les nouvelles cartes par défaut
-        for (VBox box : new VBox[]{widthBox, lengthBox, nodeInfoBox, agentStatsBox, historyBox}) {
+        for (VBox box : new VBox[] { widthBox, lengthBox, nodeInfoBox, agentStatsBox, historyBox }) {
             box.setVisible(false);
             box.setManaged(false);
         }
@@ -202,6 +297,13 @@ public class MainController {
         root.setRight(scrollPane);
     }
 
+    private String formatSpeedMultiplier(double speedMultiplier) {
+        if (Math.abs(speedMultiplier - Math.rint(speedMultiplier)) < 0.001) {
+            return "x" + (int) Math.rint(speedMultiplier);
+        }
+        return String.format("x%.2f", speedMultiplier).replace(".", ",");
+    }
+
     private VBox createStatBox(String titleText, javafx.scene.Node valueNode) {
         VBox box = new VBox(8);
         box.getStyleClass().add("stat-box");
@@ -222,9 +324,9 @@ public class MainController {
         }
     }
 
-
-
-    /** Retourne le nœud ou l'arête le plus proche des coordonnées monde (mx, my). */
+    /**
+     * Retourne le nœud ou l'arête le plus proche des coordonnées monde (mx, my).
+     */
     private GraphElement findClosestElement(double mx, double my) {
         GraphElement closest = null;
         double minDistance = Double.MAX_VALUE;
@@ -242,7 +344,7 @@ public class MainController {
         if (closest == null) {
             for (Edge edge : simController.getSimulation().getGraph().getEdges()) {
                 double x1 = edge.getStart().getX(), y1 = edge.getStart().getY();
-                double x2 = edge.getEnd().getX(),   y2 = edge.getEnd().getY();
+                double x2 = edge.getEnd().getX(), y2 = edge.getEnd().getY();
 
                 double C = x2 - x1, D = y2 - y1;
                 double len_sq = C * C + D * D;
@@ -359,7 +461,7 @@ public class MainController {
      */
     private void updateDetailsPanel(GraphElement element) {
         // Masquer toutes les boites optionnelles par défaut
-        for (VBox box : new VBox[]{widthBox, lengthBox, nodeInfoBox, agentStatsBox, historyBox}) {
+        for (VBox box : new VBox[] { widthBox, lengthBox, nodeInfoBox, agentStatsBox, historyBox }) {
             box.setVisible(false);
             box.setManaged(false);
         }
@@ -453,13 +555,15 @@ public class MainController {
         int calm = 0, selfish = 0, panicking = 0;
         for (Agent a : agents) {
             switch (a.getEmotionalState()) {
-                case CALM      -> calm++;
-                case SELFISH   -> selfish++;
+                case CALM -> calm++;
+                case SELFISH -> selfish++;
                 case PANICKING -> panicking++;
             }
         }
-        if (panicking >= calm && panicking >= selfish) return EmotionalState.PANICKING;
-        if (selfish >= calm)                           return EmotionalState.SELFISH;
+        if (panicking >= calm && panicking >= selfish)
+            return EmotionalState.PANICKING;
+        if (selfish >= calm)
+            return EmotionalState.SELFISH;
         return EmotionalState.CALM;
     }
 
@@ -470,21 +574,20 @@ public class MainController {
     private void refreshStatsPanel() {
         Graph graph = simController.getSimulation().getGraph();
         int totalAgents = simController.getSimulation().getAgentManager().getAgents().size();
-        int onNodes  = graph.getNodes().stream().mapToInt(n -> n.getAgents().size()).sum();
-        int onEdges  = graph.getEdges().stream().mapToInt(e -> e.getAgents().size()).sum();
+        int onNodes = graph.getNodes().stream().mapToInt(n -> n.getAgents().size()).sum();
+        int onEdges = graph.getEdges().stream().mapToInt(e -> e.getAgents().size()).sum();
         int fireNodes = (int) graph.getNodes().stream().filter(Node::isOnFire).count();
         int fireEdges = (int) graph.getEdges().stream().filter(Edge::isOnFire).count();
         double avgCong = graph.getNodes().stream()
                 .mapToDouble(n -> n.getCongestion()).average().orElse(0);
 
         statsPanel.update(
-            simController.getSimulation().getCurrentTick(),
-            simController.isRunning(),
-            totalAgents, onNodes, onEdges,
-            fireNodes, fireEdges,
-            graph.getNodes().size(), graph.getEdges().size(), graph.getExits().size(),
-            avgCong
-        );
+                simController.getSimulation().getCurrentTick(),
+                simController.isRunning(),
+                totalAgents, onNodes, onEdges,
+                fireNodes, fireEdges,
+                graph.getNodes().size(), graph.getEdges().size(), graph.getExits().size(),
+                avgCong);
     }
 
     public BorderPane getRoot() {
