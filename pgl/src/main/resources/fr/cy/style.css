@@ -215,23 +215,18 @@
     -fx-font-weight: bold;
 }
 
-.progress-bar {
-    -fx-min-height: 8px;
-    -fx-pref-height: 8px;
-    -fx-background-color: #1E1E24;
-    -fx-background-radius: 4px;
-    -fx-border-radius: 4px;
-    -fx-control-inner-background: #1E1E24;
-    -fx-padding: 0;
-    -fx-border-color: #30303D;
-    -fx-border-width: 1px;
-}
-
 .progress-bar > .track {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
 }
 
+/* --- LA CORRECTION EST ICI --- */
+.progress-bar > .bar {
+    -fx-padding: 4px; /* Donne 4px en haut et 4px en bas = 8px d'épaisseur totale ! */
+    -fx-background-insets: 0; /* Aligne la jauge parfaitement avec les bords */
+}
+
+/* Couleurs spécifiques (avec ton radius de 3px) */
 .stress-bar > .bar {
     -fx-background-color: -fx-danger;
     -fx-background-radius: 3px;
@@ -242,9 +237,19 @@
     -fx-background-radius: 3px;
 }
 
-
-/* Couleur de remplissage spécifique (Congestion) */
 .congestion-bar > .bar {
     -fx-background-color: -fx-accent-blue;
     -fx-background-radius: 3px;
+}
+
+/* --- Correction du fond blanc des ScrollPane --- */
+.scroll-pane,
+.scroll-pane > .viewport {
+    -fx-background-color: -fx-surface; /* Utilise la même couleur que ton panel */
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.scroll-pane {
+    -fx-border-color: transparent;
 }

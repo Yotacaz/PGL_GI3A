@@ -37,12 +37,59 @@ public class ScenarioBuilder {
         Simulation simulation = new Simulation("Demo", graph);
 
         if (simulation.getAgentManager() != null) {
-            // simulation.getAgentManager().generateAgentOnNode("Agent1", n1);  //for testing
+            // simulation.getAgentManager().generateAgentOnNode("Agent1", n1); //for testing
             simulation.getAgentManager().generateRandomsAgents(30);
         }
 
         n1.setFire(new Fire(0, 1, 0.01));
         n4.setFire(new Fire(0, 0, 0));
+
+        return simulation;
+    }
+
+    public static Simulation buildComplexScenario() {
+        Graph graph = new Graph();
+
+        // 1. Création des Nœuds (Hall, Bureaux, Couloirs)
+        Node hall = graph.createNode(400, 300); // Centre
+        Node bureauA = graph.createNode(100, 100);
+        Node bureauB = graph.createNode(100, 500);
+        Node corridorTop = graph.createNode(400, 100);
+        Node corridorBottom = graph.createNode(400, 500);
+        Node officeZone = graph.createNode(650, 300);
+
+        // 2. Création des sorties de secours (aux extrémités)
+        Node sortieNord = graph.createNode(400, 0);
+        Node sortieSud = graph.createNode(400, 600);
+        sortieNord.setExit(true);
+        sortieSud.setExit(true);
+
+        // 3. Création des arêtes (Le maillage du bâtiment)
+        graph.createEdge(bureauA, corridorTop);
+        graph.createEdge(bureauB, corridorBottom);
+        graph.createEdge(corridorTop, hall);
+        graph.createEdge(corridorBottom, hall);
+        graph.createEdge(hall, officeZone);
+        graph.createEdge(corridorTop, sortieNord); // Sortie Nord
+        graph.createEdge(corridorBottom, sortieSud); // Sortie Sud
+        graph.createEdge(hall, officeZone);
+
+        Simulation simulation = new Simulation("Labyrinthe en Flammes", graph);
+
+        // 4. Peuplement : beaucoup d'agents concentrés dans les bureaux
+        if (simulation.getAgentManager() != null) {
+            simulation.getAgentManager().generateAgentsOnNode("Agent", bureauA, 40);
+            simulation.getAgentManager().generateAgentsOnNode("Agent", bureauB, 40);
+            simulation.getAgentManager().generateAgentsOnNode("Agent", officeZone, 20);
+        }
+
+        // 5. Scénario catastrophe :
+        // Le hall principal prend feu, coupant la communication entre les bureaux et
+        // les sorties !
+        hall.setFire(new Fire(0, 0.8, 0.05)); // Feu intense et propagation rapide
+
+        // Un petit feu débutant dans un couloir pour compliquer le pathfinding
+        corridorTop.setFire(new Fire(0, 0.2, 0.02));
 
         return simulation;
     }
