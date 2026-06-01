@@ -69,7 +69,10 @@ public abstract class AbstractMoveAction extends AgentAction {
             Agent agent = getAgent();
             agent.incrementNodeVisited();
             Edge currentEdge = agent.getCurrentEdge();
-            if (currentEdge != null) {
+            if (currentEdge == null) {
+                throw new IllegalStateException("Current edge cannot be null when edge is completed");
+            }
+            if (!agent.isOnNode()) {
                 Node nextNode = currentEdge.getOppositeNode(agent.getPreviousOrCurrentNode());
                 agent.putOnNode(nextNode);
             }

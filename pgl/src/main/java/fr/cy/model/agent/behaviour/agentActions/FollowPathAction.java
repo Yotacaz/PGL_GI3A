@@ -17,7 +17,7 @@ public class FollowPathAction extends AbstractMoveAction {
     }
 
     @Override
-    public Edge getClosestTargetGraphElement() {
+    public Edge getClosestTargetEdge() {
         if (path == null || currentEdgeIndex >= path.getEdges().size()) {
             return null; // No more edges to follow
         }
@@ -31,7 +31,7 @@ public class FollowPathAction extends AbstractMoveAction {
 
     @Override
     public double perform(AgentSettings agentSettings, double availableTime) {
-        Edge currentEdge = getClosestTargetGraphElement();
+        Edge currentEdge = getClosestTargetEdge();
         if (currentEdge == null) {
             setProgress(1.0);   //no more edge
             return 0.0; //nothing done = no time consumed

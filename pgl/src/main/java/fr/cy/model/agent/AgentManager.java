@@ -25,8 +25,9 @@ public class AgentManager implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private AgentSettings agentSettings = AgentSettings.getInstance();
-    private List<Agent> agents;
+    private List<Agent> agentsOnGraph;
     private List<Agent> deadAgents = new ArrayList<>();
+    private List<Agent> evacuatedAgents = new ArrayList<>();    //TODO
     private DecisionContextProvider decisionContextProvider;
     private AgentGenerator agentGenerator;
     private final SimulationSettings simulationSettings;
@@ -37,7 +38,7 @@ public class AgentManager implements Serializable {
 
     public AgentManager(List<Agent> agents, DecisionContextProvider decisionContextProvider,
             AgentGenerator agentGenerator, SimulationSettings simulationSettings) {
-        this.agents = agents;
+        this.agentsOnGraph = agents;
         this.decisionContextProvider = decisionContextProvider;
         this.agentGenerator = agentGenerator;
         this.simulationSettings = simulationSettings;
@@ -66,7 +67,7 @@ public class AgentManager implements Serializable {
      *         (never null)
      */
     private void sortAgentsByOwnDecisionMakingFactor() {
-        agents.sort(new AgentByOwnDecisionMakingComparator());
+        agentsOnGraph.sort(new AgentByOwnDecisionMakingComparator());
     }
 
     public AgentSettings getAgentSettings() {
@@ -75,26 +76,26 @@ public class AgentManager implements Serializable {
 
     public void generateRandomsAgents(int count) {
         for (int i = 0; i < count; i++) {
-            Agent newAgent = agentGenerator.generateRandomAgentOnRandomNode("Agent" + (agents.size() + 1));
-            agents.add(newAgent);
+            Agent newAgent = agentGenerator.generateRandomAgentOnRandomNode("Agent" + (agentsOnGraph.size() + 1));
+            agentsOnGraph.add(newAgent);
         }
     }
 
     public void generateAgentOnEdge(String baseName, Edge edge, double edgeProgress) {
         Agent newAgent = agentGenerator.generateAgent(baseName, edge, edgeProgress);
-        agents.add(newAgent);
+        agentsOnGraph.add(newAgent);
     }
 
     public void generateAgentsOnNode(String baseName, Node node, int count) {
         for (int i = 0; i < count; i++) {
             Agent newAgent = agentGenerator.generateAgent(baseName + (i + 1), node);
-            agents.add(newAgent);
+            agentsOnGraph.add(newAgent);
         }
     }
 
     public void generateAgentOnNode(String baseName, Node node) {
         Agent newAgent = agentGenerator.generateAgent(baseName, node);
-        agents.add(newAgent);
+        agentsOnGraph.add(newAgent);
     }
 
     /**
@@ -119,7 +120,7 @@ public class AgentManager implements Serializable {
         // generate and register decisions for all agents before performing any action,
         // to ensure that all agents have the same information when making their
         // decisions
-        for (Agent agent : agents) {
+        for (Agent agent : agentsOnGraph) {
             if (agent.isOnNode()) {
                 DecisionNodeContext decisionContext = decisionContextProvider.getContext(agent);
                 AgentAction action = agent.makeDecision(decisionContext, agentSettings);
@@ -127,7 +128,7 @@ public class AgentManager implements Serializable {
             }
         }
 
-        for (Agent agent : agents) {
+        for (Agent agent : agentsOnGraph) {
             double remainingTime = tickDuration;
             while (remainingTime > 0.0) {
                 if (agent.getCurrentAction() == null || (agent.getCurrentAction().isCompleted() && agent.isOnNode())) {
@@ -165,8 +166,8 @@ public class AgentManager implements Serializable {
         }
     }
 
-    public List<Agent> getAgents() {
-        return agents;
+    public List<Agent> getAgentsOnGraph() {
+        return agentsOnGraph;
     }
 
     /**
@@ -177,7 +178,7 @@ public class AgentManager implements Serializable {
      * @return the removed agent
      */
     public Agent removeAgentFromGraph(Agent agent) {
-        if (!agents.remove(agent)) {
+        if (!agentsOnGraph.remove(agent)) {
             if (deadAgents.remove(agent) != true) {
                 throw new IllegalArgumentException("Agent not found in either agents or deadAgents list");
             }
@@ -196,7 +197,7 @@ public class AgentManager implements Serializable {
     public Agent killAgent(Agent agent) {
         agent.kill();
         deadAgents.add(agent);
-        agents.remove(agent);
+        agentsOnGraph.remove(agent);
         return agent;
     }
 
@@ -234,7 +235,7 @@ public class AgentManager implements Serializable {
      * factors updated beforehand
      */
     private void updateAgentsState() {
-        for (Agent agent : agents) {
+        for (Agent agent : agentsOnGraph) {
             agent.updateState();
         }
     }
@@ -248,7 +249,7 @@ public class AgentManager implements Serializable {
 
         // Create snapshots of all current agents
         this.initialAgentSnapshots = new ArrayList<>();
-        for (Agent agent : this.agents) {
+        for (Agent agent : this.agentsOnGraph) {
             this.initialAgentSnapshots.add(new AgentSnapshot(agent));
         }
     }
@@ -269,10 +270,10 @@ public class AgentManager implements Serializable {
         }
 
         // do not reset the settings
-        for (int i = this.agents.size() - 1; i >= 0; i--) {
-            deleteAgent(this.agents.get(i));
+        for (int i = this.agentsOnGraph.size() - 1; i >= 0; i--) {
+            deleteAgent(this.agentsOnGraph.get(i));
         }
-        this.agents.clear();
+        this.agentsOnGraph.clear();
         for (int i = this.deadAgents.size() - 1; i >= 0; i--) {
             deleteAgent(this.deadAgents.get(i));
         }
@@ -281,7 +282,7 @@ public class AgentManager implements Serializable {
         // Recreate agents from snapshots
         for (AgentSnapshot snapshot : this.initialAgentSnapshots) {
             Agent restoredAgent = snapshot.restoreToAgent();
-            this.agents.add(restoredAgent);
+            this.agentsOnGraph.add(restoredAgent);
         }
     }
 
@@ -315,7 +316,7 @@ public class AgentManager implements Serializable {
 
         // Position and state
         private final Node previousOrCurrentNode;
-        private final Edge currentEdge;
+        private final Edge currentOrPreviousEdge;
         private final boolean isOnNode;
         private final int nOfNodeVisited;
 
@@ -345,7 +346,7 @@ public class AgentManager implements Serializable {
 
             // Position and state
             this.previousOrCurrentNode = agent.getPreviousOrCurrentNode();
-            this.currentEdge = agent.getCurrentEdge();
+            this.currentOrPreviousEdge = agent.getCurrentOrPreviousEdge();
             this.isOnNode = agent.isOnNode();
             this.nOfNodeVisited = agent.getnOfNodeVisited();
 
@@ -391,9 +392,9 @@ public class AgentManager implements Serializable {
             }
 
             // Restore position
-            if (!this.isOnNode && this.currentEdge != null) {
+            if (!this.isOnNode && this.currentOrPreviousEdge != null) {
                 // Agent was on an edge, restore that state
-                agent.putOnEdge(this.currentEdge);
+                agent.putOnEdge(this.currentOrPreviousEdge);
                 // Restore the action if it exists
                 if (this.currentAction != null) {
                     agent.setCurrentAction(this.currentAction);
@@ -415,20 +416,20 @@ public class AgentManager implements Serializable {
         if (obj == null || getClass() != obj.getClass())
             return false;
         AgentManager other = (AgentManager) obj;
-        return Objects.equals(agentSettings, other.agentSettings) && Objects.equals(agents, other.agents)
+        return Objects.equals(agentSettings, other.agentSettings) && Objects.equals(agentsOnGraph, other.agentsOnGraph)
                 && Objects.equals(decisionContextProvider, other.decisionContextProvider);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(agentSettings, agents, decisionContextProvider);
+        return Objects.hash(agentSettings, agentsOnGraph, decisionContextProvider);
     }
 
     @Override
     public String toString() {
         return "AgentManager{" +
                 "agentSettings=" + agentSettings +
-                ", agentsCount=" + (agents == null ? 0 : agents.size()) +
+                ", agentsCount=" + (agentsOnGraph == null ? 0 : agentsOnGraph.size()) +
                 ", hasDecisionProvider=" + (decisionContextProvider != null) +
                 '}';
     }

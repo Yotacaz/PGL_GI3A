@@ -257,8 +257,8 @@ public class DetailsSidePanel extends ScrollPane {
             if (agent.isOnNode() && agent.getCurrentNode() != null) {
                 capacityValue.setText("Nœud " + agent.getCurrentNode().getId());
                 safeSetProgress(congestionBar, 0);
-            } else if (agent.getCurrentEdge() != null) {
-                Node target = agent.getCurrentEdge().getOppositeNode(agent.getPreviousOrCurrentNode());
+            } else if (agent.getCurrentOrPreviousEdge() != null) {
+                Node target = agent.getCurrentOrPreviousEdge().getOppositeNode(agent.getPreviousOrCurrentNode());
                 capacityValue.setText("Vers Nœud " + target.getId());
                 safeSetProgress(congestionBar, agent.getTravelProgressPercentageOnEdge());
             } else {

@@ -26,7 +26,7 @@ public class FollowSingleEdgeAction extends AbstractMoveAction {
     }
 
     @Override
-    public Edge getClosestTargetGraphElement() {
+    public Edge getClosestTargetEdge() {
         return edgeToFollow;
     }
 

@@ -55,7 +55,7 @@ public class DecisionContextProvider implements Serializable {
         if (context == null) {
             return;
         }
-        context.registerOutgoingIntent(action.getClosestTargetGraphElement(), agent);
+        context.registerOutgoingIntent(action.getClosestTargetEdge(), agent);
     }
 
     private DecisionNodeContext constructContext(Agent agent) {

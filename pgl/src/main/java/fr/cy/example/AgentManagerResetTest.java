@@ -46,10 +46,10 @@ public class AgentManagerResetTest {
         agentManager.generateAgentOnNode("TestAgent", node2);
         agentManager.generateAgentOnEdge("EdgeAgent", edge, 0.5);
 
-        System.out.println("Initial agent count: " + agentManager.getAgents().size());
-        Agent agent1 = agentManager.getAgents().get(0);
-        Agent agent2 = agentManager.getAgents().get(1);
-        Agent agent3 = agentManager.getAgents().get(2);
+        System.out.println("Initial agent count: " + agentManager.getAgentsOnGraph().size());
+        Agent agent1 = agentManager.getAgentsOnGraph().get(0);
+        Agent agent2 = agentManager.getAgentsOnGraph().get(1);
+        Agent agent3 = agentManager.getAgentsOnGraph().get(2);
 
         System.out.println("Agent 1: " + agent1.getName() + " stress=" + agent1.getStressLevel());
         System.out.println("Agent 2: " + agent2.getName() + " stress=" + agent2.getStressLevel());
@@ -76,7 +76,7 @@ public class AgentManagerResetTest {
 
         // Remove one agent to test handling of dead agents
         agentManager.killAgent(agent3);
-        System.out.println("Killed agent 3. Alive agents: " + agentManager.getAgents().size());
+        System.out.println("Killed agent 3. Alive agents: " + agentManager.getAgentsOnGraph().size());
 
         // Reset to initial state
         System.out.println("\n--- Calling reset() ---");
@@ -84,12 +84,12 @@ public class AgentManagerResetTest {
 
         System.out.println("\nAfter reset:");
         System.out.println("WALKING_SPEED restored: " + agentManager.getAgentSettings().getWALKING_SPEED());
-        System.out.println("Agent count restored: " + agentManager.getAgents().size());
+        System.out.println("Agent count restored: " + agentManager.getAgentsOnGraph().size());
 
-        if (agentManager.getAgents().size() > 0) {
-            Agent restoredAgent1 = agentManager.getAgents().get(0);
-            Agent restoredAgent2 = agentManager.getAgents().get(1);
-            Agent restoredAgent3 = agentManager.getAgents().get(2);
+        if (agentManager.getAgentsOnGraph().size() > 0) {
+            Agent restoredAgent1 = agentManager.getAgentsOnGraph().get(0);
+            Agent restoredAgent2 = agentManager.getAgentsOnGraph().get(1);
+            Agent restoredAgent3 = agentManager.getAgentsOnGraph().get(2);
 
             System.out.println("Restored Agent 1: " + restoredAgent1.getName());
             System.out.println("  - Stress: " + restoredAgent1.getStressLevel() + " (should be 0)");
@@ -100,7 +100,7 @@ public class AgentManagerResetTest {
 
             System.out.println("Restored Agent 3: " + restoredAgent3.getName());
             System.out.println("  - Position: " + (restoredAgent3.isOnNode() ? "on node" : "on edge"));
-            System.out.println("  - Current action exists: " + (restoredAgent3.getCurrentAction() != null));
+            System.out.println("  - Current action still exists: " + (restoredAgent3.getCurrentAction() != null));
         }
 
         System.out.println("\n=== Test Complete ===");

@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.io.*;
 
 import fr.cy.model.agent.Agent;
+import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 import fr.cy.model.fire.Fire;
 import fr.cy.model.stress.StressInducing;
 
@@ -149,6 +150,36 @@ public abstract class GraphElement implements StressInducing, Serializable {
                 incrementTimesFull();
             }
         }
+    }
+
+    public boolean isCongested() {
+        return getCongestion() > 0.7;
+    }
+
+    /**
+     * Evaluate a score multiplier for an agent on this element, based on its properties and the agent's properties.
+     * @param agentState the properties of the agent for which we want to evaluate the score multiplier
+     * @return a score multiplier for an agent on this element, based on its properties and the agent's properties, 
+     * where a value < 1 means that the element is less attractive, and > 1 means that it is more attractive
+     */
+    public double getScoreMultiplierForAgent(AgentDecisionalProperties agentState) {
+        //penalize graph elements on fire
+        double scoreMult = 1.0;
+        if (isOnFire()) {
+            Fire fire = getFire();
+            assert fire != null;
+            scoreMult *= 0.1 / (1.0 + fire.getIntensity() + fire.getSmokeLevel() + fire.getSpreadRate());
+        }
+        //penalize very congested graph elements
+        double congestion = getCongestion();
+        if (isCongested()) {
+            scoreMult *= 0.4 * (1.0 + congestion - agentState.getCongestionTolerance());
+        }
+        double stressInducedByThisElement = getStressInducingImpact();
+        if (stressInducedByThisElement > 0.90) {
+            scoreMult *= 0.4 * (1.0 + stressInducedByThisElement - agentState.getStressTolerance());
+        }
+        return scoreMult;
     }
 
     /**

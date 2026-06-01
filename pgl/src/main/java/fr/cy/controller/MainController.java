@@ -79,7 +79,7 @@ public class MainController {
             return;
 
         Graph graph = simController.getSimulation().getGraph();
-        int totalAgents = simController.getSimulation().getAgentManager().getAgents().size();
+        int totalAgents = simController.getSimulation().getAgentManager().getAgentsOnGraph().size();
         int onNodes = graph.getNodes().stream().mapToInt(n -> n.getAgents().size()).sum();
         int onEdges = graph.getEdges().stream().mapToInt(e -> e.getAgents().size()).sum();
         int fireNodes = (int) graph.getNodes().stream().filter(Node::isOnFire).count();
