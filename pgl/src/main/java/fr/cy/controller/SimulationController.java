@@ -112,6 +112,10 @@ public class SimulationController {
         }
     }
 
+    public void forceRender() {
+        renderer.render(simulation, canvas);
+    }
+
     // Fournit l'instance de la simu (pour y chercher un élément par ex)
     public Simulation getSimulation() {
         return simulation;

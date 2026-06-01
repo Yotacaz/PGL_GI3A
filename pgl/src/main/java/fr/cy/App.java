@@ -18,7 +18,7 @@ public class App extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        Simulation simulation = ScenarioBuilder.buildDemoScenario();
+        Simulation simulation = ScenarioBuilder.buildComplexScenario();
 
         MainController mainController = new MainController(simulation);
 
