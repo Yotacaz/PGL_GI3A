@@ -24,6 +24,8 @@ public class AgentManager implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    private boolean isFirstTick = true;
+
     private AgentSettings agentSettings = AgentSettings.getInstance();
     private List<Agent> agentsOnGraph;
     private List<Agent> deadAgents = new ArrayList<>();
@@ -33,7 +35,7 @@ public class AgentManager implements Serializable {
     private final SimulationSettings simulationSettings;
     // private Map<Agent, AgentAction> agentActionsPreviousTick = new HashMap<>();
 
-    /** For storing initial snapshots of agents  (for reset functionality) */
+    /** For storing initial snapshots of agents (for reset functionality) */
     private List<AgentSnapshot> initialAgentSnapshots = null;
 
     public AgentManager(List<Agent> agents, DecisionContextProvider decisionContextProvider,
@@ -109,6 +111,10 @@ public class AgentManager implements Serializable {
     }
 
     public void tick(double tickDuration) {
+        if (isFirstTick) {
+            setInitialState();
+            isFirstTick = false;
+        }
         updateAgentsState();
         moveAgents(tickDuration);
     }
@@ -183,7 +189,7 @@ public class AgentManager implements Serializable {
                 throw new IllegalArgumentException("Agent not found in either agents or deadAgents list");
             }
         }
-        
+
         agent.putOnNode(null);
         agent.setCurrentAction(null);
         agent.setStressLevel(0);
@@ -261,12 +267,10 @@ public class AgentManager implements Serializable {
      * - Clearing dead agents list
      * - Recreating agents from snapshots with restored state
      *
-     * @throws IllegalStateException if setInitialState() was never called
      */
     public void reset() {
         if (this.initialAgentSnapshots == null) {
-            throw new IllegalStateException(
-                    "Initial state not set. Call setInitialState() before calling reset().");
+            setInitialState();
         }
 
         // do not reset the settings
@@ -403,7 +407,8 @@ public class AgentManager implements Serializable {
                 // Agent was on a node, ensure it's on the node
                 agent.putOnNode(this.previousOrCurrentNode);
             }
-            // If agent is neither on node nor edge, it's unplaced (which is the agent's initial state)
+            // If agent is neither on node nor edge, it's unplaced (which is the agent's
+            // initial state)
 
             return agent;
         }
