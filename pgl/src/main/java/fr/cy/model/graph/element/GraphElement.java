@@ -338,4 +338,15 @@ public abstract class GraphElement implements StressInducing, Serializable {
         return congestionMeasureCount;
     }
 
+    public void reset() {
+        agents.clear();
+        removeFire();
+        maxCongestion = 0;
+        sumCongestion = 0;
+        congestionMeasureCount = 0;
+        timesFull = 0;
+        totalAgentsCount = 0;
+        cachedTotalStressInducedByThisElement = 0;
+        cachedTotalStressInducedIncludingNeighbors = 0;
+    }
 }

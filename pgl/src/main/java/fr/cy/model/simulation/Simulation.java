@@ -51,6 +51,13 @@ public class Simulation implements Serializable {
         return name;
     }
 
+    public void reset() {
+        graph.reset();
+        agentManager.reset();
+        currentTick = 0;
+        running = false;
+    }
+
     public void start() {
         running = true;
     }
