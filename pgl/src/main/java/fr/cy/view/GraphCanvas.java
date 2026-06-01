@@ -1,6 +1,7 @@
 package fr.cy.view;
 
 import javafx.scene.canvas.Canvas;
+import fr.cy.model.agent.Agent;
 
 /**
  * Surface de dessin personnalisée qui épouse dynamiquement
@@ -13,6 +14,9 @@ public class GraphCanvas extends Canvas {
     private double panX = 0.0;
     private double panY = 0.0;
     private double zoom = 1.0;
+
+    // --- NOUVEAU : Mémoire de la sélection UI ---
+    private Agent selectedAgent = null;
 
     @Override
     public boolean isResizable() {
@@ -52,5 +56,14 @@ public class GraphCanvas extends Canvas {
 
     public void setZoom(double zoom) {
         this.zoom = zoom;
+    }
+
+    // --- Getters & Setters Sélection ---
+    public Agent getSelectedAgent() {
+        return selectedAgent;
+    }
+
+    public void setSelectedAgent(Agent selectedAgent) {
+        this.selectedAgent = selectedAgent;
     }
 }

@@ -206,12 +206,13 @@ public class Edge extends GraphElement {
      * @return la vitesse maximale calculée
      */
     public double getMaxAgentSpeed() {
-        // if (isOnFire()) {
-        //     return 0.0;
-        // }
-
         double congestionFactor = 1.0 - getCongestion();
         double calculatedSpeed = AgentSettings.getInstance().getMAX_RUNNING_SPEED() * congestionFactor;
+
+        if (isOnFire()) {
+            return calculatedSpeed * 1.5;
+        }
+
         return Math.max(calculatedSpeed, 0.0);
     }
 
