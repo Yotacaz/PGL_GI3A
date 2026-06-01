@@ -85,6 +85,13 @@ public class AgentManager implements Serializable {
         agents.add(newAgent);
     }
 
+    public void generateAgentsOnNode(String baseName, Node node, int count) {
+        for (int i = 0; i < count; i++) {
+            Agent newAgent = agentGenerator.generateAgent(baseName + (i + 1), node);
+            agents.add(newAgent);
+        }
+    }
+
     public void generateAgentOnNode(String baseName, Node node) {
         Agent newAgent = agentGenerator.generateAgent(baseName, node);
         agents.add(newAgent);
@@ -182,7 +189,10 @@ public class AgentManager implements Serializable {
         return agent;
     }
 
-    /** Kills the agent and removes the main agent list, but keeps it in the list of dead agents for statistics purposes */
+    /**
+     * Kills the agent and removes the main agent list, but keeps it in the list of
+     * dead agents for statistics purposes
+     */
     public Agent killAgent(Agent agent) {
         agent.kill();
         deadAgents.add(agent);

@@ -82,6 +82,80 @@
     -fx-text-fill: white;
 }
 
+.step-btn {
+    -fx-background-color: -fx-surface-elevated;
+    -fx-text-fill: -fx-text-primary;
+}
+
+.step-btn:hover {
+    -fx-background-color: #393948;
+}
+
+.step-control {
+    -fx-alignment: center;
+    -fx-padding: 0 6 0 6px;
+}
+
+.step-count-value {
+    -fx-text-fill: -fx-accent-blue;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 0 0 0 0px;
+    -fx-background-color: rgba(0, 122, 204, 0.14);
+    -fx-background-radius: 999px;
+    -fx-padding: 4 10 4 10px;
+}
+
+.speed-badge {
+    -fx-text-fill: -fx-accent-blue;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-background-color: rgba(0, 122, 204, 0.14);
+    -fx-background-radius: 999px;
+    -fx-padding: 4 10 4 10px;
+}
+
+.step-header {
+    -fx-alignment: center;
+}
+
+.step-popup {
+    -fx-background-color: rgba(40, 40, 51, 0.98);
+    -fx-background-radius: 12px;
+    -fx-padding: 10 12 10 12px;
+    -fx-border-color: #3A3A48;
+    -fx-border-radius: 12px;
+    -fx-border-width: 1px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.35), 10, 0, 0, 4);
+}
+
+.step-adjust-row {
+    -fx-alignment: center;
+}
+
+.step-adjust-btn {
+    -fx-background-color: #30303D;
+    -fx-text-fill: white;
+    -fx-min-width: 54px;
+    -fx-pref-width: 54px;
+    -fx-min-height: 30px;
+    -fx-pref-height: 30px;
+    -fx-padding: 0;
+    -fx-background-radius: 999px;
+}
+
+.step-adjust-btn:hover {
+    -fx-background-color: -fx-accent-blue;
+}
+
+.step-hint {
+    -fx-text-fill: -fx-text-muted;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 0.4px;
+    -fx-opacity: 0.9;
+}
+
 /* --- Container central (Canvas) --- */
 .canvas-container {
     -fx-background-color: transparent;
@@ -141,23 +215,18 @@
     -fx-font-weight: bold;
 }
 
-.progress-bar {
-    -fx-min-height: 8px;
-    -fx-pref-height: 8px;
-    -fx-background-color: #1E1E24;
-    -fx-background-radius: 4px;
-    -fx-border-radius: 4px;
-    -fx-control-inner-background: #1E1E24;
-    -fx-padding: 0;
-    -fx-border-color: #30303D;
-    -fx-border-width: 1px;
-}
-
 .progress-bar > .track {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
 }
 
+/* --- LA CORRECTION EST ICI --- */
+.progress-bar > .bar {
+    -fx-padding: 4px; /* Donne 4px en haut et 4px en bas = 8px d'épaisseur totale ! */
+    -fx-background-insets: 0; /* Aligne la jauge parfaitement avec les bords */
+}
+
+/* Couleurs spécifiques (avec ton radius de 3px) */
 .stress-bar > .bar {
     -fx-background-color: -fx-danger;
     -fx-background-radius: 3px;
@@ -168,9 +237,19 @@
     -fx-background-radius: 3px;
 }
 
-
-/* Couleur de remplissage spécifique (Congestion) */
 .congestion-bar > .bar {
     -fx-background-color: -fx-accent-blue;
     -fx-background-radius: 3px;
+}
+
+/* --- Correction du fond blanc des ScrollPane --- */
+.scroll-pane,
+.scroll-pane > .viewport {
+    -fx-background-color: -fx-surface; /* Utilise la même couleur que ton panel */
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.scroll-pane {
+    -fx-border-color: transparent;
 }

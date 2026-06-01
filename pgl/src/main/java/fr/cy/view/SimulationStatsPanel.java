@@ -9,25 +9,25 @@ import javafx.scene.layout.VBox;
  */
 public class SimulationStatsPanel extends VBox {
 
-    private static final String BG         = "#0F0F1A";
-    private static final String HEADER_BG  = "#141428";
+    private static final String BG = "#0F0F1A";
+    private static final String HEADER_BG = "#141428";
     private static final String SECTION_BG = "#1C1C32";
-    private static final String ACCENT     = "#5B7FFF";
-    private static final String TEXT       = "#E8E8FF";
-    private static final String GREEN      = "#4ADE80";
-    private static final String ORANGE     = "#FFA94D";
-    private static final String RED        = "#FF6B6B";
+    private static final String ACCENT = "#5B7FFF";
+    private static final String TEXT = "#E8E8FF";
+    private static final String GREEN = "#4ADE80";
+    private static final String ORANGE = "#FFA94D";
+    private static final String RED = "#FF6B6B";
 
-    private final Label simStateLabel     = new Label();
-    private final Label tickLabel         = new Label();
-    private final Label agentTotalLabel   = new Label();
-    private final Label agentNodesLabel   = new Label();
-    private final Label agentEdgesLabel   = new Label();
-    private final Label fireNodesLabel    = new Label();
-    private final Label fireEdgesLabel    = new Label();
-    private final Label graphNodesLabel   = new Label();
-    private final Label graphEdgesLabel   = new Label();
-    private final Label globalCongLabel   = new Label();
+    private final Label simStateLabel = new Label();
+    private final Label tickLabel = new Label();
+    private final Label agentTotalLabel = new Label();
+    private final Label agentNodesLabel = new Label();
+    private final Label agentEdgesLabel = new Label();
+    private final Label fireNodesLabel = new Label();
+    private final Label fireEdgesLabel = new Label();
+    private final Label graphNodesLabel = new Label();
+    private final Label graphEdgesLabel = new Label();
+    private final Label globalCongLabel = new Label();
 
     public SimulationStatsPanel() {
         setPrefWidth(215);
@@ -37,45 +37,43 @@ public class SimulationStatsPanel extends VBox {
         Label titleLabel = new Label("STATISTIQUES");
         titleLabel.setMaxWidth(Double.MAX_VALUE);
         titleLabel.setStyle(
-            "-fx-background-color: " + HEADER_BG + "; " +
-            "-fx-text-fill: white; -fx-font-size: 14; -fx-font-weight: bold; " +
-            "-fx-padding: 16 16 14 16;"
-        );
+                "-fx-background-color: " + HEADER_BG + "; " +
+                        "-fx-text-fill: white; -fx-font-size: 14; -fx-font-weight: bold; " +
+                        "-fx-padding: 16 16 14 16;");
 
         String dataStyle = "-fx-text-fill: " + TEXT + "; -fx-font-size: 12; -fx-padding: 3 16;";
-        for (Label l : new Label[]{simStateLabel, tickLabel, agentTotalLabel, agentNodesLabel,
+        for (Label l : new Label[] { simStateLabel, tickLabel, agentTotalLabel, agentNodesLabel,
                 agentEdgesLabel, fireNodesLabel, fireEdgesLabel, graphNodesLabel,
-                graphEdgesLabel, globalCongLabel}) {
+                graphEdgesLabel, globalCongLabel }) {
             l.setStyle(dataStyle);
         }
 
         getChildren().addAll(
-            titleLabel,
-            sectionHeader("SIMULATION"),
-            simStateLabel, tickLabel,
-            sectionHeader("AGENTS"),
-            agentTotalLabel, agentNodesLabel, agentEdgesLabel,
-            sectionHeader("INCENDIES"),
-            fireNodesLabel, fireEdgesLabel,
-            sectionHeader("GRAPHE"),
-            graphNodesLabel, graphEdgesLabel, globalCongLabel
-        );
+                titleLabel,
+                sectionHeader("SIMULATION"),
+                simStateLabel, tickLabel,
+                sectionHeader("AGENTS"),
+                agentTotalLabel, agentNodesLabel, agentEdgesLabel,
+                sectionHeader("INCENDIES"),
+                fireNodesLabel, fireEdgesLabel,
+                sectionHeader("GRAPHE"),
+                graphNodesLabel, graphEdgesLabel, globalCongLabel);
     }
 
     private Label sectionHeader(String text) {
         Label l = new Label(text);
         l.setMaxWidth(Double.MAX_VALUE);
         l.setStyle(
-            "-fx-background-color: " + SECTION_BG + "; " +
-            "-fx-text-fill: " + ACCENT + "; " +
-            "-fx-font-size: 10; -fx-font-weight: bold; " +
-            "-fx-padding: 7 16 5 16;"
-        );
+                "-fx-background-color: " + SECTION_BG + "; " +
+                        "-fx-text-fill: " + ACCENT + "; " +
+                        "-fx-font-size: 10; -fx-font-weight: bold; " +
+                        "-fx-padding: 7 16 5 16;");
         return l;
     }
 
     /**
-     * Met à jour tous les labels. Toutes les valeurs sont calculées dans le contrôleur.
+     * Met à jour tous les labels. Toutes les valeurs sont calculées dans le
+     * contrôleur.
      *
      * @param tick          tick courant
      * @param running       simulation en cours
@@ -90,10 +88,10 @@ public class SimulationStatsPanel extends VBox {
      * @param avgCongestion congestion moyenne (0.0–1.0)
      */
     public void update(int tick, boolean running,
-                       int totalAgents, int onNodes, int onEdges,
-                       int fireNodes, int fireEdges,
-                       int totalNodes, int totalEdges, int exitNodes,
-                       double avgCongestion) {
+            int totalAgents, int onNodes, int onEdges,
+            int fireNodes, int fireEdges,
+            int totalNodes, int totalEdges, int exitNodes,
+            double avgCongestion) {
 
         String data = "-fx-text-fill: " + TEXT + "; -fx-font-size: 12; -fx-padding: 3 16;";
 

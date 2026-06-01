@@ -64,9 +64,18 @@ public class Simulation implements Serializable {
             return;
         }
 
-        fireService.updateFires(graph, simulationSettings.getTickDuration());
+        double effectiveTickDuration = simulationSettings.getTickDuration() * simulationSettings.getSpeedMultiplier();
+        fireService.updateFires(graph, effectiveTickDuration);
         graph.tick();
-        agentManager.tick(simulationSettings.getTickDuration());
+        agentManager.tick(effectiveTickDuration);
+        currentTick++;
+    }
+
+    public void stepTick() {
+        double effectiveTickDuration = simulationSettings.getTickDuration() * simulationSettings.getSpeedMultiplier();
+        fireService.updateFires(graph, effectiveTickDuration);
+        graph.tick();
+        agentManager.tick(effectiveTickDuration);
         currentTick++;
     }
 
