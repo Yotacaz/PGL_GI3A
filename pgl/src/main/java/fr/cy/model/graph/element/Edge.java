@@ -370,4 +370,11 @@ public class Edge extends GraphElement {
 
         return Math.min(1.0, burnedDistance / getLength());
     }
+
+    @Override
+    public void reset() {
+        super.reset();
+        burningFromStart = false;
+        burningFromEnd = false;
+    }
 }
