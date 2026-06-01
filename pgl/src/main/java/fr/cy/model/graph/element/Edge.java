@@ -3,6 +3,7 @@ package fr.cy.model.graph.element;
 import fr.cy.model.graph.GraphConfig;
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentSettings;
+import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 import fr.cy.model.fire.Fire;
 import java.util.*;
 
@@ -275,8 +276,17 @@ public class Edge extends GraphElement {
         return speed;
     }
 
-    public boolean isCongested() {
-        return getCongestion() > 0.7;
+    /**
+     * Evaluate a score multiplier for an agent on this edge, based on its properties and the agent's properties.
+     * @param agentState the properties of the agent for which we want to evaluate the score multiplier
+     * @param destinationNode the node the agent is trying to reach by going through
+     *  this edge (used to evaluate the score multiplier of that node as well)
+     * @return a score multiplier for an agent on this edge, based on its properties and the agent's properties,
+     */
+    public double getScoreMultiplierForAgentGoingToNode(AgentDecisionalProperties agentState, Node destinationNode) {
+        double scoreMult = getScoreMultiplierForAgent(agentState);
+        scoreMult *= destinationNode.getScoreMultiplierForAgent(agentState);
+        return scoreMult;
     }
 
     @Override

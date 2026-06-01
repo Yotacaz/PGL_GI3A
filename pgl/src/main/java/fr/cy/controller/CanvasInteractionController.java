@@ -125,7 +125,7 @@ public class CanvasInteractionController {
         Agent closest = null;
         double minDistance = Double.MAX_VALUE;
 
-        for (Agent agent : simController.getSimulation().getAgentManager().getAgents()) {
+        for (Agent agent : simController.getSimulation().getAgentManager().getAgentsOnGraph()) {
             double ax = 0, ay = 0;
             boolean isVisible = false;
 
@@ -137,8 +137,8 @@ public class CanvasInteractionController {
                 ax = node.getX() + Math.cos(Math.toRadians(angle)) * dist;
                 ay = node.getY() + Math.sin(Math.toRadians(angle)) * dist;
                 isVisible = true;
-            } else if (!agent.isOnNode() && agent.getCurrentEdge() != null) {
-                Edge edge = agent.getCurrentEdge();
+            } else if (!agent.isOnNode() && agent.getCurrentOrPreviousEdge() != null) {
+                Edge edge = agent.getCurrentOrPreviousEdge();
                 Node previous = agent.getPreviousOrCurrentNode();
                 Node target = edge.getOppositeNode(previous);
                 double ratio = Math.max(0, agent.getTravelProgressPercentageOnEdge());

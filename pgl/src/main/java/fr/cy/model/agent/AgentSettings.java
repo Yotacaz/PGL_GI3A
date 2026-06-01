@@ -41,6 +41,7 @@ public class AgentSettings implements Serializable {
         defaultDecisionMakingFactors.put(AgentPossibleNodeDecision.NICEST_PATH, 0.2);
         defaultDecisionMakingFactors.put(AgentPossibleNodeDecision.RANDOM, 0.5);
         defaultDecisionMakingFactors.put(AgentPossibleNodeDecision.CONTINUE_LAST_ACTION, 2.5);
+        defaultDecisionMakingFactors.put(AgentPossibleNodeDecision.WAIT, 1.0);
     }
 
     /* Default speeds and tolerances for agents, can be overridden by individual agents */
@@ -94,8 +95,6 @@ public class AgentSettings implements Serializable {
     public double getDecisionMakingFactor(AgentPossibleNodeDecision decision) {
         return defaultDecisionMakingFactors.get(decision);
     }
-
-
 
     private void updateWALK_SPEED_REDUCTION_FACTOR() {
         this.WALK_SPEED_REDUCTION_FACTOR = WALKING_SPEED / RUNNING_SPEED;
@@ -253,7 +252,7 @@ public class AgentSettings implements Serializable {
         return min + random.nextInt((max - min) + 1);
     }
 
-        public void resetSettings(){
+    public void resetSettings() {
         AgentSettings defaultSettings = new AgentSettings();
         this.WALKING_SPEED = defaultSettings.WALKING_SPEED;
         this.RUNNING_SPEED = defaultSettings.RUNNING_SPEED;

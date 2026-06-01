@@ -1,6 +1,8 @@
 package fr.cy.model.agent;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -57,10 +59,11 @@ public class Agent implements StressInducing, Serializable {
      */
     private AgentDecisionalProperties behavioralState;
 
-    /** Current edge of the graph where the agent is located */
-    private Edge currentEdge;
+    /** Current or previous edge of the graph where the agent is located */
+    private Edge currentOrPreviousEdge;
+    /** True if the agent is currently on a node, false if on an edge */
     private boolean isOnNode = true; // True if the agent is currently on a node, false if on an edge
-    /** Previous node visited by the agent, used in case of backtracking */
+    /** Current node or previous node visited by the agent, used in case of backtracking */
     private Node previousOrCurrentNode = null;
     /**
      * The current action being performed by the agent, which can be null if the
@@ -119,15 +122,36 @@ public class Agent implements StressInducing, Serializable {
 
     private double computeAgentDecisionsScore(AgentSettings agentSettings, DecisionNodeContext decisionContext) {
         // No need to clear the map as it is overwritten at each decision step
+        // Precompute edge score multipliers once to avoid recalculation for each decision
+        List<Double> edgeScoreMultipliers = computeEdgeScoreMultipliers(decisionContext);
+
         double totalScore = 0.0;
         for (AgentPossibleNodeDecision possibleDecision : AgentPossibleNodeDecision.values()) {
             double factor = agentSettings.getDecisionMakingFactor(possibleDecision);
             AgentDecisionScore decisionScore = possibleDecision.computeScore(decisionContext, behavioralState, factor,
-                    lastSelectedDecision, currentAction);
+                    lastSelectedDecision, currentAction, edgeScoreMultipliers);
             decisionsScore.put(possibleDecision, decisionScore);
             totalScore += decisionScore.getScore();
         }
         return totalScore;
+    }
+
+    /**
+     * Compute edge score multipliers for all outgoing edges from the current node.
+     * These multipliers are based on the agent's behavioral state and the destination nodes.
+     * @param decisionContext the context containing the source node and outgoing edges
+     * @return a list of score multipliers in the same order as the outgoing edges
+     */
+    private List<Double> computeEdgeScoreMultipliers(DecisionNodeContext decisionContext) {
+        List<Edge> outgoingEdges = decisionContext.getOutgoingEdges();
+        List<Double> multipliers = new ArrayList<>(outgoingEdges.size());
+        Node sourceNode = decisionContext.getSourceNode();
+        for (Edge edge : decisionContext.getOutgoingEdges()) {
+            double multiplier = edge.getScoreMultiplierForAgentGoingToNode(behavioralState,
+                    edge.getOppositeNode(sourceNode));
+            multipliers.add(multiplier);
+        }
+        return multipliers;
     }
 
     /**
@@ -145,10 +169,13 @@ public class Agent implements StressInducing, Serializable {
     }
 
     public double getEffectiveSpeed(AgentSettings agentSettings) {
-        double maxEdgeSpeed = currentEdge != null ? currentEdge.getMaxAgentSpeedInDirection(previousOrCurrentNode)
-                : Double.POSITIVE_INFINITY;
+        double maxElemSpeed = Double.MAX_VALUE;
+        if (!isOnNode()) {
+            maxElemSpeed = currentOrPreviousEdge == null ? Double.MAX_VALUE
+                    : currentOrPreviousEdge.getMaxAgentSpeedInDirection(previousOrCurrentNode);
+        }
         double agentMaxSpeed = getMaxSpeed();
-        double effectiveMaxSpeed = Math.min(agentMaxSpeed, maxEdgeSpeed);
+        double effectiveMaxSpeed = Math.min(agentMaxSpeed, maxElemSpeed);
         assert effectiveMaxSpeed >= 0 : "Effective max speed should be non-negative";
         double speed = 0.0;
         double walkSpeedReductionFactor = agentSettings.getWALK_SPEED_REDUCTION_FACTOR();
@@ -232,26 +259,24 @@ public class Agent implements StressInducing, Serializable {
         return previousOrCurrentNode;
     }
 
-    public void setPreviousOrCurrentNode(Node previousNode) {
-        this.previousOrCurrentNode = previousNode;
-    }
 
     public void putOnNode(Node currentNode) {
-        Node previousNode = getPreviousOrCurrentNode();
-        if (previousNode != null) {
-            previousNode.removeAgent(this);
+        if (isOnNode()) {
+            Node previousNode = getPreviousOrCurrentNode();
+            if (previousNode != null) {
+                previousNode.removeAgent(this);
+            }
+        } else {
+            Edge previousEdge = getCurrentOrPreviousEdge();
+            if (previousEdge != null) {
+                previousEdge.removeAgent(this);
+            }
         }
-        Edge currentEdge = getCurrentEdge();
-        if (currentEdge != null) {
-            assert !isOnNode : "incorrect state: agent cannot be on an edge and on a node at the same time";
-            currentEdge.removeAgent(this);
-        }
-
+        
         if (currentNode != null) {
             currentNode.addAgent(this);
         }
         this.previousOrCurrentNode = currentNode;
-        setCurrentEdge(null);
         setIsOnNode(true);
     }
 
@@ -263,42 +288,43 @@ public class Agent implements StressInducing, Serializable {
         return isOnNode ? getPreviousOrCurrentNode() : null;
     }
 
-    public Edge getCurrentEdge() {
-        return currentEdge;
+    public Edge getCurrentOrPreviousEdge() {
+        return currentOrPreviousEdge;
     }
 
-    public void setCurrentEdge(Edge currentEdge) {
-        this.currentEdge = currentEdge;
-    }
 
     public void putOnEdge(Edge edge) {
-        Edge currentEdge = getCurrentEdge();
-        if (currentEdge != null) {
-            assert !isOnNode
-                    : "incorrect state: agent cannot be on an edge and on a node at the same time (was on an edge but isOnNode was true)";
-            currentEdge.removeAgent(this);
-        }
-        if (getCurrentNode() != null) {
-            assert isOnNode
-                    : "incorrect state: agent cannot be on an edge and on a node at the same time (was on a node but isOnNode was false)";
-            getCurrentNode().removeAgent(this);
+        if (isOnNode()){
+            if (getCurrentNode() != null) {
+                getCurrentNode().removeAgent(this);
+            }
+            
+        }else{
+            Edge previousEdge = getCurrentOrPreviousEdge();
+            if (previousEdge != null) {
+                previousEdge.removeAgent(this);
+            }
         }
         if (edge != null) {
             edge.addAgent(this);
         }
-        setCurrentEdge(edge);
+        this.currentOrPreviousEdge = edge;
         setIsOnNode(false);
+    }
+
+    public Edge getCurrentEdge() {
+        return isOnNode() ? null : getCurrentOrPreviousEdge();
     }
 
     public Edge getCurrentEdgeOrNextEdgeIfOnNode() {
         if (currentAction == null) {
             return null;
         }
-        return currentAction.getClosestTargetGraphElement();
+        return currentAction.getClosestTargetEdge();
     }
 
     public GraphElement getCurrentGraphElement() {
-        return isOnNode ? getCurrentNode() : getCurrentEdge();
+        return isOnNode ? getCurrentNode() : getCurrentOrPreviousEdge();
     }
 
     public double travelBy(double distance) {
@@ -455,7 +481,7 @@ public class Agent implements StressInducing, Serializable {
         if (isOnNode) {
             position = previousOrCurrentNode == null ? "Node[?]" : "Node[" + previousOrCurrentNode.getId() + "]";
         } else {
-            position = currentEdge == null ? "Edge[?]" : "Edge[" + currentEdge.getId() + "]";
+            position = currentOrPreviousEdge == null ? "Edge[?]" : "Edge[" + currentOrPreviousEdge.getId() + "]";
         }
         String state = behavioralState == null ? "unknown" : behavioralState.getEmotionnalState().name();
         double stress = behavioralState == null ? 0.0 : behavioralState.getStressLevel();

@@ -74,7 +74,7 @@ public class GraphRenderer {
             // NOUVEAU : On récupère l'agent sélectionné pour le passer à la fonction de
             // dessin
             Agent selectedAgent = canvas.getSelectedAgent();
-            for (Agent agent : simulation.getAgentManager().getAgents()) {
+            for (Agent agent : simulation.getAgentManager().getAgentsOnGraph()) {
                 drawAgent(agent, selectedAgent);
             }
         }
@@ -147,8 +147,8 @@ public class GraphRenderer {
             double dist = (agent.getId() * 11.3) % maxOffset;
             ax = node.getX() + Math.cos(Math.toRadians(angle)) * dist;
             ay = node.getY() + Math.sin(Math.toRadians(angle)) * dist;
-        } else if (!agent.isOnNode() && agent.getCurrentEdge() != null) {
-            Edge edge = agent.getCurrentEdge();
+        } else if (!agent.isOnNode() && agent.getCurrentOrPreviousEdge() != null) {
+            Edge edge = agent.getCurrentOrPreviousEdge();
             Node previous = agent.getPreviousOrCurrentNode();
             Node target = edge.getOppositeNode(previous);
             double ratio = Math.max(0, agent.getTravelProgressPercentageOnEdge());

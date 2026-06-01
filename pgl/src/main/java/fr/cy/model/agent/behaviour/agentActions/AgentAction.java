@@ -57,7 +57,7 @@ public abstract class AgentAction implements Serializable {
 	 * @return the next graph element that the agent is targeting with this action, or null if none.
 	 * This is used for conflict resolution and should reflect the agent's intentions as closely as possible.
 	 */
-	public abstract Edge getClosestTargetGraphElement();
+	public abstract Edge getClosestTargetEdge();
 
 	//TODO
 	/** @return the final destination graph element of this action, or null if none. For visualization purposes.*/

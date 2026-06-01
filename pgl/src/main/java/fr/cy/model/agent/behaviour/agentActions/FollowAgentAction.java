@@ -32,7 +32,7 @@ public class FollowAgentAction extends AgentAction {
 	}
 
 	@Override
-	public Edge getClosestTargetGraphElement() {
+	public Edge getClosestTargetEdge() {
 		// TODO
 		return targetAgent.getCurrentEdgeOrNextEdgeIfOnNode();
 	}

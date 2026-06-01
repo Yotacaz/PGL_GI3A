@@ -3,6 +3,8 @@ package fr.cy.model.graph.element;
 import java.util.ArrayList;
 import java.util.List;
 
+import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
+
 /**
  * Classe représentant un nœud dans le graphe.
  * 
@@ -44,6 +46,15 @@ public class Node extends GraphElement {
         outgoingEdges = new ArrayList<>();
     }
 
+    @Override
+    public double getScoreMultiplierForAgent(AgentDecisionalProperties agentState) {
+        double scoreMultiplier = super.getScoreMultiplierForAgent(agentState);
+        if (isExit()) {
+            scoreMultiplier *= 10; //prefer exits
+        }
+        return scoreMultiplier;
+    }
+
     /**
      * Retourne une représentation textuelle du nœud.
      * 
@@ -79,7 +90,7 @@ public class Node extends GraphElement {
     public double getX() {
         return x;
     }
-    
+
     public void setX(double x) {
         this.x = x;
     }
@@ -92,7 +103,7 @@ public class Node extends GraphElement {
     public double getY() {
         return y;
     }
-    
+
     public void setY(double y) {
         this.y = y;
     }

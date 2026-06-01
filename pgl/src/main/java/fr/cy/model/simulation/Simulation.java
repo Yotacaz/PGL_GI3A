@@ -10,6 +10,7 @@ import fr.cy.model.graph.element.Node;
 import fr.cy.model.pathfinding.PathFinder;
 
 import java.io.*;
+import java.util.stream.Collectors;
 
 public class Simulation implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -109,15 +110,16 @@ public class Simulation implements Serializable {
 
     @Override
     public String toString() {
+        String agentDetails = agentManager.getAgentsOnGraph().stream().map(Agent::toString)
+            .collect(Collectors.joining("\n"));
         return "=== SIMULATION STATUS ===\n" +
                 "Current Tick: " + currentTick + "\n" +
                 "Running: " + (running ? "Yes" : "No") + "\n" +
-                "Active Agents: " + agentManager.getAgents().size() + "\n" +
+                "Active Agents: " + agentManager.getAgentsOnGraph().size() + "\n" +
                 // "Active Fires: " + fireService.getActiveFires().size() + "\n" +
                 "========================" +
                 "\nGraph:\n" + graph.toString() +
-                "\nAgents:\n"
-                + agentManager.getAgents().stream().map(Agent::toString).reduce("", (a, b) -> a + b + "\n");
+            "\nAgents:\n" + agentDetails + (agentDetails.isEmpty() ? "" : "\n");
     }
 
     public static void main(String[] args) {
@@ -151,7 +153,7 @@ public class Simulation implements Serializable {
         for (int i = 0; i < 1000; i++) {
             simulation.tick();
             System.out.println("Tick: " + simulation.getCurrentTick() + ", Agents: "
-                    + simulation.getAgentManager().getAgents().size());
+                    + simulation.getAgentManager().getAgentsOnGraph().size());
             System.out.println(simulation);
             System.out.println("--------------------------------------------------");
             System.out.println("press Enter to continue...");
