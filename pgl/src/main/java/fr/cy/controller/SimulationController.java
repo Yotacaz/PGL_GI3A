@@ -16,6 +16,7 @@ public class SimulationController {
     private AnimationTimer timer;
     private boolean isRunning = false;
     private Runnable onRender = null;
+    private int stepTicks = 15;
 
     public SimulationController(Simulation simulation, GraphCanvas canvas) {
         this.simulation = simulation;
@@ -39,7 +40,8 @@ public class SimulationController {
                 renderer.render(simulation, canvas);
 
                 // Notifie le contrôleur principal pour mettre à jour les stats
-                if (onRender != null) onRender.run();
+                if (onRender != null)
+                    onRender.run();
             }
         };
     }
@@ -71,6 +73,43 @@ public class SimulationController {
         simulation.stop();
         // simulation.reset()
         renderer.render(simulation, canvas);
+    }
+
+    public void increaseSpeed() {
+        simulation.getSimulationSettings().increaseSpeedLevel();
+    }
+
+    public void decreaseSpeed() {
+        simulation.getSimulationSettings().decreaseSpeedLevel();
+    }
+
+    public double getSpeed() {
+        return simulation.getSimulationSettings().getSpeedMultiplier();
+    }
+
+    public int getStepTicks() {
+        return stepTicks;
+    }
+
+    public void setStepTicks(int stepTicks) {
+        if (stepTicks < 1) {
+            throw new IllegalArgumentException("stepTicks must be at least 1");
+        }
+        this.stepTicks = stepTicks;
+    }
+
+    public void stepTick() {
+        this.pause();
+
+        for (int i = 0; i < stepTicks; i++) {
+            simulation.stepTick();
+        }
+
+        renderer.render(simulation, canvas);
+
+        if (onRender != null) {
+            onRender.run();
+        }
     }
 
     // Fournit l'instance de la simu (pour y chercher un élément par ex)
