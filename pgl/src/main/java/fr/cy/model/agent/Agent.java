@@ -8,7 +8,7 @@ import java.io.*;
 
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.agent.behaviour.decisions.AgentDecisionScore;
-import fr.cy.model.agent.behaviour.decisions.AgentPossibleDecision;
+import fr.cy.model.agent.behaviour.decisions.AgentPossibleNodeDecision;
 import fr.cy.model.agent.behaviour.decisions.DecisionNodeContext;
 import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 import fr.cy.model.agent.behaviour.properties.AgentPhysicalProperties;
@@ -16,7 +16,6 @@ import fr.cy.model.agent.behaviour.properties.EmotionalState;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.GraphElement;
 import fr.cy.model.graph.element.Node;
-import fr.cy.model.simulation.SimulationSettings;
 import fr.cy.model.stress.StressInducing;
 import fr.cy.util.IdManager;
 
@@ -48,10 +47,10 @@ public class Agent implements StressInducing, Serializable {
      * This is a class attribute in order to avoid creating a new map for each agent
      * at each decision step
      */
-    private final Map<AgentPossibleDecision, AgentDecisionScore> decisionsScore = new HashMap<>();
+    private final Map<AgentPossibleNodeDecision, AgentDecisionScore> decisionsScore = new HashMap<>();
 
     /** The last selected decision by the agent */
-    private AgentPossibleDecision lastSelectedDecision = null;
+    private AgentPossibleNodeDecision lastSelectedDecision = null;
     /**
      * Current behavioral state of the agent, used to influence decision-making and
      * stress levels
@@ -104,11 +103,11 @@ public class Agent implements StressInducing, Serializable {
         // these probabilities
         double randomValue = Math.random() * totalScore;
         double cumulativeProbability = 0.0;
-        for (Map.Entry<AgentPossibleDecision, AgentDecisionScore> entry : decisionsScore.entrySet()) {
+        for (Map.Entry<AgentPossibleNodeDecision, AgentDecisionScore> entry : decisionsScore.entrySet()) {
             AgentDecisionScore decisionScore = entry.getValue();
             cumulativeProbability += decisionScore.getScore();
             if (randomValue <= cumulativeProbability) {
-                AgentPossibleDecision selectedDecision = entry.getKey();
+                AgentPossibleNodeDecision selectedDecision = entry.getKey();
                 setLastSelectedDecision(selectedDecision);
                 AgentAction action = selectedDecision.toAgentAction(decisionContext, this, decisionScore);
                 setCurrentAction(action);
@@ -121,7 +120,7 @@ public class Agent implements StressInducing, Serializable {
     private double computeAgentDecisionsScore(AgentSettings agentSettings, DecisionNodeContext decisionContext) {
         // No need to clear the map as it is overwritten at each decision step
         double totalScore = 0.0;
-        for (AgentPossibleDecision possibleDecision : AgentPossibleDecision.values()) {
+        for (AgentPossibleNodeDecision possibleDecision : AgentPossibleNodeDecision.values()) {
             double factor = agentSettings.getDecisionMakingFactor(possibleDecision);
             AgentDecisionScore decisionScore = possibleDecision.computeScore(decisionContext, behavioralState, factor,
                     lastSelectedDecision, currentAction);
@@ -159,9 +158,11 @@ public class Agent implements StressInducing, Serializable {
                 break;
             case SELFISH:
                 speed = Math.min(agentMaxSpeed * walkSpeedReductionFactor * 1.5, effectiveMaxSpeed);
+                // System.out.println("Agent " + id + " is selfish and tries to run at speed " + speed);
                 break;
             case PANICKING:
                 speed = effectiveMaxSpeed;
+                // System.out.println("Agent " + id + " is panicking and tries to run at max speed " + speed);
                 break;
             default:
                 throw new IllegalStateException("Unexpected emotional state: " + behavioralState.getEmotionnalState());
@@ -328,7 +329,7 @@ public class Agent implements StressInducing, Serializable {
         return isOnNode();
     }
 
-    void setLastSelectedDecision(AgentPossibleDecision lastSelectedDecision) {
+    void setLastSelectedDecision(AgentPossibleNodeDecision lastSelectedDecision) {
         this.lastSelectedDecision = lastSelectedDecision;
     }
 
@@ -336,7 +337,7 @@ public class Agent implements StressInducing, Serializable {
         return currentAction;
     }
 
-    public AgentPossibleDecision getLastSelectedDecision() {
+    public AgentPossibleNodeDecision getLastSelectedDecision() {
         return lastSelectedDecision;
     }
 
@@ -415,6 +416,20 @@ public class Agent implements StressInducing, Serializable {
 
     public boolean isAlive() {
         return physicalProperties.isAlive();
+    }
+
+    /**
+     * @return the physical properties of the agent
+     */
+    public AgentPhysicalProperties getPhysicalProperties() {
+        return physicalProperties;
+    }
+
+    /**
+     * @return the behavioral/decisional state of the agent
+     */
+    public AgentDecisionalProperties getBehavioralState() {
+        return behavioralState;
     }
 
     @Override

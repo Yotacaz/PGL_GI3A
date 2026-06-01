@@ -7,10 +7,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
-import java.io.*;
-
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.agent.behaviour.decisions.DecisionNodeContext;
+import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
+import fr.cy.model.agent.behaviour.properties.AgentPhysicalProperties;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.agent.behaviour.decisions.DecisionContextProvider;
@@ -24,14 +24,16 @@ public class AgentManager implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-
-    private AgentSettings agentSettings = new AgentSettings();
+    private AgentSettings agentSettings = AgentSettings.getInstance();
     private List<Agent> agents;
     private List<Agent> deadAgents = new ArrayList<>();
     private DecisionContextProvider decisionContextProvider;
     private AgentGenerator agentGenerator;
     private final SimulationSettings simulationSettings;
     // private Map<Agent, AgentAction> agentActionsPreviousTick = new HashMap<>();
+
+    /** For storing initial snapshots of agents  (for reset functionality) */
+    private List<AgentSnapshot> initialAgentSnapshots = null;
 
     public AgentManager(List<Agent> agents, DecisionContextProvider decisionContextProvider,
             AgentGenerator agentGenerator, SimulationSettings simulationSettings) {
@@ -168,7 +170,12 @@ public class AgentManager implements Serializable {
      * @return the removed agent
      */
     public Agent removeAgentFromGraph(Agent agent) {
-        agents.remove(agent);
+        if (!agents.remove(agent)) {
+            if (deadAgents.remove(agent) != true) {
+                throw new IllegalArgumentException("Agent not found in either agents or deadAgents list");
+            }
+        }
+        
         agent.putOnNode(null);
         agent.setCurrentAction(null);
         agent.setStressLevel(0);
@@ -219,6 +226,175 @@ public class AgentManager implements Serializable {
     private void updateAgentsState() {
         for (Agent agent : agents) {
             agent.updateState();
+        }
+    }
+
+    /**
+     * Captures the current state of the AgentManager as the initial state.
+     * This state can be restored later by calling reset().
+     * Must be called before any significant changes to agents occur.
+     */
+    public void setInitialState() {
+
+        // Create snapshots of all current agents
+        this.initialAgentSnapshots = new ArrayList<>();
+        for (Agent agent : this.agents) {
+            this.initialAgentSnapshots.add(new AgentSnapshot(agent));
+        }
+    }
+
+    /**
+     * Resets the AgentManager to its initial state (as set by setInitialState()).
+     * This includes:
+     * - Removing all current agents and releasing their IDs
+     * - Clearing dead agents list
+     * - Recreating agents from snapshots with restored state
+     *
+     * @throws IllegalStateException if setInitialState() was never called
+     */
+    public void reset() {
+        if (this.initialAgentSnapshots == null) {
+            throw new IllegalStateException(
+                    "Initial state not set. Call setInitialState() before calling reset().");
+        }
+
+        // do not reset the settings
+        for (int i = this.agents.size() - 1; i >= 0; i--) {
+            deleteAgent(this.agents.get(i));
+        }
+        this.agents.clear();
+        for (int i = this.deadAgents.size() - 1; i >= 0; i--) {
+            deleteAgent(this.deadAgents.get(i));
+        }
+        this.deadAgents.clear();
+
+        // Recreate agents from snapshots
+        for (AgentSnapshot snapshot : this.initialAgentSnapshots) {
+            Agent restoredAgent = snapshot.restoreToAgent();
+            this.agents.add(restoredAgent);
+        }
+    }
+
+    public void resetSettings() {
+        this.agentSettings.resetSettings();
+    }
+
+    /**
+     * Inner class to capture and store the state of an agent at a point in time.
+     * This allows agents to be restored to a previous state, including their
+     * position, action, and behavioral properties.
+     */
+    private static class AgentSnapshot implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        // Agent identity and name
+        private final String name;
+
+        // Physical properties
+        private final double maxSpeed;
+        private final int maxHealth;
+        private final int currentHealth;
+        private final double surfaceAreaTakenByAgent;
+
+        // Behavioral/decisional properties
+        private final double stressTolerance;
+        private final double baseOwnDecisionMakingFactor;
+        private final double repeatLastDecisionTendency;
+        private final double crowdingTolerance;
+        private final double stressLevel;
+
+        // Position and state
+        private final Node previousOrCurrentNode;
+        private final Edge currentEdge;
+        private final boolean isOnNode;
+        private final int nOfNodeVisited;
+
+        // Action and related state
+        private final AgentAction currentAction;
+
+        /**
+         * Creates a snapshot of the given agent's current state
+         */
+        AgentSnapshot(Agent agent) {
+            this.name = agent.getName();
+
+            // Physical properties
+            AgentPhysicalProperties physProps = agent.getPhysicalProperties();
+            this.maxSpeed = agent.getMaxSpeed();
+            this.maxHealth = physProps.getMaxHealth();
+            this.currentHealth = agent.getHealth();
+            this.surfaceAreaTakenByAgent = agent.getSurfaceAreaTakenByAgent();
+
+            // Behavioral properties
+            AgentDecisionalProperties behavProps = agent.getBehavioralState();
+            this.stressTolerance = behavProps.getStressTolerance();
+            this.baseOwnDecisionMakingFactor = agent.getBaseOwnDecisionMakingFactor();
+            this.repeatLastDecisionTendency = behavProps.getRepeatLastDecisionFactor();
+            this.crowdingTolerance = agent.getCongestionTolerance();
+            this.stressLevel = agent.getStressLevel();
+
+            // Position and state
+            this.previousOrCurrentNode = agent.getPreviousOrCurrentNode();
+            this.currentEdge = agent.getCurrentEdge();
+            this.isOnNode = agent.isOnNode();
+            this.nOfNodeVisited = agent.getnOfNodeVisited();
+
+            // Current action (will be serialized as-is)
+            this.currentAction = agent.getCurrentAction();
+        }
+
+        /**
+         * Restores an agent from this snapshot.
+         * Creates a new agent with the same properties and state as when the snapshot
+         * was taken. Note: The restored agent will have a new ID (since IDs are
+         * managed by the static IdManager).
+         *
+         * @return a new agent restored from this snapshot
+         */
+        Agent restoreToAgent() {
+            // Create a new agent with the remembered parameters
+            Agent agent = new Agent(
+                    this.name,
+                    this.previousOrCurrentNode,
+                    this.maxSpeed,
+                    this.stressTolerance,
+                    this.crowdingTolerance,
+                    this.baseOwnDecisionMakingFactor,
+                    this.repeatLastDecisionTendency,
+                    this.maxHealth,
+                    this.surfaceAreaTakenByAgent);
+
+            // Restore health if it differs from max health
+            if (this.currentHealth != this.maxHealth) {
+                agent.setHealth(this.currentHealth);
+            }
+
+            // Restore stress level
+            agent.setStressLevel(this.stressLevel);
+
+            // Restore crowding tolerance
+            agent.setCongestionTolerance(this.crowdingTolerance);
+
+            // Restore number of nodes visited
+            for (int i = 0; i < this.nOfNodeVisited; i++) {
+                agent.incrementNodeVisited();
+            }
+
+            // Restore position
+            if (!this.isOnNode && this.currentEdge != null) {
+                // Agent was on an edge, restore that state
+                agent.putOnEdge(this.currentEdge);
+                // Restore the action if it exists
+                if (this.currentAction != null) {
+                    agent.setCurrentAction(this.currentAction);
+                }
+            } else if (this.isOnNode && this.previousOrCurrentNode != null) {
+                // Agent was on a node, ensure it's on the node
+                agent.putOnNode(this.previousOrCurrentNode);
+            }
+            // If agent is neither on node nor edge, it's unplaced (which is the agent's initial state)
+
+            return agent;
         }
     }
 

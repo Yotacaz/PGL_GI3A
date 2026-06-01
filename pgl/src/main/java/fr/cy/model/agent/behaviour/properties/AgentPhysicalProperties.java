@@ -43,6 +43,10 @@ public class AgentPhysicalProperties implements Serializable {
         return health;
     }
 
+    public int getMaxHealth() {
+        return maxHealth;
+    }
+
     public void decreaseHealth(int amount) {
         setHealth(Math.max(0, getHealth() - amount));
     }

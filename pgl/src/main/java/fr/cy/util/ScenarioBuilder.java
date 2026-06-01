@@ -37,8 +37,8 @@ public class ScenarioBuilder {
         Simulation simulation = new Simulation("Demo", graph);
 
         if (simulation.getAgentManager() != null) {
-            // simulation.getAgentManager().generateAgentOnNode("Agent1", n1);  //for testing
-            simulation.getAgentManager().generateRandomsAgents(30);
+            simulation.getAgentManager().generateAgentOnNode("Agent1", n1);  //for testing
+            // simulation.getAgentManager().generateRandomsAgents(30);
         }
 
         n1.setFire(new Fire(0, 1, 0.01));
