@@ -1,6 +1,5 @@
 package fr.cy.model.agent.behaviour.agentActions;
 
-import java.io.Serializable;
 import java.util.Objects;
 
 import fr.cy.model.agent.Agent;
@@ -8,7 +7,7 @@ import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 
-public abstract class AbstractMoveAction extends AgentAction implements Serializable {
+public abstract class AbstractMoveAction extends AgentAction {
     private static final long serialVersionUID = 1L;
     /** The progress of the agent along the current edge, between 0 and 1 */
     private double edgeProgress = 0.0;

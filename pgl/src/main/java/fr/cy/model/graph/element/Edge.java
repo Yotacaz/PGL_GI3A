@@ -2,6 +2,7 @@ package fr.cy.model.graph.element;
 
 import fr.cy.model.graph.GraphConfig;
 import fr.cy.model.agent.Agent;
+import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.fire.Fire;
 import java.util.*;
 
@@ -205,12 +206,12 @@ public class Edge extends GraphElement {
      * @return la vitesse maximale calculée
      */
     public double getMaxAgentSpeed() {
-        if (isOnFire()) {
-            return 0.0;
-        }
+        // if (isOnFire()) {
+        //     return 0.0;
+        // }
 
         double congestionFactor = 1.0 - getCongestion();
-        double calculatedSpeed = GraphConfig.DEFAULT_EDGE_MAX_AGENT_SPEED * congestionFactor;
+        double calculatedSpeed = AgentSettings.getInstance().getMAX_RUNNING_SPEED() * congestionFactor;
         return Math.max(calculatedSpeed, 0.0);
     }
 

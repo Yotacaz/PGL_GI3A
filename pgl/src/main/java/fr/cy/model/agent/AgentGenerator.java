@@ -19,6 +19,7 @@ public class AgentGenerator implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private final Random RNG = new Random();
+	private final AgentSettings agentSettings = AgentSettings.getInstance();
 	private final Graph graph;
 
 	public AgentGenerator(Graph graph) {
@@ -73,13 +74,13 @@ public class AgentGenerator implements Serializable {
 
 	private Agent createRandomAgent(String baseName, Node startingNode) {
 		String name = String.format(Locale.ROOT, "%s-%d", baseName, RNG.nextInt(1_000_000));
-		double maxSpeed = 1 + RNG.nextDouble() * 4; // 1..5 units
-		double stressTolerance = RNG.nextDouble();
-		double crowdingTolerance = RNG.nextDouble();
-		double repeatLastDecisionTendency = 0.875 + RNG.nextDouble(); // Between 0.875 and 1.875
-		double baseOwnDecisionMakingFactor = RNG.nextDouble(); // Between 0 and 1
-		int health = 75 + RNG.nextInt(26); // Between 75 and 100
-		double surfaceAreaTakenByAgent = 0.5 + RNG.nextDouble(); // Between 0.5 and 1.5
+		double maxSpeed = agentSettings.generateRandomSpeed(RNG);
+		double stressTolerance = agentSettings.generateRandomStressTolerance(RNG);
+		double crowdingTolerance = agentSettings.generateRandomCrowdingTolerance(RNG);
+		double repeatLastDecisionTendency = agentSettings.generateRandomRepeatLastDecisionTendency(RNG);
+		double baseOwnDecisionMakingFactor = agentSettings.generateRandomBaseOwnDecisionMakingFactor(RNG);
+		int health = agentSettings.generateRandomHealth(RNG);
+		double surfaceAreaTakenByAgent = agentSettings.generateRandomSurfaceAreaTakenByAgent(RNG);
 
 		return new Agent(name, startingNode, maxSpeed, stressTolerance, crowdingTolerance,
 				baseOwnDecisionMakingFactor, repeatLastDecisionTendency, health, surfaceAreaTakenByAgent);

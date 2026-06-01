@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 
-import fr.cy.model.agent.behaviour.decisions.AgentPossibleDecision;
+import fr.cy.model.agent.behaviour.decisions.AgentPossibleNodeDecision;
 
 public class AgentPersonalityTrait implements Serializable {
     public AgentPersonalityTrait() {
@@ -26,7 +26,7 @@ public class AgentPersonalityTrait implements Serializable {
      */
     private static final long serialVersionUID = 1L;
 
-    public boolean evaluatePossibleDecision(Map<AgentPossibleDecision, Double> decisionScores) {
+    public boolean evaluatePossibleDecision(Map<AgentPossibleNodeDecision, Double> decisionScores) {
         // Default implementation: always return true
         return true;
     }

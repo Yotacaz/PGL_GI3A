@@ -1,6 +1,5 @@
 package fr.cy.model.agent.behaviour.agentActions;
 
-import java.io.Serializable;
 import java.util.Objects;
 
 import fr.cy.model.agent.Agent;
@@ -10,7 +9,7 @@ import fr.cy.model.graph.element.Edge;
 /**
  * Action representing behavior where an agent follows another agent.
  */
-public class FollowAgentAction extends AgentAction implements Serializable {
+public class FollowAgentAction extends AgentAction {
 	private static final long serialVersionUID = 1L;
 
 	private Agent targetAgent;
