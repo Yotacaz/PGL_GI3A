@@ -71,7 +71,7 @@ public class SimulationController {
     public void reset() {
         isRunning = false;
         simulation.stop();
-        // simulation.reset()
+        simulation.reset();
         renderer.render(simulation, canvas);
     }
 

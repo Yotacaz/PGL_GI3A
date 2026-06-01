@@ -43,6 +43,15 @@ public class Graph implements Serializable {
         this.edgeIdManager = new IdManager();
     }
 
+    public void reset() {
+        for (Edge edge : edges) {
+            edge.reset();
+        }
+        for (Node node : nodes) {
+            node.reset();
+        }
+    }
+
     /**
      * Give an update to each elements that need it (eg: cached values like stress)
      */
