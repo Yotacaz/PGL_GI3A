@@ -4,7 +4,7 @@ import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentGenerator;
 import fr.cy.model.agent.AgentManager;
 import fr.cy.model.agent.AgentSettings;
-import fr.cy.model.agent.behaviour.decisions.DecisionContextProvider;
+import fr.cy.model.agent.behaviour.decisions.NodeDecisionContextProvider;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
@@ -32,7 +32,7 @@ public class AgentManagerResetTest {
         // Create AgentManager
         SimulationSettings simSettings = new SimulationSettings();
         AgentGenerator agentGenerator = new AgentGenerator(graph);
-        DecisionContextProvider contextProvider = null; // Would need proper implementation
+        NodeDecisionContextProvider contextProvider = null; // Would need proper implementation
 
         AgentManager agentManager = new AgentManager(contextProvider, agentGenerator, simSettings);
 
@@ -46,10 +46,10 @@ public class AgentManagerResetTest {
         agentManager.generateAgentOnNode("TestAgent", node2);
         agentManager.generateAgentOnEdge("EdgeAgent", edge, 0.5);
 
-        System.out.println("Initial agent count: " + agentManager.getAgentsOnGraph().size());
-        Agent agent1 = agentManager.getAgentsOnGraph().get(0);
-        Agent agent2 = agentManager.getAgentsOnGraph().get(1);
-        Agent agent3 = agentManager.getAgentsOnGraph().get(2);
+        System.out.println("Initial agent count: " + agentManager.getAgentsToEvacuate().size());
+        Agent agent1 = agentManager.getAgentsToEvacuate().get(0);
+        Agent agent2 = agentManager.getAgentsToEvacuate().get(1);
+        Agent agent3 = agentManager.getAgentsToEvacuate().get(2);
 
         System.out.println("Agent 1: " + agent1.getName() + " stress=" + agent1.getStressLevel());
         System.out.println("Agent 2: " + agent2.getName() + " stress=" + agent2.getStressLevel());
@@ -76,7 +76,7 @@ public class AgentManagerResetTest {
 
         // Remove one agent to test handling of dead agents
         agentManager.killAgent(agent3);
-        System.out.println("Killed agent 3. Alive agents: " + agentManager.getAgentsOnGraph().size());
+        System.out.println("Killed agent 3. Alive agents: " + agentManager.getAgentsToEvacuate().size());
 
         // Reset to initial state
         System.out.println("\n--- Calling reset() ---");
@@ -84,12 +84,12 @@ public class AgentManagerResetTest {
 
         System.out.println("\nAfter reset:");
         System.out.println("WALKING_SPEED restored: " + agentManager.getAgentSettings().getWALKING_SPEED());
-        System.out.println("Agent count restored: " + agentManager.getAgentsOnGraph().size());
+        System.out.println("Agent count restored: " + agentManager.getAgentsToEvacuate().size());
 
-        if (agentManager.getAgentsOnGraph().size() > 0) {
-            Agent restoredAgent1 = agentManager.getAgentsOnGraph().get(0);
-            Agent restoredAgent2 = agentManager.getAgentsOnGraph().get(1);
-            Agent restoredAgent3 = agentManager.getAgentsOnGraph().get(2);
+        if (agentManager.getAgentsToEvacuate().size() > 0) {
+            Agent restoredAgent1 = agentManager.getAgentsToEvacuate().get(0);
+            Agent restoredAgent2 = agentManager.getAgentsToEvacuate().get(1);
+            Agent restoredAgent3 = agentManager.getAgentsToEvacuate().get(2);
 
             System.out.println("Restored Agent 1: " + restoredAgent1.getName());
             System.out.println("  - Stress: " + restoredAgent1.getStressLevel() + " (should be 0)");
