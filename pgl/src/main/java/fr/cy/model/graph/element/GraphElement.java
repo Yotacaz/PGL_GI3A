@@ -3,6 +3,7 @@ package fr.cy.model.graph.element;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.io.Serializable;
 
 import java.io.*;
 
@@ -26,7 +27,7 @@ public abstract class GraphElement implements StressInducing, Serializable {
     /** Identifiant unique de l'élément du graphe */
     private final int id;
 
-    private final List<Agent> agents;
+    private transient List<Agent> agents;
     private double capacity;
 
     // STRESS :

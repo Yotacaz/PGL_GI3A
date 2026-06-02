@@ -4,12 +4,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.io.Serializable;
 
 import java.io.*;
 
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 import fr.cy.util.IdManager;
+
 
 /**
  * Représente un graphe composé de nœuds et d'arêtes.
