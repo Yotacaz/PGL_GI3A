@@ -150,8 +150,8 @@ public class Graph implements Serializable {
      * 
      */
     public void addNode() {
-        double x = Math.random() * 100; // Exemple de position aléatoire
-        double y = Math.random() * 100;
+        double x = Math.random() * 1000; // Exemple de position aléatoire
+        double y = Math.random() * 1000;
         createNode(x, y);
     }
 
