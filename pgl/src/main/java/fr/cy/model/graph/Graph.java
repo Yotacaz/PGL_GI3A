@@ -70,39 +70,6 @@ public class Graph implements Serializable {
         }
 
         updateStressInducedByElements();
-
-        System.out.println("--- Nouveau Tick ---");
-        for (Edge edge : edges) {
-            // On affiche seulement les arêtes qui ont au moins 1 agent pour ne pas spammer
-            // la console
-            if (!edge.getAgents().isEmpty()) {
-
-                int nbAgents = edge.getAgents().size();
-                double capacite = edge.getCapacity(); // Rappel : width * length
-
-                // Si tu as déjà une méthode getCongestion() dans Edge, tu peux l'utiliser
-                // directement :
-                // double congestion = edge.getCongestion();
-                double congestion = nbAgents / capacite;
-
-                System.out.printf("Arête %d | Agents: %d / %.1f (Capacité) | Congestion: %.1f%%%n",
-                        edge.getId(),
-                        nbAgents,
-                        capacite,
-                        congestion * 100);
-            }
-        }
-
-        // Optionnel : Regarder si le Nœud d'intersection est vraiment plein
-        for (Node node : nodes) {
-            if (!node.getAgents().isEmpty()) { // On cible notre petit nœud central
-                System.out.printf("Nœud %d  | Agents: %d / %.1f (Capacité)%n",
-                        node.getId(),
-                        node.getAgents().size(),
-                        node.getCapacity());
-            }
-        }
-        // ==========================================∂ÒÒ
     }
 
     /**

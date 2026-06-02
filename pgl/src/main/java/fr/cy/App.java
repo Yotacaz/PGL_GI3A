@@ -18,7 +18,7 @@ public class App extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        Simulation simulation = ScenarioBuilder.setupFireDilemmaTest();
+        Simulation simulation = ScenarioBuilder.setupBypassTest();
 
         MainController mainController = new MainController(simulation);
 
