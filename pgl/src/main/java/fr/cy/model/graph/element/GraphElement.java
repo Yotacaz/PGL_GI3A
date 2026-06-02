@@ -73,10 +73,6 @@ public abstract class GraphElement implements StressInducing, Serializable {
         removeFire();
     }
 
-    public void setInitialState() {
-        this.initialFire = this.getFire();
-    }
-
     /***
      * Determine la liste des elements voisins
      * 
@@ -91,17 +87,15 @@ public abstract class GraphElement implements StressInducing, Serializable {
 
     @Override
     public boolean equals(Object o) {
-
         if (this == o) {
             return true;
         }
 
-        if (!(o instanceof GraphElement)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
 
         GraphElement element = (GraphElement) o;
-
         return getId() == element.getId();
     }
 
@@ -380,9 +374,24 @@ public abstract class GraphElement implements StressInducing, Serializable {
         return congestionMeasureCount;
     }
 
+    public void setInitialState() {
+        if (this.getFire() != null) {
+            this.initialFire = getFire();
+        } else {
+            this.initialFire = null;
+        }
+    }
+
     public void reset() {
         agents.clear();
-        this.setFire(initialFire);
+
+        if (this.initialFire != null) {
+            // On recrée une copie propre pour la nouvelle simulation
+            this.setFire(initialFire);
+        } else {
+            this.setFire(null);
+        }
+
         maxCongestion = 0;
         sumCongestion = 0;
         congestionMeasureCount = 0;
