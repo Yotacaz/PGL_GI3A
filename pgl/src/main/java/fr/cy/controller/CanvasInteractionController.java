@@ -125,7 +125,7 @@ public class CanvasInteractionController {
         Agent closest = null;
         double minDistance = Double.MAX_VALUE;
 
-        for (Agent agent : simController.getSimulation().getAgentManager().getAgentsOnGraph()) {
+        for (Agent agent : simController.getSimulation().getAgentManager().getAgentsToEvacuate()) {
             double ax = 0, ay = 0;
             boolean isVisible = false;
 

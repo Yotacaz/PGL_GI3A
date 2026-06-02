@@ -14,24 +14,24 @@ import fr.cy.model.graph.element.Node;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.pathfinding.PathFinder;
 
-public class DecisionContextProvider implements Serializable {
+public class NodeDecisionContextProvider implements Serializable {
     private static final long serialVersionUID = 1L;
     private final Graph graph;
     private final PathFinder pathFinder;
-    private Map<Node, DecisionNodeContext> cachedContexts = new HashMap<>();
+    private Map<Node, NodeDecisionContext> cachedContexts = new HashMap<>();
 
     // private final
-    public DecisionContextProvider(Graph graph, PathFinder pathFinder) {
+    public NodeDecisionContextProvider(Graph graph, PathFinder pathFinder) {
         this.graph = graph;
         this.pathFinder = pathFinder;
     }
 
-    public DecisionNodeContext getContext(Agent agent) {
+    public NodeDecisionContext getContext(Agent agent) {
         Node node = agent.getCurrentNode();
         if (node == null) {
             return null;
         }
-        DecisionNodeContext cachedContext = cachedContexts.get(node);
+        NodeDecisionContext cachedContext = cachedContexts.get(node);
         if (cachedContext == null) {
             cachedContext = constructContext(agent);
             cachedContexts.put(node, cachedContext);
@@ -51,14 +51,14 @@ public class DecisionContextProvider implements Serializable {
         if (currentNode == null) {
             return;
         }
-        DecisionNodeContext context = cachedContexts.get(currentNode);
+        NodeDecisionContext context = cachedContexts.get(currentNode);
         if (context == null) {
             return;
         }
         context.registerOutgoingIntent(action.getClosestTargetEdge(), agent);
     }
 
-    private DecisionNodeContext constructContext(Agent agent) {
+    private NodeDecisionContext constructContext(Agent agent) {
         // List<Node> recommendedPath = pathFinder.findPath(agent.getCurrentNode(),
         // agent.getDestinationNode());
         Node currentNode = Objects.requireNonNull(agent.getCurrentNode(),
@@ -90,7 +90,7 @@ public class DecisionContextProvider implements Serializable {
         }
 
         List<Edge> outgoingEdges = currentNode.getOutgoingEdges();
-        return new DecisionNodeContext(currentNode, null, null, outgoingEdges, nearbyIncomingAgents,
+        return new NodeDecisionContext(currentNode, null, null, outgoingEdges, nearbyIncomingAgents,
                 nearbyOutgoingAgents);
     }
 

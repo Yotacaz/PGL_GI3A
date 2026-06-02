@@ -24,7 +24,7 @@ public enum AgentPossibleNodeDecision {
 
     FOLLOW_CROWD {
         @Override
-        public AgentDecisionScore computeScore(DecisionNodeContext context, AgentDecisionalProperties agentState,
+        public AgentDecisionScore computeScore(NodeDecisionContext context, AgentDecisionalProperties agentState,
                 double decisionMakingFactor, AgentPossibleNodeDecision lastDecision, AgentAction lastAction,
                 List<Double> edgeScoreMultipliers) {
             //get 
@@ -44,7 +44,7 @@ public enum AgentPossibleNodeDecision {
         }
 
         @Override
-        public AgentAction toAgentAction(DecisionNodeContext context, Agent agent, AgentDecisionScore decisionScore) {
+        public AgentAction toAgentAction(NodeDecisionContext context, Agent agent, AgentDecisionScore decisionScore) {
             Map<Edge, Double> preferredEdges = decisionScore.getPreferredNeighboringEdges();
             double totalScore = decisionScore.getTotalScoreForPreferredNeighboringEdges();
             Edge chosenEdge = selectEdgeBasedOnScores(preferredEdges, totalScore);
@@ -54,7 +54,7 @@ public enum AgentPossibleNodeDecision {
     },
     FOLLOW_LESS_CROWDED_PATH {
         @Override
-        public AgentDecisionScore computeScore(DecisionNodeContext context, AgentDecisionalProperties agentState,
+        public AgentDecisionScore computeScore(NodeDecisionContext context, AgentDecisionalProperties agentState,
                 double decisionMakingFactor, AgentPossibleNodeDecision lastDecision, AgentAction lastAction,
                 List<Double> edgeScoreMultipliers) {
             CongestionStats<Edge> congestionStats = context.getCongestionStatsForOutgoingEdges();
@@ -77,7 +77,7 @@ public enum AgentPossibleNodeDecision {
         }
 
         @Override
-        public AgentAction toAgentAction(DecisionNodeContext context, Agent agent, AgentDecisionScore decisionScore) {
+        public AgentAction toAgentAction(NodeDecisionContext context, Agent agent, AgentDecisionScore decisionScore) {
             Map<Edge, Double> preferredEdges = decisionScore.getPreferredNeighboringEdges();
             double totalScore = decisionScore.getTotalScoreForPreferredNeighboringEdges();
             Edge chosenEdge = selectEdgeBasedOnScores(preferredEdges, totalScore);
@@ -86,7 +86,7 @@ public enum AgentPossibleNodeDecision {
     },
     FOLLOW_RECOMMENDED_PATH {
         @Override
-        public AgentDecisionScore computeScore(DecisionNodeContext context, AgentDecisionalProperties agentState,
+        public AgentDecisionScore computeScore(NodeDecisionContext context, AgentDecisionalProperties agentState,
                 double decisionMakingFactor, AgentPossibleNodeDecision lastDecision, AgentAction lastAction,
                 List<Double> edgeScoreMultipliers) {
             Map<Edge, Double> preferredNeighboringEdges = new HashMap<>();
@@ -108,7 +108,7 @@ public enum AgentPossibleNodeDecision {
         }
 
         @Override
-        public AgentAction toAgentAction(DecisionNodeContext context, Agent agent, AgentDecisionScore decisionScore) {
+        public AgentAction toAgentAction(NodeDecisionContext context, Agent agent, AgentDecisionScore decisionScore) {
             Map<Edge, Double> preferredEdges = decisionScore.getPreferredNeighboringEdges();
             double totalScore = decisionScore.getTotalScoreForPreferredNeighboringEdges();
             Edge chosenEdge = selectEdgeBasedOnScores(preferredEdges, totalScore);
@@ -118,7 +118,7 @@ public enum AgentPossibleNodeDecision {
     },
     RANDOM {
         @Override
-        public AgentDecisionScore computeScore(DecisionNodeContext context, AgentDecisionalProperties agentState,
+        public AgentDecisionScore computeScore(NodeDecisionContext context, AgentDecisionalProperties agentState,
                 double decisionMakingFactor, AgentPossibleNodeDecision lastDecision, AgentAction lastAction,
                 List<Double> edgeScoreMultipliers) {
             Map<Edge, Double> preferredNeighboringEdges = new HashMap<>();
@@ -135,7 +135,7 @@ public enum AgentPossibleNodeDecision {
         }
 
         @Override
-        public AgentAction toAgentAction(DecisionNodeContext context, Agent agent, AgentDecisionScore decisionScore) {
+        public AgentAction toAgentAction(NodeDecisionContext context, Agent agent, AgentDecisionScore decisionScore) {
             Map<Edge, Double> preferredEdges = decisionScore.getPreferredNeighboringEdges();
             double totalScore = decisionScore.getTotalScoreForPreferredNeighboringEdges();
             Edge chosenEdge = selectEdgeBasedOnScores(preferredEdges, totalScore);
@@ -144,7 +144,7 @@ public enum AgentPossibleNodeDecision {
     },
     NICEST_PATH {
         @Override
-        public AgentDecisionScore computeScore(DecisionNodeContext context, AgentDecisionalProperties agentState,
+        public AgentDecisionScore computeScore(NodeDecisionContext context, AgentDecisionalProperties agentState,
                 double decisionMakingFactor, AgentPossibleNodeDecision lastDecision, AgentAction lastAction,
                 List<Double> edgeScoreMultipliers) {
             Map<Edge, Double> preferredNeighboringEdges = new HashMap<>();
@@ -163,7 +163,7 @@ public enum AgentPossibleNodeDecision {
         }
 
         @Override
-        public AgentAction toAgentAction(DecisionNodeContext context, Agent agent, AgentDecisionScore decisionScore) {
+        public AgentAction toAgentAction(NodeDecisionContext context, Agent agent, AgentDecisionScore decisionScore) {
             Map<Edge, Double> preferredEdges = decisionScore.getPreferredNeighboringEdges();
             double totalScore = decisionScore.getTotalScoreForPreferredNeighboringEdges();
             Edge chosenEdge = selectEdgeBasedOnScores(preferredEdges, totalScore);
@@ -172,7 +172,7 @@ public enum AgentPossibleNodeDecision {
     },
     FOLLOW_SHORTEST_PATH {
         @Override
-        public AgentDecisionScore computeScore(DecisionNodeContext context, AgentDecisionalProperties agentState,
+        public AgentDecisionScore computeScore(NodeDecisionContext context, AgentDecisionalProperties agentState,
                 double decisionMakingFactor, AgentPossibleNodeDecision lastDecision, AgentAction lastAction,
                 List<Double> edgeScoreMultipliers) {
             Map<Edge, Double> preferredNeighboringEdges = new HashMap<>();
@@ -194,7 +194,7 @@ public enum AgentPossibleNodeDecision {
         }
 
         @Override
-        public AgentAction toAgentAction(DecisionNodeContext context, Agent agent, AgentDecisionScore decisionScore) {
+        public AgentAction toAgentAction(NodeDecisionContext context, Agent agent, AgentDecisionScore decisionScore) {
             Map<Edge, Double> preferredEdges = decisionScore.getPreferredNeighboringEdges();
             double totalScore = decisionScore.getTotalScoreForPreferredNeighboringEdges();
             Edge chosenEdge = selectEdgeBasedOnScores(preferredEdges, totalScore); //FIXME: temporary solution, should directly follow the recommended path without random selection
@@ -203,7 +203,7 @@ public enum AgentPossibleNodeDecision {
     },
     CONTINUE_LAST_ACTION {
         @Override
-        public AgentDecisionScore computeScore(DecisionNodeContext context, AgentDecisionalProperties agentState,
+        public AgentDecisionScore computeScore(NodeDecisionContext context, AgentDecisionalProperties agentState,
                 double decisionMakingFactor, AgentPossibleNodeDecision lastDecision, AgentAction lastAction,
                 List<Double> edgeScoreMultipliers) {
             Map<Edge, Double> preferredNeighboringEdges = new HashMap<>();
@@ -225,7 +225,7 @@ public enum AgentPossibleNodeDecision {
         }
 
         @Override
-        public AgentAction toAgentAction(DecisionNodeContext context, Agent agent, AgentDecisionScore decisionScore) {
+        public AgentAction toAgentAction(NodeDecisionContext context, Agent agent, AgentDecisionScore decisionScore) {
             AgentAction lastAction = Objects.requireNonNull(agent.getCurrentAction(),
                     "Last action cannot be null when choosing to continue last action");
             return lastAction;
@@ -233,7 +233,7 @@ public enum AgentPossibleNodeDecision {
     },
     WAIT {
         @Override
-        public AgentDecisionScore computeScore(DecisionNodeContext context, AgentDecisionalProperties agentState,
+        public AgentDecisionScore computeScore(NodeDecisionContext context, AgentDecisionalProperties agentState,
                 double decisionMakingFactor, AgentPossibleNodeDecision lastDecision, AgentAction lastAction,
                 List<Double> edgeScoreMultipliers) {
             Map<Edge, Double> preferredNeighboringEdges = new HashMap<>();
@@ -248,19 +248,19 @@ public enum AgentPossibleNodeDecision {
         }
 
         @Override
-        public AgentAction toAgentAction(DecisionNodeContext context, Agent agent, AgentDecisionScore decisionScore) {
-            double timeToWait = RNG.nextDouble() * 0.5 + 0.5; //wait between 0.5 and 1 s
+        public AgentAction toAgentAction(NodeDecisionContext context, Agent agent, AgentDecisionScore decisionScore) {
+            double timeToWait = RNG.nextDouble() * 0.5 + 1; //wait between 1 and 1.5 s
             return new WaitAction(agent, timeToWait);
         }
     };
 
     private static final Random RNG = new Random();
 
-    public abstract AgentDecisionScore computeScore(DecisionNodeContext context, AgentDecisionalProperties agentState,
+    public abstract AgentDecisionScore computeScore(NodeDecisionContext context, AgentDecisionalProperties agentState,
             double decisionMakingFactor, AgentPossibleNodeDecision lastDecision, AgentAction lastAction,
             List<Double> edgeScoreMultipliers);
 
-    public abstract AgentAction toAgentAction(DecisionNodeContext context, Agent agent,
+    public abstract AgentAction toAgentAction(NodeDecisionContext context, Agent agent,
             AgentDecisionScore decisionScore);
 
     private static Edge selectEdgeBasedOnScores(Map<Edge, Double> edgeScores, double totalScore) {

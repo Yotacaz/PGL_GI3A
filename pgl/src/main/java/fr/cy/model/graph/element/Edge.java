@@ -291,8 +291,12 @@ public class Edge extends GraphElement {
      * @return a score multiplier for an agent on this edge, based on its properties
      *         and the agent's properties,
      */
-    public double getScoreMultiplierForAgentGoingToNode(AgentDecisionalProperties agentState, Node destinationNode) {
+    public double getScoreMultiplierForAgentGoingToNode(AgentDecisionalProperties agentState, Node destinationNode,
+            Edge previousEdge) {
         double scoreMult = getScoreMultiplierForAgent(agentState);
+        if (previousEdge != null) {
+            scoreMult *= 0.8; // prefer new edges over going back and forth on the same edge
+        }
         scoreMult *= destinationNode.getScoreMultiplierForAgent(agentState);
         return scoreMult;
     }

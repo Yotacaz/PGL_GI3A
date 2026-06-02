@@ -3,7 +3,7 @@ package fr.cy.model.simulation;
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentGenerator;
 import fr.cy.model.agent.AgentManager;
-import fr.cy.model.agent.behaviour.decisions.DecisionContextProvider;
+import fr.cy.model.agent.behaviour.decisions.NodeDecisionContextProvider;
 import fr.cy.model.fire.FireService;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Node;
@@ -38,7 +38,7 @@ public class Simulation implements Serializable {
         this.pathFinder = new PathFinder(graph);
         this.fireService = new FireService();
 
-        DecisionContextProvider decisionContextProvider = new DecisionContextProvider(graph, pathFinder);
+        NodeDecisionContextProvider decisionContextProvider = new NodeDecisionContextProvider(graph, pathFinder);
         AgentGenerator agentGenerator = new AgentGenerator(graph);
 
         this.agentManager = new AgentManager(decisionContextProvider, agentGenerator, simulationSettings);
@@ -117,12 +117,12 @@ public class Simulation implements Serializable {
 
     @Override
     public String toString() {
-        String agentDetails = agentManager.getAgentsOnGraph().stream().map(Agent::toString)
+        String agentDetails = agentManager.getAgentsToEvacuate().stream().map(Agent::toString)
             .collect(Collectors.joining("\n"));
         return "=== SIMULATION STATUS ===\n" +
                 "Current Tick: " + currentTick + "\n" +
                 "Running: " + (running ? "Yes" : "No") + "\n" +
-                "Active Agents: " + agentManager.getAgentsOnGraph().size() + "\n" +
+                "Active Agents: " + agentManager.getAgentsToEvacuate().size() + "\n" +
                 // "Active Fires: " + fireService.getActiveFires().size() + "\n" +
                 "========================" +
                 "\nGraph:\n" + graph.toString() +
@@ -160,7 +160,7 @@ public class Simulation implements Serializable {
         for (int i = 0; i < 1000; i++) {
             simulation.tick();
             System.out.println("Tick: " + simulation.getCurrentTick() + ", Agents: "
-                    + simulation.getAgentManager().getAgentsOnGraph().size());
+                    + simulation.getAgentManager().getAgentsToEvacuate().size());
             System.out.println(simulation);
             System.out.println("--------------------------------------------------");
             System.out.println("press Enter to continue...");
