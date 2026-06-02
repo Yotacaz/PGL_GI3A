@@ -6,6 +6,9 @@ import java.io.ObjectOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import fr.cy.model.simulation.Simulation;
 
@@ -53,6 +56,29 @@ public class FileManager implements Serializable {
 
         }
         return null;
+    }
+
+    public static List<String> getAvailableSimulations() {
+        List<String> simulationNames = new ArrayList<>();
+        File folder = new File(SIMULATION_FOLDER);
+        
+        if (!folder.exists()) {
+            System.out.println("Le dossier de simulations n'existe pas. Création du dossier...");
+            folder.mkdirs();
+            return simulationNames;
+        }
+        
+        File[] files = folder.listFiles((dir, name) -> name.endsWith(".bin"));
+        System.out.println("Simulations disponibles : " + (files != null ? files.length : 0));
+        
+        if (files != null) {
+            for (File file : files) {
+                String nameWithoutExtension = file.getName().replace(".bin", "");
+                simulationNames.add(nameWithoutExtension);
+            }
+        }
+        
+        return simulationNames;
     }
 
 }
