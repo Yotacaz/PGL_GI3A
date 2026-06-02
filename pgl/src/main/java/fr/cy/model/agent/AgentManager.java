@@ -38,6 +38,19 @@ public class AgentManager implements Serializable {
     /** For storing initial snapshots of agents (for reset functionality) */
     private List<AgentSnapshot> initialAgentSnapshots = null;
 
+    /**
+     * Creer un AgentManager avec n agents
+     * @param agents
+     * @param decisionContextProvider
+     * @param agentGenerator
+     * @param simulationSettings
+     */
+    public AgentManager(int count, NodeDecisionContextProvider decisionContextProvider,
+            AgentGenerator agentGenerator, SimulationSettings simulationSettings) {
+        this(new ArrayList<>(), decisionContextProvider, agentGenerator, simulationSettings);
+        generateRandomsAgents(count);
+    
+    }
     public AgentManager(List<Agent> agents, NodeDecisionContextProvider decisionContextProvider,
             AgentGenerator agentGenerator, SimulationSettings simulationSettings) {
         this.agentsToEvacuate = agents;
