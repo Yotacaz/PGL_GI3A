@@ -29,6 +29,8 @@ public abstract class GraphElement implements StressInducing, Serializable {
     private final List<Agent> agents;
     private double capacity;
 
+    protected Fire initialFire = null;
+
     // STRESS :
     /**
      * Total stress induced by this element and its neighbors, it is a cached value
@@ -69,6 +71,10 @@ public abstract class GraphElement implements StressInducing, Serializable {
         this.agents = new ArrayList<>();
         this.capacity = Math.max(0.1, capacity);
         removeFire();
+    }
+
+    public void setInitialState() {
+        this.initialFire = this.getFire();
     }
 
     /***
@@ -157,20 +163,25 @@ public abstract class GraphElement implements StressInducing, Serializable {
     }
 
     /**
-     * Evaluate a score multiplier for an agent on this element, based on its properties and the agent's properties.
-     * @param agentState the properties of the agent for which we want to evaluate the score multiplier
-     * @return a score multiplier for an agent on this element, based on its properties and the agent's properties, 
-     * where a value < 1 means that the element is less attractive, and > 1 means that it is more attractive
+     * Evaluate a score multiplier for an agent on this element, based on its
+     * properties and the agent's properties.
+     * 
+     * @param agentState the properties of the agent for which we want to evaluate
+     *                   the score multiplier
+     * @return a score multiplier for an agent on this element, based on its
+     *         properties and the agent's properties,
+     *         where a value < 1 means that the element is less attractive, and > 1
+     *         means that it is more attractive
      */
     public double getScoreMultiplierForAgent(AgentDecisionalProperties agentState) {
-        //penalize graph elements on fire
+        // penalize graph elements on fire
         double scoreMult = 1.0;
         if (isOnFire()) {
             Fire fire = getFire();
             assert fire != null;
             scoreMult *= 0.1 / (1.0 + fire.getIntensity() + fire.getSmokeLevel() + fire.getSpreadRate());
         }
-        //penalize very congested graph elements
+        // penalize very congested graph elements
         double congestion = getCongestion();
         if (isCongested()) {
             scoreMult *= 0.4 * (1.0 + congestion - agentState.getCongestionTolerance());
@@ -371,7 +382,7 @@ public abstract class GraphElement implements StressInducing, Serializable {
 
     public void reset() {
         agents.clear();
-        removeFire();
+        this.setFire(initialFire);
         maxCongestion = 0;
         sumCongestion = 0;
         congestionMeasureCount = 0;
