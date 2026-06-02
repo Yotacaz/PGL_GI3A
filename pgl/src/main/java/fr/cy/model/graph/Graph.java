@@ -30,6 +30,8 @@ public class Graph implements Serializable {
     private final IdManager nodeIdManager;
     private final IdManager edgeIdManager;
 
+    private boolean isFirstTick = true;
+
     /**
      * Crée un graphe vide.
      */
@@ -56,6 +58,17 @@ public class Graph implements Serializable {
      * Give an update to each elements that need it (eg: cached values like stress)
      */
     public void tick() {
+        /** Snapshot auto */
+        if (isFirstTick) {
+            for (Node node : nodes) {
+                node.setInitialState();
+            }
+            for (Edge edge : edges) {
+                edge.setInitialState();
+            }
+            isFirstTick = false;
+        }
+
         updateStressInducedByElements();
     }
 

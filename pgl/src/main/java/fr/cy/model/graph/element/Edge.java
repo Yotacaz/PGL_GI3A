@@ -34,6 +34,9 @@ public class Edge extends GraphElement {
     private boolean burningFromStart = false;
     private boolean burningFromEnd = false;
 
+    private boolean initialBurningFromStart = false;
+    private boolean initialBurningFromEnd = false;
+
     /**
      * Constructeur simplifié utilisant les valeurs par défaut de
      * {@link GraphConfig} pour la largeur et la longueur.
@@ -277,11 +280,16 @@ public class Edge extends GraphElement {
     }
 
     /**
-     * Evaluate a score multiplier for an agent on this edge, based on its properties and the agent's properties.
-     * @param agentState the properties of the agent for which we want to evaluate the score multiplier
+     * Evaluate a score multiplier for an agent on this edge, based on its
+     * properties and the agent's properties.
+     * 
+     * @param agentState      the properties of the agent for which we want to
+     *                        evaluate the score multiplier
      * @param destinationNode the node the agent is trying to reach by going through
-     *  this edge (used to evaluate the score multiplier of that node as well)
-     * @return a score multiplier for an agent on this edge, based on its properties and the agent's properties,
+     *                        this edge (used to evaluate the score multiplier of
+     *                        that node as well)
+     * @return a score multiplier for an agent on this edge, based on its properties
+     *         and the agent's properties,
      */
     public double getScoreMultiplierForAgentGoingToNode(AgentDecisionalProperties agentState, Node destinationNode) {
         double scoreMult = getScoreMultiplierForAgent(agentState);
@@ -382,9 +390,18 @@ public class Edge extends GraphElement {
     }
 
     @Override
+    public void setInitialState() {
+        super.setInitialState();
+
+        this.initialBurningFromStart = this.burningFromStart;
+        this.initialBurningFromEnd = this.burningFromEnd;
+    }
+
+    @Override
     public void reset() {
         super.reset();
-        burningFromStart = false;
-        burningFromEnd = false;
+
+        this.burningFromStart = this.initialBurningFromStart;
+        this.burningFromEnd = this.initialBurningFromEnd;
     }
 }
