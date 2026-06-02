@@ -29,7 +29,7 @@ public class AgentManager implements Serializable {
     private AgentSettings agentSettings = AgentSettings.getInstance();
     private List<Agent> agentsToEvacuate;
     private List<Agent> deadAgents = new ArrayList<>();
-    private List<Agent> evacuatedAgents = new ArrayList<>(); //TODO
+    private List<Agent> evacuatedAgents = new ArrayList<>(); // TODO
     private NodeDecisionContextProvider decisionContextProvider;
     private AgentGenerator agentGenerator;
     private final SimulationSettings simulationSettings;
@@ -121,25 +121,30 @@ public class AgentManager implements Serializable {
 
     private void moveAgents(double tickDuration) {
         decisionContextProvider.clearCache();
-        sortAgentsByOwnDecisionMakingFactor(); // should be relatively fast since the list is almost sorted
+        sortAgentsByOwnDecisionMakingFactor();
 
-        // generate and register decisions for all agents before performing any action,
-        // to ensure that all agents have the same information when making their
-        // decisions
         for (Agent agent : agentsToEvacuate) {
             if (agent.isOnNode()) {
                 NodeDecisionContext decisionContext = decisionContextProvider.getContext(agent);
                 AgentAction action = agent.makeDecision(decisionContext, agentSettings);
                 decisionContextProvider.registerChosenAction(agent, action);
-
             }
         }
+
         List<Agent> agentsHavingReachedExit = new ArrayList<>();
+
+        // =========================================================
+        // REGISTRES DE TICKETS (Initialisés au bon endroit !)
+        // =========================================================
+        java.util.Map<Edge, Integer> agentsEnteringThisTick = new java.util.HashMap<>();
+        java.util.Set<Agent> agentsPassedVigile = new java.util.HashSet<>();
+
         for (Agent agent : agentsToEvacuate) {
             double remainingTime = tickDuration;
             while (remainingTime > 0.0) {
-                if ((agent.getCurrentAction() == null
-                        || agent.getCurrentAction().isCompleted()) && agent.isOnNode()) {
+
+                // 1. DÉCISION
+                if ((agent.getCurrentAction() == null || agent.getCurrentAction().isCompleted()) && agent.isOnNode()) {
                     if (agent.getCurrentAction() != null) {
                         agent.setCurrentAction(null);
                     }
@@ -156,25 +161,78 @@ public class AgentManager implements Serializable {
                         break;
                     }
                 }
+
                 if (agent.isEvacuated()) {
                     agentsHavingReachedExit.add(agent);
                     break;
                 }
+
+                // =========================================================
+                // 2. LE VIGILE D'ENTRÉE (Anti-Amnésie & File d'attente)
+                // =========================================================
+                if (agent.getCurrentAction() != null && agent.isOnNode()) {
+                    Edge targetEdge = (Edge) agent.getCurrentAction().getClosestTargetEdge();
+
+                    if (targetEdge != null && !agentsPassedVigile.contains(agent)) {
+
+                        int agentsEnteringNow = agentsEnteringThisTick.getOrDefault(targetEdge, 0);
+
+                        // A. L'arête est-elle pleine physiquement ?
+                        int futureSize = targetEdge.getAgents().size() + agentsEnteringNow;
+                        if (futureSize >= targetEdge.getCapacity()) {
+                            break; // ⚠️ PAUSE PATIENTE : On garde l'action, on attend.
+                        }
+
+                        // B. Le débit max est-il atteint pour cette fraction de seconde ?
+                        int maxEntriesPerTick = Math.max(1, (int) (targetEdge.getWidth() / 0.5));
+                        if (agentsEnteringNow >= maxEntriesPerTick) {
+                            break; // ⚠️ PAUSE PATIENTE : Le goulot sature, on attend.
+                        }
+
+                        // Feu vert : L'agent reçoit son ticket
+                        agentsEnteringThisTick.put(targetEdge, agentsEnteringNow + 1);
+                        agentsPassedVigile.add(agent);
+                    }
+                }
+                // =========================================================
+
+                // 3. EXÉCUTION DU MOUVEMENT
                 double consumed = agent.performCurrentAction(agentSettings, remainingTime);
                 if (consumed <= 1E-32) {
                     break;
                 }
                 remainingTime -= consumed;
 
+                // =========================================================
+                // 4. LE VIGILE DE SORTIE (Transfert Arête -> Nœud)
+                // =========================================================
                 if (agent.getCurrentAction() != null && agent.getCurrentAction().isCompleted()) {
-                    agent.setCurrentAction(null);
+
+                    if (!agent.isOnNode() && agent.getCurrentEdge() != null) {
+                        Edge currentEdge = agent.getCurrentEdge();
+                        Node targetNode = currentEdge.getOppositeNode(agent.getPreviousOrCurrentNode());
+
+                        if (targetNode.getAgents().size() < targetNode.getCapacity()) {
+                            currentEdge.removeAgent(agent);
+                            targetNode.addAgent(agent);
+
+                            agent.putOnNode(targetNode);
+                            agent.setCurrentAction(null);
+                        } else {
+                            // Le Nœud est plein, l'agent reste bloqué dans l'arête en attendant !
+                        }
+                    } else {
+                        agent.setCurrentAction(null);
+                    }
                 }
+                // =========================================================
 
                 if (remainingTime <= 0.0) {
                     break;
                 }
             }
         }
+
         for (Agent agent : agentsHavingReachedExit) {
             evacuateAgent(agent);
         }
