@@ -148,6 +148,16 @@ public class DialogHelper {
         }
     }
 
+    public static class NodeParams {
+        public final double capacity;
+        public final boolean isExit;
+
+        public NodeParams(double capacity, boolean isExit) {
+            this.capacity = capacity;
+            this.isExit = isExit;
+        }
+    }
+
     // 2. La méthode pour afficher la boîte de dialogue
     public static Optional<EdgeParams> showEdgeCreationDialog(fr.cy.model.graph.element.Node start,
             fr.cy.model.graph.element.Node end, javafx.scene.Node parentNode) {
@@ -178,7 +188,7 @@ public class DialogHelper {
         widthSpinner.setEditable(true);
 
         // Case à cocher pour le sens unique
-        javafx.scene.control.CheckBox directedBox = new javafx.scene.control.CheckBox("Arête orientée (Sens unique)");
+        CheckBox directedBox = new javafx.scene.control.CheckBox("Arête orientée (Sens unique)");
 
         grid.add(new Label("Largeur :"), 0, 0);
         grid.add(widthSpinner, 1, 0);
@@ -197,8 +207,8 @@ public class DialogHelper {
     }
 
     // La méthode pour afficher la boîte de dialogue du Nœud
-    public static Optional<Double> showNodeCreationDialog(javafx.scene.Node parentNode) {
-        Dialog<Double> dialog = new Dialog<>();
+    public static Optional<NodeParams> showNodeCreationDialog(javafx.scene.Node parentNode) {
+        Dialog<NodeParams> dialog = new Dialog<>();
         dialog.setTitle("Nouveau Nœud");
         dialog.setHeaderText("Définir la zone (Capacité en m²)");
 
@@ -216,23 +226,26 @@ public class DialogHelper {
                 "play-btn");
         ((javafx.scene.control.Button) dialogPane.lookupButton(ButtonType.CANCEL)).getStyleClass().add("action-btn");
 
+        CheckBox exitBox = new CheckBox("Sortie d'évacuation");
+
         GridPane grid = new GridPane();
         grid.setHgap(15);
         grid.setVgap(15);
         grid.setPadding(new Insets(20, 20, 10, 10));
 
         // Spinner pour la capacité (de 10 à 5000 m², avec 50 par défaut)
-        Spinner<Double> capacitySpinner = new Spinner<>(10.0, 5000.0, 50.0, 10.0);
+        Spinner<Double> capacitySpinner = new Spinner<>(1, 5000.0, 5.0, 2.0);
         capacitySpinner.setEditable(true);
 
         grid.add(new Label("Capacité (m²) :"), 0, 0);
         grid.add(capacitySpinner, 1, 0);
+        grid.add(exitBox, 0, 1, 2, 1);
 
         dialogPane.setContent(grid);
 
         dialog.setResultConverter(btn -> {
             if (btn == createBtnType) {
-                return capacitySpinner.getValue();
+                return new NodeParams(capacitySpinner.getValue(), exitBox.isSelected());
             }
             return null;
         });

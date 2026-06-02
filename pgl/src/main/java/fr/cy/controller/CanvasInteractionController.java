@@ -192,8 +192,9 @@ public class CanvasInteractionController {
             if (currentMode == InteractionMode.ADD_NODE) {
                 try {
                     DialogHelper.showNodeCreationDialog(canvas)
-                            .ifPresent(capacity -> {
-                                Node newNode = graph.createNode(mx, my, capacity);
+                            .ifPresent(params -> {
+                                Node newNode = graph.createNode(mx, my, params.capacity);
+                                newNode.setExit(params.isExit);
                                 canvas.setSelectedEntity(newNode);
                                 notifySelection(newNode);
                             });
