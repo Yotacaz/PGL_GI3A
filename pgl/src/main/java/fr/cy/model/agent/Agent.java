@@ -11,7 +11,7 @@ import java.io.*;
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.agent.behaviour.decisions.AgentDecisionScore;
 import fr.cy.model.agent.behaviour.decisions.AgentPossibleNodeDecision;
-import fr.cy.model.agent.behaviour.decisions.DecisionNodeContext;
+import fr.cy.model.agent.behaviour.decisions.NodeDecisionContext;
 import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 import fr.cy.model.agent.behaviour.properties.AgentPhysicalProperties;
 import fr.cy.model.agent.behaviour.properties.EmotionalState;
@@ -100,7 +100,7 @@ public class Agent implements StressInducing, Serializable {
         this(name, null, maxSpeed, stressTolerance, crowdingTolerance, 0.5, 1.25, 100, 0.5);
     }
 
-    AgentAction makeDecision(DecisionNodeContext decisionContext, AgentSettings agentSettings) {
+    AgentAction makeDecision(NodeDecisionContext decisionContext, AgentSettings agentSettings) {
         double totalScore = computeAgentDecisionsScore(agentSettings, decisionContext);
         // using the scores convert value to probabilities and select an action based on
         // these probabilities
@@ -120,7 +120,7 @@ public class Agent implements StressInducing, Serializable {
         return null;
     }
 
-    private double computeAgentDecisionsScore(AgentSettings agentSettings, DecisionNodeContext decisionContext) {
+    private double computeAgentDecisionsScore(AgentSettings agentSettings, NodeDecisionContext decisionContext) {
         // No need to clear the map as it is overwritten at each decision step
         // Precompute edge score multipliers once to avoid recalculation for each decision
         List<Double> edgeScoreMultipliers = computeEdgeScoreMultipliers(decisionContext);
@@ -142,13 +142,18 @@ public class Agent implements StressInducing, Serializable {
      * @param decisionContext the context containing the source node and outgoing edges
      * @return a list of score multipliers in the same order as the outgoing edges
      */
-    private List<Double> computeEdgeScoreMultipliers(DecisionNodeContext decisionContext) {
+    private List<Double> computeEdgeScoreMultipliers(NodeDecisionContext decisionContext) {
         List<Edge> outgoingEdges = decisionContext.getOutgoingEdges();
         List<Double> multipliers = new ArrayList<>(outgoingEdges.size());
         Node sourceNode = decisionContext.getSourceNode();
+        if (!isOnNode()) {
+            throw new IllegalStateException("Agent should be on a node to compute edge score multipliers");
+        }
+        Edge previousEdge = getCurrentOrPreviousEdge();
         for (Edge edge : decisionContext.getOutgoingEdges()) {
+
             double multiplier = edge.getScoreMultiplierForAgentGoingToNode(behavioralState,
-                    edge.getOppositeNode(sourceNode));
+                    edge.getOppositeNode(sourceNode), previousEdge);
             multipliers.add(multiplier);
         }
         return multipliers;
@@ -171,6 +176,8 @@ public class Agent implements StressInducing, Serializable {
     public double getEffectiveSpeed(AgentSettings agentSettings) {
         double maxElemSpeed = Double.MAX_VALUE;
         if (!isOnNode()) {
+            assert previousOrCurrentNode != null || currentOrPreviousEdge == null
+                    : "Agent on edge should have a previous or current node";
             maxElemSpeed = currentOrPreviousEdge == null ? Double.MAX_VALUE
                     : currentOrPreviousEdge.getMaxAgentSpeedInDirection(previousOrCurrentNode);
         }
@@ -200,7 +207,7 @@ public class Agent implements StressInducing, Serializable {
     @Override
     public double getStressInducingImpact() {
         return Math.max(-0.5,
-                Math.min(behavioralState.getStressLevel() * 0.1 + getEmotionalState().getStressInducedToOthers(), 1.0)); // FIXME: temporary
+                Math.min(behavioralState.getStressLevel() * 0.1 + getEmotionalState().getStressInducedToOthers(), 1.0));
     }
 
     /**
@@ -259,20 +266,21 @@ public class Agent implements StressInducing, Serializable {
         return previousOrCurrentNode;
     }
 
+    private void removeFromGraphElemButKeepReferences() {
+        GraphElement currentElement = getCurrentGraphElement();
+        if (currentElement != null) {
+            currentElement.removeAgent(this);
+        }
+    }
+
+    void removeFromGraph() {
+        removeFromGraphElemButKeepReferences();
+        this.previousOrCurrentNode = null;
+        this.currentOrPreviousEdge = null;
+    }
 
     public void putOnNode(Node currentNode) {
-        if (isOnNode()) {
-            Node previousNode = getPreviousOrCurrentNode();
-            if (previousNode != null) {
-                previousNode.removeAgent(this);
-            }
-        } else {
-            Edge previousEdge = getCurrentOrPreviousEdge();
-            if (previousEdge != null) {
-                previousEdge.removeAgent(this);
-            }
-        }
-        
+        removeFromGraphElemButKeepReferences();
         if (currentNode != null) {
             currentNode.addAgent(this);
         }
@@ -292,19 +300,8 @@ public class Agent implements StressInducing, Serializable {
         return currentOrPreviousEdge;
     }
 
-
     public void putOnEdge(Edge edge) {
-        if (isOnNode()){
-            if (getCurrentNode() != null) {
-                getCurrentNode().removeAgent(this);
-            }
-            
-        }else{
-            Edge previousEdge = getCurrentOrPreviousEdge();
-            if (previousEdge != null) {
-                previousEdge.removeAgent(this);
-            }
-        }
+        removeFromGraphElemButKeepReferences();
         if (edge != null) {
             edge.addAgent(this);
         }
@@ -343,8 +340,20 @@ public class Agent implements StressInducing, Serializable {
         return action != null ? action.getEdgeProgress() : -1.0;
     }
 
+    public boolean isEvacuated() {
+        return getCurrentNode() != null && getCurrentNode().isExit();
+    }
+
     public boolean isOnNode() {
-        return isOnNode;
+        return isOnNode && getPreviousOrCurrentNode() != null;
+    }
+
+    public boolean isOnEdge() {
+        return !isOnNode && getCurrentOrPreviousEdge() != null;
+    }
+
+    public boolean isOnGraph() {
+        return isOnNode() || isOnEdge();
     }
 
     public void setIsOnNode(boolean isOnNode) {
