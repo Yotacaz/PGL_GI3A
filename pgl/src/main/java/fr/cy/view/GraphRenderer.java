@@ -74,7 +74,7 @@ public class GraphRenderer {
             // NOUVEAU : On récupère l'agent sélectionné pour le passer à la fonction de
             // dessin
             Agent selectedAgent = canvas.getSelectedAgent();
-            for (Agent agent : simulation.getAgentManager().getAgentsOnGraph()) {
+            for (Agent agent : simulation.getAgentManager().getAgentsToEvacuate()) {
                 drawAgent(agent, selectedAgent);
             }
         }

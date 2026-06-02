@@ -4,6 +4,8 @@ public enum AgentPossibleEdgeDecision {
     /** Agent decides to backtrack to the previous node */
     BACKTRACK, 
     /** Agent decides to continue on the current edge */
-    CONTINUE
+    CONTINUE,
+    /** Agent decides to wait */
+    WAIT;
     //TODO
 }

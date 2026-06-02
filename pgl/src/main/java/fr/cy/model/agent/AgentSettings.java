@@ -48,7 +48,7 @@ public class AgentSettings implements Serializable {
     /** Walking speed for agents */
     private double WALKING_SPEED = 1.0;
     /** Running speed for agents */
-    private double RUNNING_SPEED = 2.5;
+    private double RUNNING_SPEED = 3.0;
     /** Maximum running speed for agents, derived from RUNNING_SPEED */
     private double MAX_RUNNING_SPEED = RUNNING_SPEED * 1.5;
     /** Reduction factor applied to speed when walking instead of running, derived from WALKING_SPEED and RUNNING_SPEED */

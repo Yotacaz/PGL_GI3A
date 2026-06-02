@@ -12,7 +12,7 @@ import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.pathfinding.GraphPath;
 
-public class DecisionNodeContext implements Serializable {
+public class NodeDecisionContext implements Serializable {
     private static final long serialVersionUID = 1L;
     /** The node from which the decision is made */
     private Node sourceNode;
@@ -27,7 +27,7 @@ public class DecisionNodeContext implements Serializable {
      * take that edge
      */
 
-    DecisionNodeContext(Node sourceNode, GraphPath recommendedPath, GraphPath shortestPathToExit,
+    NodeDecisionContext(Node sourceNode, GraphPath recommendedPath, GraphPath shortestPathToExit,
             List<Edge> outgoingEdges,
             Map<Edge, List<Agent>> incomingNearbyAgents,
             Map<Edge, List<Agent>> outgoingNearbyAgents) {
@@ -134,7 +134,7 @@ public class DecisionNodeContext implements Serializable {
         if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-        DecisionNodeContext other = (DecisionNodeContext) obj;
+        NodeDecisionContext other = (NodeDecisionContext) obj;
         return sourceNode.equals(other.sourceNode);
     }
 

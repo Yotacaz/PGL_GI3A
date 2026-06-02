@@ -4,7 +4,7 @@ import java.util.Optional;
 
 public enum EmotionalState {
     /** Agent is calm and behaves normally, reducing stress to others around them */
-    CALM(0.0f, 0.5f, -0.2),
+    CALM(0.0f, 0.5f, -0.01),
     /** Agent is selfish and may start pushing others to escape faster */
     SELFISH(0.5f, 1f, 0.1),
     /** Agent is panicking and may cause more stress to others around it */
