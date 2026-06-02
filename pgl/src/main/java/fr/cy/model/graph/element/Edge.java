@@ -378,6 +378,13 @@ public class Edge extends GraphElement {
         return distance >= length;
     }
 
+    @Override
+    public void removeFire() {
+        super.removeFire();
+        this.burningFromStart = false;
+        this.burningFromEnd = false;
+    }
+
     /**
      * Calcule le pourcentage de l'arête recouvert par les flammes (de 0.0 à 1.0).
      * 
