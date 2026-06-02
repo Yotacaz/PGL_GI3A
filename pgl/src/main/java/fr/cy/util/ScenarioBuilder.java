@@ -13,42 +13,6 @@ import fr.cy.model.simulation.Simulation;
  */
 public class ScenarioBuilder {
 
-    public static Simulation buildDemoScenario() {
-        Graph graph = new Graph();
-
-        Node n1 = graph.createNode(150, 150);
-        Node n2 = graph.createNode(400, 100);
-        Node n3 = graph.createNode(600, 250);
-        Node n4 = graph.createNode(400, 400);
-        Node n5 = graph.createNode(150, 450);
-
-        Node sortie1 = graph.createNode(700, 100);
-        Node sortie2 = graph.createNode(700, 450);
-        sortie1.setExit(true);
-        sortie2.setExit(true);
-
-        graph.createEdge(n1, n2);
-        graph.createEdge(n2, n3);
-        graph.createEdge(n3, n4);
-        graph.createEdge(n4, n5);
-        graph.createEdge(n5, n1);
-        graph.createEdge(n2, n4);
-        graph.createEdge(n3, sortie1);
-        graph.createEdge(n4, sortie2);
-
-        Simulation simulation = new Simulation("Demo", graph);
-
-        if (simulation.getAgentManager() != null) {
-            // simulation.getAgentManager().generateAgentOnNode("Agent1", n1); //for testing
-            simulation.getAgentManager().generateRandomsAgents(30);
-        }
-
-        n1.setFire(new Fire(0, 1, 0.01));
-        n4.setFire(new Fire(0, 0, 0));
-
-        return simulation;
-    }
-
     public static Simulation buildComplexScenario() {
         Graph graph = new Graph();
 
@@ -172,48 +136,74 @@ public class ScenarioBuilder {
     public static Simulation setupBypassTest() {
         Graph graph = new Graph();
 
+        // RAPPEL DE L'ÉCHELLE : 1 unité = 10 pixels.
+        // Les agents (0.5) feront 10 pixels de diamètre à l'écran.
+
         // --- 1. CRÉATION DES NŒUDS ---
-        // Nœud de départ (Capacité 100, pour accueillir tout le monde)
-        Node startNode = graph.createNode(100, 300, 100.0);
+        // Nœud de départ : Capacité 150 (Diamètre visuel généré : ~138 px)
+        // Il est assez grand pour contenir confortablement les 60 agents sans qu'ils ne
+        // se chevauchent trop.
+        Node startNode = graph.createNode(100, 300);
+        startNode.setCapacity(150.0);
 
-        // Nœud intermédiaire du chemin direct (Le sas avant le piège, Capacité 10)
-        Node waypointMain = graph.createNode(400, 300, 10.0);
+        // Nœud intermédiaire direct : Capacité 20 (Diamètre visuel généré : ~50 px)
+        // Le sas avant le piège. Assez grand pour recevoir l'arête de 30px (width 3.0),
+        // mais assez petit pour que le bouchon se crée rapidement.
+        Node waypointMain = graph.createNode(400, 300);
+        waypointMain.setCapacity(20.0);
 
-        // Nœud intermédiaire du long détour (Capacité 40)
-        Node waypointTop = graph.createNode(400, 100, 40.0);
+        // Nœud intermédiaire du détour : Capacité 60 (Diamètre visuel généré : ~87 px)
+        // Placé plus haut en Y (50 au lieu de 100) pour que le détour soit visuellement
+        // long.
+        Node waypointTop = graph.createNode(400, 50);
+        waypointTop.setCapacity(60.0);
 
-        // Nœud de sortie
-        Node exitNode = graph.createNode(700, 300, 100.0);
+        // Nœud de sortie : Capacité 200 (Diamètre visuel : ~160 px)
+        Node exitNode = graph.createNode(700, 300);
+        exitNode.setCapacity(200.0);
         exitNode.setExit(true);
 
         // --- 2. CRÉATION DES ARÊTES (Les chemins) ---
 
-        // CHEMIN DIRECT (Court mais dangereux)
+        // CHEMIN DIRECT (Ligne droite)
         Edge mainRoute1 = graph.createEdge(startNode, waypointMain);
-        mainRoute1.setWidth(3.0); // Large accès
-        mainRoute1.setLength(30.0); // Très court
+        mainRoute1.setWidth(3.0); // Visuel : 30 pixels (Large accès)
+        // La distance physique est de 300px (400 - 100). On met length = 30.0 pour être
+        // à l'échelle parfaite.
+        mainRoute1.setLength(30.0);
 
         Edge mainRoute2 = graph.createEdge(waypointMain, exitNode);
-        mainRoute2.setWidth(0.4); // LE PIÈGE : Porte minuscule (1 agent par tick)
-        mainRoute2.setLength(10.0);
+        mainRoute2.setWidth(0.4); // LE PIÈGE : Visuel 4 pixels (1 agent à la fois en file indienne serrée)
+        mainRoute2.setLength(30.0); // Distance physique 300px = length 30.0
 
-        // CHEMIN ALTERNATIF (Le grand détour)
+        // CHEMIN ALTERNATIF (Le grand pont)
         Edge altRoute1 = graph.createEdge(startNode, waypointTop);
-        altRoute1.setWidth(2.5); // Accès correct
-        altRoute1.setLength(100.0); // Très long détour ! (Poids de base énorme)
+        altRoute1.setWidth(2.5); // Visuel : 25 pixels (Accès correct)
+        // Distance physique Diagonale ~390px. On gonfle un peu le length (50.0) pour
+        // que l'algo A* / Dijkstra
+        // le trouve repoussant au début.
+        altRoute1.setLength(50.0);
 
         Edge altRoute2 = graph.createEdge(waypointTop, exitNode);
-        altRoute2.setWidth(4.0); // Boulevard géant vers la sortie
-        altRoute2.setLength(80.0);
+        altRoute2.setWidth(4.0); // Visuel : 40 pixels (Autoroute géante vers la sortie)
+        altRoute2.setLength(50.0);
+
+        // Les couloirs sont à sens unique pour forcer le flux
+        mainRoute1.setDirected(true);
+        mainRoute2.setDirected(true);
+        altRoute1.setDirected(true);
+        altRoute2.setDirected(true);
 
         // --- 3. GÉNÉRATION ---
-        Simulation simulation = new Simulation("Test IA Contournement", graph);
+        Simulation simulation = new Simulation("Test Contournement", graph);
         AgentManager am = simulation.getAgentManager();
 
         if (am != null) {
             // On fait spawner 60 agents.
-            // C'est beaucoup trop pour le chemin principal, ce qui va forcer le
-            // contournement.
+            // Au début, ils voudront tous prendre la ligne droite (length 60 vs length
+            // 100),
+            // mais l'embouteillage sur mainRoute2 va faire exploser le coût de mainRoute1,
+            // forçant les agents suivants à dévier par le Nord.
             am.generateAgentsOnNode("Agent_", startNode, 60);
         }
 
@@ -250,12 +240,14 @@ public class ScenarioBuilder {
 
         // 🟠 CHEMIN CENTRAL : Distance moyenne, mais GOULOT D'ÉTRANGLEMENT
         Edge midIn = graph.createEdge(startNode, midNode);
-        midIn.setWidth(3.0);
+        midIn.setWidth(5.0);
         midIn.setLength(60.0);
+        midIn.setDirected(true);
 
         Edge midOut = graph.createEdge(midNode, exitNode);
         midOut.setWidth(0.4);
-        midOut.setLength(60.0); // L'enfer : 1 agent par tick maximum
+        midOut.setLength(60.0);
+        midOut.setDirected(true); // L'enfer : 1 agent par tick maximum
 
         // 🟢 CHEMIN SUD : Sécurisé, large, mais DÉTOUR IMMENSE
         Edge botIn = graph.createEdge(startNode, botNode);
@@ -279,9 +271,5 @@ public class ScenarioBuilder {
         }
 
         return simulation;
-    }
-
-    public static void main(String[] args) {
-        FileManager.saveSimulation(buildDemoScenario());
     }
 }

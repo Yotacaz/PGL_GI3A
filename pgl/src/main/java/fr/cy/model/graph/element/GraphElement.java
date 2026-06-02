@@ -27,7 +27,7 @@ public abstract class GraphElement implements StressInducing, Serializable {
     private final int id;
 
     private final List<Agent> agents;
-    private double capacity;
+    protected double capacity;
 
     protected Fire initialFire = null;
 
