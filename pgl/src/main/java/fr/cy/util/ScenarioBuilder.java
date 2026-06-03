@@ -78,6 +78,7 @@ public class ScenarioBuilder {
 
         // 4. Peuplement : beaucoup d'agents concentrés dans les bureaux
         if (simulation.getAgentManager() != null) {
+            // simulation.getAgentManager().generateAgentsOnNode("Agent", bureauA, 1);
             simulation.getAgentManager().generateAgentsOnNode("Agent", bureauA, 40);
             simulation.getAgentManager().generateAgentsOnNode("Agent", bureauB, 40);
             simulation.getAgentManager().generateAgentsOnNode("Agent", officeZone, 20);

@@ -82,6 +82,8 @@ public class AgentSettings implements Serializable {
     /** Maximum surface area taken by an agent on a node or edge */
     private double MAX_SURFACE_AREA_TAKEN_BY_AGENT = 1.5;
 
+    private double STRESS_MULTIPLIER = 40.0;
+
     public Map<AgentPossibleNodeDecision, Double> getImmutableDecisionMakingFactors() {
         return Collections.unmodifiableMap(defaultDecisionMakingFactors);
     }
@@ -208,6 +210,14 @@ public class AgentSettings implements Serializable {
 
     public double getMAX_SURFACE_AREA_TAKEN_BY_AGENT() {
         return MAX_SURFACE_AREA_TAKEN_BY_AGENT;
+    }
+
+    public double getSTRESS_MULTIPLIER() {
+        return STRESS_MULTIPLIER;
+    }
+
+    public void setSTRESS_MULTIPLIER(double sTRESS_MULTIPLIER) {
+        STRESS_MULTIPLIER = sTRESS_MULTIPLIER;
     }
 
     public double generateRandomSpeed(Random random) {

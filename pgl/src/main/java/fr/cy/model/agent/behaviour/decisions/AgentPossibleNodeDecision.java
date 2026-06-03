@@ -177,15 +177,17 @@ public enum AgentPossibleNodeDecision {
                 List<Double> edgeScoreMultipliers) {
             Map<Edge, Double> preferredNeighboringEdges = new HashMap<>();
             double totalScoreForPreferredNeighboringEdges = 0.0;
-            if (context.getRecommendedPath() != null) {
+            boolean hasRecommendedPath = context.getRecommendedPath() != null;
+            if (hasRecommendedPath) {
                 List<Edge> recommendedPathEdges = context.getRecommendedPath().getEdges();
                 InterfaceEdgeScorer edgeScorer = (Edge edge) -> recommendedPathEdges.contains(edge) ? 1.0 : 0.0; //prefer edges in the recommended path
                 totalScoreForPreferredNeighboringEdges = computeEdgesScore(context.getOutgoingEdges(), edgeScorer,
                         preferredNeighboringEdges, edgeScoreMultipliers);
             }
 
-            double decisionScore = ((context.getRecommendedPath() != null ? 1.0 : 0.0)
-                    + agentState.getCurrentOwnDecisionMakingFactor()) * decisionMakingFactor;
+            double decisionScore = hasRecommendedPath
+                    ? (1.0 + agentState.getCurrentOwnDecisionMakingFactor()) * decisionMakingFactor
+                    : 0.0;
             if (lastDecision == this) {
                 decisionScore *= agentState.getRepeatLastDecisionFactor();
             }
@@ -263,7 +265,16 @@ public enum AgentPossibleNodeDecision {
     public abstract AgentAction toAgentAction(NodeDecisionContext context, Agent agent,
             AgentDecisionScore decisionScore);
 
+    /** Selects an edge based on the provided scores and total score.
+     * If totalScore is 0 or negative, selects a random edge. Otherwise, selects an edge randomly weighted by its score. */
     private static Edge selectEdgeBasedOnScores(Map<Edge, Double> edgeScores, double totalScore) {
+        if (edgeScores.isEmpty()) {
+            throw new AgentBehaviourException("No edges to choose from.");
+        }
+        if (totalScore <= 0) {
+            //get the first edge
+            return edgeScores.keySet().iterator().next();
+        }
         double randomValue = RNG.nextDouble() * totalScore;
         for (Map.Entry<Edge, Double> entry : edgeScores.entrySet()) {
             randomValue -= entry.getValue();
@@ -272,7 +283,9 @@ public enum AgentPossibleNodeDecision {
             }
         }
         throw new AgentBehaviourException(
-                "No edge selected. Should never happen if totalScore is the sum of edgeScores");
+                "No edge selected. Should never happen if totalScore is the sum of edgeScores (got " + totalScore
+                        + ") and edgeScores are non-negative.");
+        // return null;
     }
 
     /** Functional interface for scoring edges */

@@ -115,7 +115,7 @@ public class AgentManager implements Serializable {
             setInitialState();
             isFirstTick = false;
         }
-        updateAgentsState();
+        updateAgentsState(tickDuration);
         moveAgents(tickDuration);
     }
 
@@ -126,18 +126,36 @@ public class AgentManager implements Serializable {
         // generate and register decisions for all agents before performing any action,
         // to ensure that all agents have the same information when making their
         // decisions
+        List<Agent> agentsHavingReachedExit = new ArrayList<>();
+        List<Agent> agentsKilledThisTick = new ArrayList<>();
         for (Agent agent : agentsToEvacuate) {
             if (agent.isOnNode()) {
+                if (agent.isEvacuated()) {
+                    agentsHavingReachedExit.add(agent);
+                    continue;
+                }
+                if (!agent.isAlive()) {
+                    agentsKilledThisTick.add(agent);
+                    continue;
+                }
                 NodeDecisionContext decisionContext = decisionContextProvider.getContext(agent);
                 AgentAction action = agent.makeDecision(decisionContext, agentSettings);
                 decisionContextProvider.registerChosenAction(agent, action);
-
             }
         }
-        List<Agent> agentsHavingReachedExit = new ArrayList<>();
+        for (Agent agent : agentsKilledThisTick) {
+            killAgent(agent);
+        }
+        for (Agent agent : agentsHavingReachedExit) {
+            evacuateAgent(agent);
+        }
         for (Agent agent : agentsToEvacuate) {
             double remainingTime = tickDuration;
             while (remainingTime > 0.0) {
+                if (agent.isEvacuated()) {
+                    agentsHavingReachedExit.add(agent);
+                    break;
+                }
                 if ((agent.getCurrentAction() == null
                         || agent.getCurrentAction().isCompleted()) && agent.isOnNode()) {
                     if (agent.getCurrentAction() != null) {
@@ -156,10 +174,7 @@ public class AgentManager implements Serializable {
                         break;
                     }
                 }
-                if (agent.isEvacuated()) {
-                    agentsHavingReachedExit.add(agent);
-                    break;
-                }
+
                 double consumed = agent.performCurrentAction(agentSettings, remainingTime);
                 if (consumed <= 1E-32) {
                     break;
@@ -178,6 +193,7 @@ public class AgentManager implements Serializable {
         for (Agent agent : agentsHavingReachedExit) {
             evacuateAgent(agent);
         }
+
     }
 
     public List<Agent> getAgentsToEvacuate() {
@@ -254,9 +270,9 @@ public class AgentManager implements Serializable {
      * This method requires that the graph elements have their stress-inducing
      * factors updated beforehand
      */
-    private void updateAgentsState() {
+    private void updateAgentsState(double tickDuration) {
         for (Agent agent : agentsToEvacuate) {
-            agent.updateState();
+            agent.updateState(tickDuration);
         }
     }
 
@@ -321,8 +337,8 @@ public class AgentManager implements Serializable {
 
         // Physical properties
         private final double maxSpeed;
-        private final int maxHealth;
-        private final int currentHealth;
+        private final double maxHealth;
+        private final double currentHealth;
         private final double surfaceAreaTakenByAgent;
 
         // Behavioral/decisional properties

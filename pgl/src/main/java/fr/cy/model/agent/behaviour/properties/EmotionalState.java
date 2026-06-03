@@ -4,11 +4,11 @@ import java.util.Optional;
 
 public enum EmotionalState {
     /** Agent is calm and behaves normally, reducing stress to others around them */
-    CALM(0.0f, 0.5f, -0.01),
+    CALM(0.0f, 0.3f, -0.1),
     /** Agent is selfish and may start pushing others to escape faster */
-    SELFISH(0.5f, 1f, 0.1),
+    SELFISH(0.3f, 0.7f, 0.1),
     /** Agent is panicking and may cause more stress to others around it */
-    PANICKING(1f, Double.MAX_VALUE, 0.5);
+    PANICKING(0.7f, 1.01d, 0.5);
 
     private final double minStressLevel;
     private final double maxStressLevel;
@@ -32,10 +32,10 @@ public enum EmotionalState {
         return stressInducedToOthers;
     }
 
-    public static Optional<EmotionalState> fromdouble(double stressLevel, double stressTolerance) {
+    public static Optional<EmotionalState> fromdouble(double stressLevel) {
         for (EmotionalState state : EmotionalState.values()) {
-            if (stressLevel >= state.getMinStressLevel() * stressTolerance
-                    && stressLevel < state.getMaxStressLevel() * stressTolerance) {
+            if (stressLevel >= state.getMinStressLevel()
+                    && stressLevel < state.getMaxStressLevel()) {
                 return Optional.of(state);
             }
         }
@@ -54,5 +54,4 @@ public enum EmotionalState {
                 throw new IllegalStateException("Unexpected value: " + this);
         }
     }
-
 }

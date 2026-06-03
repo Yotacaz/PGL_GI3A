@@ -74,7 +74,7 @@ public class Agent implements StressInducing, Serializable {
     private static IdManager idManager = new IdManager();
 
     public Agent(String name, Node startingNode, double maxSpeed, double stressTolerance, double crowdingTolerance,
-            double baseOwnDecisionMakingFactor, double repeatLastDecisionTendency, int health,
+            double baseOwnDecisionMakingFactor, double repeatLastDecisionTendency, double health,
             double surfaceAreaTakenByAgent) {
         this.id = idManager.generateId();
         this.name = name;
@@ -102,6 +102,15 @@ public class Agent implements StressInducing, Serializable {
 
     AgentAction makeDecision(NodeDecisionContext decisionContext, AgentSettings agentSettings) {
         double totalScore = computeAgentDecisionsScore(agentSettings, decisionContext);
+        if (totalScore <= 0.0) {
+            AgentPossibleNodeDecision fallbackDecision = AgentPossibleNodeDecision.WAIT;
+            AgentDecisionScore decisionScore = decisionsScore.get(fallbackDecision);
+            if (decisionScore == null) {
+                return null;
+            }
+            setLastSelectedDecision(fallbackDecision);
+            return setActionFromDecision(fallbackDecision, decisionContext, decisionScore);
+        }
         // using the scores convert value to probabilities and select an action based on
         // these probabilities
         double randomValue = Math.random() * totalScore;
@@ -109,15 +118,27 @@ public class Agent implements StressInducing, Serializable {
         for (Map.Entry<AgentPossibleNodeDecision, AgentDecisionScore> entry : decisionsScore.entrySet()) {
             AgentDecisionScore decisionScore = entry.getValue();
             cumulativeProbability += decisionScore.getScore();
-            if (randomValue <= cumulativeProbability) {
+            if (randomValue < cumulativeProbability) {
                 AgentPossibleNodeDecision selectedDecision = entry.getKey();
                 setLastSelectedDecision(selectedDecision);
-                AgentAction action = selectedDecision.toAgentAction(decisionContext, this, decisionScore);
-                setCurrentAction(action);
-                return action;
+                return setActionFromDecision(selectedDecision, decisionContext, decisionScore);
             }
         }
         return null;
+    }
+
+    /**
+     * Set the current action of the agent based on the selected decision and its score, and return the action.
+     * @param decision the selected decision for which to set the action
+     * @param decisionContext the context of the decision, containing information about the current node and possible actions
+     * @param decisionScore the score associated with the selected decision, which may influence the action's parameters
+     * @return the AgentAction corresponding to the selected decision, or null if the action cannot be created
+     */
+    private AgentAction setActionFromDecision(AgentPossibleNodeDecision decision, NodeDecisionContext decisionContext,
+            AgentDecisionScore decisionScore) {
+        AgentAction action = decision.toAgentAction(decisionContext, this, decisionScore);
+        setCurrentAction(action);
+        return action;
     }
 
     private double computeAgentDecisionsScore(AgentSettings agentSettings, NodeDecisionContext decisionContext) {
@@ -232,26 +253,33 @@ public class Agent implements StressInducing, Serializable {
         return name;
     }
 
-    public void updateState() {
-        updateStressLevel();
+    public void updateState(double tickDuration) {
+        updateStressLevel(tickDuration);
         behavioralState.updateEmotionnalState();
-        updateHealth();
+        updateHealth(tickDuration);
     }
 
-    private double updateStressLevel() {
+    private double updateStressLevel(double tickDuration) {
         GraphElement position = getCurrentGraphElement();
         double stressFromPosition = position != null ? position.getStressInducingImpact() : 0.0;
-        double newStressLevel = getStressLevel() * (0.5 + stressFromPosition);
+        double stressMultiplier = AgentSettings.getInstance().getSTRESS_MULTIPLIER();
+        double stressFromHealth = (1.0 - getHealthPercentage()) * 0.5; // up to 0.5 stress when health is at 0%
+        double newStressLevel = Math.min(
+                Math.max(tickDuration * stressMultiplier * (getStressLevel() + stressFromPosition + stressFromHealth)
+                        / (1.0 + getStressTolerance()), 0.0),
+                1.0);
         setStressLevel(newStressLevel);
         return newStressLevel;
     }
 
-    private void updateHealth() {
+    private double updateHealth(double tickDuration) {
         GraphElement current = getCurrentGraphElement();
         if (current == null) {
-            return;
+            return 0.0;
         }
-        //TODO + should this be before or after action
+        double damage = current.getDamage() * tickDuration;
+        decreaseHealth(damage);
+        return damage;
     }
 
     public int getnOfNodeVisited() {
@@ -324,13 +352,6 @@ public class Agent implements StressInducing, Serializable {
         return isOnNode ? getCurrentNode() : getCurrentOrPreviousEdge();
     }
 
-    public double travelBy(double distance) {
-        // Placeholder implementation - in a real implementation, this would update the
-        // agent's position along the current edge
-        return distance; // Return the actual distance traveled, which may be less than the requested
-                         // distance if the agent reaches the end of the edge
-    }
-
     /**
      * Returns the progress of the agent along the current edge, between 0 and 1, or
      * -1 if not applicable
@@ -387,6 +408,10 @@ public class Agent implements StressInducing, Serializable {
         return behavioralState.getCongestionTolerance();
     }
 
+    public double getStressTolerance() {
+        return behavioralState.getStressTolerance();
+    }
+
     public void setCongestionTolerance(double congestionTolerance) {
         behavioralState.setCongestionTolerance(congestionTolerance);
     }
@@ -425,19 +450,19 @@ public class Agent implements StressInducing, Serializable {
         return physicalProperties.getMaxSpeed();
     }
 
-    public void setHealth(int health) {
+    public void setHealth(double health) {
         physicalProperties.setHealth(health);
     }
 
-    public int getHealth() {
+    public double getHealth() {
         return physicalProperties.getHealth();
     }
 
-    public void decreaseHealth(int amount) {
+    public void decreaseHealth(double amount) {
         physicalProperties.decreaseHealth(amount);
     }
 
-    public void restoreHealth(int amount) {
+    public void restoreHealth(double amount) {
         physicalProperties.restoreHealth(amount);
     }
 
