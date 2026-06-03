@@ -380,6 +380,18 @@ public abstract class GraphElement implements StressInducing, Serializable {
         return congestionMeasureCount;
     }
 
+    /**
+     * @return the damage caused by this element, based on its properties such as fire intensity
+     */
+    public double getDamage() {
+        double damage = getCongestion() > 1 ? 1 : 0;
+        if (isOnFire()) {
+            assert getFire() != null;
+            return damage + getFire().getDamage();
+        }
+        return damage;
+    }
+
     public void reset() {
         agents.clear();
         this.setFire(initialFire);

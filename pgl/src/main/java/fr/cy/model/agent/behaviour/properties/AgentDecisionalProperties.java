@@ -60,7 +60,7 @@ public class AgentDecisionalProperties implements Serializable {
      * @return the new state of the agent after the update
      */
     public EmotionalState updateEmotionnalState() {
-        Optional<EmotionalState> optState = EmotionalState.fromdouble(stressLevel, stressTolerance);
+        Optional<EmotionalState> optState = EmotionalState.fromdouble(stressLevel);
         if (optState.isEmpty()) {
             System.err.println("Warning: Agent " + id + " has an invalid stress level of " + stressLevel
                     + " with a tolerance of " + stressTolerance + ". Defaulting to PANICKING state.");
