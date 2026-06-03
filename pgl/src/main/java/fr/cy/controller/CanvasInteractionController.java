@@ -272,20 +272,22 @@ public class CanvasInteractionController {
             // MODE NORMAL (SÉLECTION ET INFOS) - TON CODE ORIGINAL
             // =========================================================
             if (currentMode == InteractionMode.SELECT_AND_DRAG || currentMode == null) {
+                // 1. On cherche l'élément cliqué
                 Object selectedEntity = null;
-
                 Agent clickedAgent = findClosestAgent(mx, my);
-                if (clickedAgent != null) {
-                    selectedEntity = clickedAgent;
-                } else {
-                    GraphElement clickedElement = findClosestElement(mx, my);
-                    if (clickedElement != null) {
-                        selectedEntity = clickedElement;
-                    }
-                }
+                GraphElement clickedElement = (clickedAgent == null) ? findClosestElement(mx, my) : null;
 
-                canvas.setSelectedEntity(selectedEntity);
-                notifySelection(selectedEntity);
+                selectedEntity = (clickedAgent != null) ? clickedAgent : clickedElement;
+
+                // 2. Gestion du Double-Clic (Modification)
+                if (event.getClickCount() == 2 && selectedEntity != null) {
+                    handleModification(selectedEntity);
+                }
+                // 3. Gestion du Clic Simple (Sélection)
+                else {
+                    canvas.setSelectedEntity(selectedEntity);
+                    notifySelection(selectedEntity);
+                }
             }
         }
     }
@@ -358,6 +360,24 @@ public class CanvasInteractionController {
         double projY = y1 + t * (y2 - y1);
 
         return Math.hypot(px - projX, py - projY);
+    }
+
+    private void handleModification(Object entity) {
+        javafx.application.Platform.runLater(() -> {
+            if (entity instanceof Node node) {
+                fr.cy.view.DialogHelper.showNodeUpdateDialog(node, canvas).ifPresent(params -> {
+                    node.setCapacity(params.capacity);
+                    node.setExit(params.isExit);
+                });
+            } else if (entity instanceof Edge edge) {
+                // On passe le parentNode (ex: le canvas lui-même) pour centrer la fenêtre
+                fr.cy.view.DialogHelper.showEdgeUpdateDialog(edge, canvas).ifPresent(params -> {
+                    edge.setWidth(params.width);
+                    edge.setLength(params.length);
+                    edge.setDirected(params.directed);
+                });
+            }
+        });
     }
 
     private GraphElement findClosestElement(double mx, double my) {
