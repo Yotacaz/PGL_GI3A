@@ -31,6 +31,9 @@ public abstract class GraphElement implements StressInducing, Serializable {
 
     protected Fire initialFire = null;
 
+    private boolean isForcedCongested = false;
+    private int forcedCongestionTicks = 0;
+
     // STRESS :
     /**
      * Total stress induced by this element and its neighbors, it is a cached value
@@ -399,5 +402,29 @@ public abstract class GraphElement implements StressInducing, Serializable {
         totalAgentsCount = 0;
         cachedTotalStressInducedByThisElement = 0;
         cachedTotalStressInducedIncludingNeighbors = 0;
+    }
+
+    public void setForcedCongestion(boolean congested) {
+        this.isForcedCongested = congested;
+        if (congested) {
+            this.forcedCongestionTicks = 0; // Réinitialise le compteur
+        }
+    }
+
+    public boolean isForcedCongested() {
+        return isForcedCongested;
+    }
+
+    /**
+     * Appelé à chaque tick pour décrémenter le compteur de congestion forcée.
+     */
+    public void updateForcedCongestion() {
+        if (isForcedCongested) {
+            forcedCongestionTicks++;
+            if (forcedCongestionTicks >= 2) { // 2 cycles de simulation
+                isForcedCongested = false;
+                forcedCongestionTicks = 0;
+            }
+        }
     }
 }

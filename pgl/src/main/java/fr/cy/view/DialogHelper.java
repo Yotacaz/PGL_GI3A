@@ -1,150 +1,253 @@
 package fr.cy.view;
 
 import fr.cy.model.fire.Fire;
+import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.GraphElement;
+import fr.cy.model.graph.element.Node;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
-
 import java.util.Optional;
 
 public class DialogHelper {
 
-    // On ajoute 'Node parentNode' dans les paramètres
+    private static DialogPane createBaseDialog(Dialog<?> dialog, String title, String header,
+            javafx.scene.Node parent) {
+        dialog.setTitle(title);
+        dialog.setHeaderText(header);
+        DialogPane pane = dialog.getDialogPane();
+        if (parent != null && parent.getScene() != null) {
+            dialog.initOwner(parent.getScene().getWindow());
+            pane.getStylesheets().addAll(parent.getScene().getStylesheets());
+        }
+        return pane;
+    }
+
+    private static void styleButtons(DialogPane pane, ButtonType okBtn) {
+        ((Button) pane.lookupButton(okBtn)).getStyleClass().addAll("action-btn", "play-btn");
+        ((Button) pane.lookupButton(ButtonType.CANCEL)).getStyleClass().add("action-btn");
+    }
+
+    // --- DIALOGUES ---
+
     public static Optional<Fire> showFireDialog(GraphElement element, javafx.scene.Node parentNode) {
         Dialog<Fire> dialog = new Dialog<>();
-        dialog.setTitle("Déclenchement Incendie");
-        dialog.setHeaderText("Propriétés de l'incendie (#" + element.getId() + ")");
+        ButtonType btnType = new ButtonType("🔥 Enflammer", ButtonBar.ButtonData.OK_DONE);
+        DialogPane pane = createBaseDialog(dialog, "Déclenchement Incendie", "Propriétés (#" + element.getId() + ")",
+                parentNode);
+        pane.getButtonTypes().addAll(btnType, ButtonType.CANCEL);
 
-        DialogPane dialogPane = dialog.getDialogPane();
+        // Style spécifique incendie
+        ((Button) pane.lookupButton(btnType)).getStyleClass().addAll("action-btn", "danger-btn");
+        ((Button) pane.lookupButton(ButtonType.CANCEL)).getStyleClass().add("action-btn");
 
-        // 🌟 L'ASTUCE MAGIQUE EST ICI 🌟
-        // On récupère exactement le même CSS que celui utilisé par l'application
-        // principale
-        if (parentNode != null && parentNode.getScene() != null) {
-            dialog.initOwner(parentNode.getScene().getWindow()); // Centre la boîte de dialogue
-            dialogPane.getStylesheets().addAll(parentNode.getScene().getStylesheets()); // Copie le CSS
-        }
+        Spinner<Double> intS = new Spinner<>(0.1, 5.0, 1.0, 0.1);
+        Spinner<Double> sprS = new Spinner<>(0.0, 1.0, 0.05, 0.01);
+        intS.setEditable(true);
+        sprS.setEditable(true);
 
-        ButtonType igniteBtnType = new ButtonType("🔥 Enflammer", ButtonBar.ButtonData.OK_DONE);
-        dialogPane.getButtonTypes().addAll(igniteBtnType, ButtonType.CANCEL);
-
-        // 2. Styliser les boutons avec tes classes CSS
-        Button igniteBtn = (Button) dialogPane.lookupButton(igniteBtnType);
-        igniteBtn.getStyleClass().addAll("action-btn", "danger-btn");
-
-        Button cancelBtn = (Button) dialogPane.lookupButton(ButtonType.CANCEL);
-        cancelBtn.getStyleClass().add("action-btn");
-
-        // 3. Création de la grille
         GridPane grid = new GridPane();
         grid.setHgap(15);
         grid.setVgap(15);
-        grid.setPadding(new Insets(20, 20, 10, 10));
-
-        Spinner<Double> intensitySpinner = new Spinner<>(0.1, 5.0, 1.0, 0.1);
-        Spinner<Double> spreadSpinner = new Spinner<>(0.00, 1.0, 0.05, 0.01);
-        intensitySpinner.setEditable(true);
-        spreadSpinner.setEditable(true);
-
+        grid.setPadding(new Insets(20));
         grid.add(new Label("Intensité :"), 0, 0);
-        grid.add(intensitySpinner, 1, 0);
+        grid.add(intS, 1, 0);
         grid.add(new Label("Propagation :"), 0, 1);
-        grid.add(spreadSpinner, 1, 1);
+        grid.add(sprS, 1, 1);
+        pane.setContent(grid);
 
-        dialogPane.setContent(grid);
-
-        // 4. Conversion
-        dialog.setResultConverter(btn -> {
-            if (btn == igniteBtnType) {
-                return new Fire(0, intensitySpinner.getValue(), spreadSpinner.getValue());
-            }
-            return null;
-        });
-
+        dialog.setResultConverter(b -> b == btnType ? new Fire(0, intS.getValue(), sprS.getValue()) : null);
         return dialog.showAndWait();
     }
 
-    public static Optional<Integer> showRandomGraphDialog(javafx.scene.Node parentNode) {
-        Dialog<Integer> dialog = new Dialog<>();
-        dialog.setTitle("Génération de Masse");
-        dialog.setHeaderText("Ajouter des nœuds aléatoires au réseau");
+    public static Optional<NodeParams> showNodeCreationDialog(javafx.scene.Node parentNode) {
+        ButtonType okBtn = new ButtonType("Créer le Nœud", ButtonBar.ButtonData.OK_DONE);
+        Dialog<NodeParams> dialog = new Dialog<>();
+        DialogPane pane = createBaseDialog(dialog, "Nouveau Nœud", "Définir la zone", parentNode);
+        pane.getButtonTypes().addAll(okBtn, ButtonType.CANCEL);
+        styleButtons(pane, okBtn);
 
-        DialogPane dialogPane = dialog.getDialogPane();
-        if (parentNode != null && parentNode.getScene() != null) {
-            dialog.initOwner(parentNode.getScene().getWindow());
-            dialogPane.getStylesheets().addAll(parentNode.getScene().getStylesheets());
-        }
-
-        ButtonType generateBtnType = new ButtonType("Générer", ButtonBar.ButtonData.OK_DONE);
-        dialogPane.getButtonTypes().addAll(generateBtnType, ButtonType.CANCEL);
-
-        ((Button) dialogPane.lookupButton(generateBtnType)).getStyleClass().addAll("action-btn", "play-btn"); // Bouton
-                                                                                                              // bleu
-        ((Button) dialogPane.lookupButton(ButtonType.CANCEL)).getStyleClass().add("action-btn");
+        Spinner<Double> capSpinner = new Spinner<>(1.0, 5000.0, 5.0, 10.0);
+        capSpinner.setEditable(true);
+        CheckBox exitBox = new CheckBox("Sortie d'évacuation");
 
         GridPane grid = new GridPane();
         grid.setHgap(15);
         grid.setVgap(15);
-        grid.setPadding(new Insets(20, 20, 10, 10));
+        grid.setPadding(new Insets(20));
+        grid.add(new Label("Capacité (m²) :"), 0, 0);
+        grid.add(capSpinner, 1, 0);
+        grid.add(exitBox, 0, 1, 2, 1);
+        pane.setContent(grid);
 
-        Spinner<Integer> countSpinner = new Spinner<>(5, 1000, 20, 5); // Entre 5 et 1000, defaut 20
-        countSpinner.setEditable(true);
+        dialog.setResultConverter(b -> b == okBtn ? new NodeParams(capSpinner.getValue(), exitBox.isSelected()) : null);
+        return dialog.showAndWait();
+    }
 
-        grid.add(new Label("Nombre de nœuds à créer :"), 0, 0);
-        grid.add(countSpinner, 1, 0);
+    public static Optional<NodeParams> showNodeUpdateDialog(Node node, javafx.scene.Node parentNode) {
+        ButtonType okBtn = new ButtonType("Appliquer", ButtonBar.ButtonData.OK_DONE);
+        Dialog<NodeParams> dialog = new Dialog<>();
+        DialogPane pane = createBaseDialog(dialog, "Modifier le Nœud", "ID #" + node.getId(), parentNode);
+        pane.getButtonTypes().addAll(okBtn, ButtonType.CANCEL);
+        styleButtons(pane, okBtn);
 
-        dialogPane.setContent(grid);
+        Spinner<Double> capSpinner = new Spinner<>(1.0, 5000.0, node.getCapacity(), 10.0);
+        capSpinner.setEditable(true);
+        CheckBox exitBox = new CheckBox("Sortie d'évacuation");
+        exitBox.setSelected(node.isExit());
 
-        dialog.setResultConverter(btn -> btn == generateBtnType ? countSpinner.getValue() : null);
+        GridPane grid = new GridPane();
+        grid.setHgap(15);
+        grid.setVgap(15);
+        grid.setPadding(new Insets(20));
+        grid.add(new Label("Capacité (m²) :"), 0, 0);
+        grid.add(capSpinner, 1, 0);
+        grid.add(exitBox, 0, 1, 2, 1);
+        pane.setContent(grid);
+
+        dialog.setResultConverter(b -> b == okBtn ? new NodeParams(capSpinner.getValue(), exitBox.isSelected()) : null);
+        return dialog.showAndWait();
+    }
+
+    public static Optional<EdgeParams> showEdgeCreationDialog(fr.cy.model.graph.element.Node start,
+            fr.cy.model.graph.element.Node end,
+            javafx.scene.Node parentNode) {
+        Dialog<EdgeParams> dialog = new Dialog<>();
+        // ... (utilise ici la logique createBaseDialog que nous avons faite) ...
+        ButtonType createBtnType = new ButtonType("Créer", ButtonBar.ButtonData.OK_DONE);
+        DialogPane pane = createBaseDialog(dialog, "Nouvelle Arête",
+                "Connexion #" + start.getId() + " vers #" + end.getId(), parentNode);
+        pane.getButtonTypes().addAll(createBtnType, ButtonType.CANCEL);
+        styleButtons(pane, createBtnType);
+
+        Spinner<Double> wSp = new Spinner<>(0.5, 10.0, 2.0, 0.5);
+        wSp.setEditable(true);
+        Spinner<Double> lSp = new Spinner<>(0.5, 1000.0, 50.0, 10.0);
+        lSp.setEditable(true);
+        CheckBox dirBox = new CheckBox("Orientée");
+
+        GridPane grid = new GridPane();
+        grid.setHgap(15);
+        grid.setVgap(15);
+        grid.setPadding(new Insets(20));
+        grid.add(new Label("Largeur:"), 0, 0);
+        grid.add(wSp, 1, 0);
+        grid.add(new Label("Longueur:"), 0, 1);
+        grid.add(lSp, 1, 1);
+        grid.add(dirBox, 0, 2, 2, 1);
+        pane.setContent(grid);
+
+        dialog.setResultConverter(
+                b -> b == createBtnType ? new EdgeParams(wSp.getValue(), lSp.getValue(), dirBox.isSelected()) : null);
+        return dialog.showAndWait();
+    }
+
+    public static Optional<EdgeParams> showEdgeUpdateDialog(Edge edge, javafx.scene.Node parentNode) {
+        Dialog<EdgeParams> dialog = new Dialog<>();
+        ButtonType appBtnType = new ButtonType("Appliquer", ButtonBar.ButtonData.OK_DONE);
+        DialogPane pane = createBaseDialog(dialog, "Modifier Arête", "ID #" + edge.getId(), parentNode);
+        pane.getButtonTypes().addAll(appBtnType, ButtonType.CANCEL);
+        styleButtons(pane, appBtnType);
+
+        TextField wF = new TextField(String.valueOf(edge.getWidth()));
+        TextField lF = new TextField(String.valueOf(edge.getLength()));
+        CheckBox dirCheck = new CheckBox("Orientée");
+        dirCheck.setSelected(edge.isDirected());
+
+        GridPane grid = new GridPane();
+        grid.setHgap(15);
+        grid.setVgap(15);
+        grid.setPadding(new Insets(20));
+        grid.add(new Label("Largeur:"), 0, 0);
+        grid.add(wF, 1, 0);
+        grid.add(new Label("Longueur:"), 0, 1);
+        grid.add(lF, 1, 1);
+        grid.add(dirCheck, 0, 2, 2, 1);
+        pane.setContent(grid);
+
+        dialog.setResultConverter(b -> {
+            if (b == appBtnType) {
+                try {
+                    return new EdgeParams(Double.parseDouble(wF.getText()), Double.parseDouble(lF.getText()),
+                            dirCheck.isSelected());
+                } catch (Exception e) {
+                    return null;
+                }
+            }
+            return null;
+        });
         return dialog.showAndWait();
     }
 
     public static Optional<Integer> showAgentCountDialog(javafx.scene.Node parentNode, String title,
             String headerText) {
         Dialog<Integer> dialog = new Dialog<>();
-        dialog.setTitle(title);
-        dialog.setHeaderText(headerText);
-
-        DialogPane dialogPane = dialog.getDialogPane();
-        if (parentNode != null && parentNode.getScene() != null) {
-            dialog.initOwner(parentNode.getScene().getWindow());
-            dialogPane.getStylesheets().addAll(parentNode.getScene().getStylesheets());
-        }
-
         ButtonType generateBtnType = new ButtonType("Générer", ButtonBar.ButtonData.OK_DONE);
-        dialogPane.getButtonTypes().addAll(generateBtnType, ButtonType.CANCEL);
 
-        ((javafx.scene.control.Button) dialogPane.lookupButton(generateBtnType)).getStyleClass().addAll("action-btn",
-                "play-btn");
-        ((javafx.scene.control.Button) dialogPane.lookupButton(ButtonType.CANCEL)).getStyleClass().add("action-btn");
+        // Utilisation de notre méthode usine pour initialiser le dialogue
+        DialogPane pane = createBaseDialog(dialog, title, headerText, parentNode);
+        pane.getButtonTypes().addAll(generateBtnType, ButtonType.CANCEL);
+
+        // Application sécurisée du style
+        Button genBtn = (Button) pane.lookupButton(generateBtnType);
+        if (genBtn != null)
+            genBtn.getStyleClass().addAll("action-btn", "play-btn");
+        Button cancelBtn = (Button) pane.lookupButton(ButtonType.CANCEL);
+        if (cancelBtn != null)
+            cancelBtn.getStyleClass().add("action-btn");
 
         GridPane grid = new GridPane();
         grid.setHgap(15);
         grid.setVgap(15);
-        grid.setPadding(new Insets(20, 20, 10, 10));
+        grid.setPadding(new Insets(20));
 
-        // Par défaut 10 agents, modifiable
         Spinner<Integer> countSpinner = new Spinner<>(1, 1000, 10, 1);
         countSpinner.setEditable(true);
 
         grid.add(new Label("Nombre d'agents :"), 0, 0);
         grid.add(countSpinner, 1, 0);
-
-        dialogPane.setContent(grid);
+        pane.setContent(grid);
 
         dialog.setResultConverter(btn -> btn == generateBtnType ? countSpinner.getValue() : null);
         return dialog.showAndWait();
     }
 
-    // 1. Petite classe pour stocker les choix de l'utilisateur
+    public static Optional<Integer> showRandomGraphDialog(javafx.scene.Node parentNode) {
+        Dialog<Integer> dialog = new Dialog<>();
+        ButtonType genBtnType = new ButtonType("Générer", ButtonBar.ButtonData.OK_DONE);
+
+        // Utilisation de la méthode usine factorisée
+        DialogPane pane = createBaseDialog(dialog, "Génération de Masse", "Ajouter des nœuds aléatoires", parentNode);
+        pane.getButtonTypes().addAll(genBtnType, ButtonType.CANCEL);
+
+        // Style des boutons
+        styleButtons(pane, genBtnType);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(15);
+        grid.setVgap(15);
+        grid.setPadding(new Insets(20));
+
+        Spinner<Integer> countSpinner = new Spinner<>(5, 1000, 20, 5);
+        countSpinner.setEditable(true);
+
+        grid.add(new Label("Nombre de nœuds :"), 0, 0);
+        grid.add(countSpinner, 1, 0);
+        pane.setContent(grid);
+
+        dialog.setResultConverter(btn -> btn == genBtnType ? countSpinner.getValue() : null);
+        return dialog.showAndWait();
+    }
+
+    // --- CLASSES PARAMÈTRES ---
     public static class EdgeParams {
-        public final double width;
+        public final double width, length;
         public final boolean directed;
 
-        public EdgeParams(double width, boolean directed) {
-            this.width = width;
-            this.directed = directed;
+        public EdgeParams(double w, double l, boolean d) {
+            this.width = w;
+            this.length = l;
+            this.directed = d;
         }
     }
 
@@ -152,104 +255,9 @@ public class DialogHelper {
         public final double capacity;
         public final boolean isExit;
 
-        public NodeParams(double capacity, boolean isExit) {
-            this.capacity = capacity;
-            this.isExit = isExit;
+        public NodeParams(double c, boolean e) {
+            this.capacity = c;
+            this.isExit = e;
         }
-    }
-
-    // 2. La méthode pour afficher la boîte de dialogue
-    public static Optional<EdgeParams> showEdgeCreationDialog(fr.cy.model.graph.element.Node start,
-            fr.cy.model.graph.element.Node end, javafx.scene.Node parentNode) {
-        Dialog<EdgeParams> dialog = new Dialog<>();
-        dialog.setTitle("Nouvelle Arête");
-        dialog.setHeaderText("Connexion du Nœud #" + start.getId() + " vers #" + end.getId());
-
-        DialogPane dialogPane = dialog.getDialogPane();
-        if (parentNode != null && parentNode.getScene() != null) {
-            dialog.initOwner(parentNode.getScene().getWindow());
-            dialogPane.getStylesheets().addAll(parentNode.getScene().getStylesheets());
-        }
-
-        ButtonType createBtnType = new ButtonType("Créer l'arête", ButtonBar.ButtonData.OK_DONE);
-        dialogPane.getButtonTypes().addAll(createBtnType, ButtonType.CANCEL);
-
-        ((javafx.scene.control.Button) dialogPane.lookupButton(createBtnType)).getStyleClass().addAll("action-btn",
-                "play-btn");
-        ((javafx.scene.control.Button) dialogPane.lookupButton(ButtonType.CANCEL)).getStyleClass().add("action-btn");
-
-        GridPane grid = new GridPane();
-        grid.setHgap(15);
-        grid.setVgap(15);
-        grid.setPadding(new Insets(20, 20, 10, 10));
-
-        // Spinner pour la largeur (de 0.5 à 10.0, défaut à 2.0)
-        Spinner<Double> widthSpinner = new Spinner<>(0.5, 10.0, 2.0, 0.5);
-        widthSpinner.setEditable(true);
-
-        // Case à cocher pour le sens unique
-        CheckBox directedBox = new javafx.scene.control.CheckBox("Arête orientée (Sens unique)");
-
-        grid.add(new Label("Largeur :"), 0, 0);
-        grid.add(widthSpinner, 1, 0);
-        grid.add(directedBox, 0, 1, 2, 1);
-
-        dialogPane.setContent(grid);
-
-        dialog.setResultConverter(btn -> {
-            if (btn == createBtnType) {
-                return new EdgeParams(widthSpinner.getValue(), directedBox.isSelected());
-            }
-            return null;
-        });
-
-        return dialog.showAndWait();
-    }
-
-    // La méthode pour afficher la boîte de dialogue du Nœud
-    public static Optional<NodeParams> showNodeCreationDialog(javafx.scene.Node parentNode) {
-        Dialog<NodeParams> dialog = new Dialog<>();
-        dialog.setTitle("Nouveau Nœud");
-        dialog.setHeaderText("Définir la zone (Capacité en m²)");
-
-        DialogPane dialogPane = dialog.getDialogPane();
-        if (parentNode != null && parentNode.getScene() != null) {
-            dialog.initOwner(parentNode.getScene().getWindow());
-            dialogPane.getStylesheets().addAll(parentNode.getScene().getStylesheets());
-        }
-
-        ButtonType createBtnType = new ButtonType("Créer le Nœud", ButtonBar.ButtonData.OK_DONE);
-        dialogPane.getButtonTypes().addAll(createBtnType, ButtonType.CANCEL);
-
-        // Application du style de tes boutons
-        ((javafx.scene.control.Button) dialogPane.lookupButton(createBtnType)).getStyleClass().addAll("action-btn",
-                "play-btn");
-        ((javafx.scene.control.Button) dialogPane.lookupButton(ButtonType.CANCEL)).getStyleClass().add("action-btn");
-
-        CheckBox exitBox = new CheckBox("Sortie d'évacuation");
-
-        GridPane grid = new GridPane();
-        grid.setHgap(15);
-        grid.setVgap(15);
-        grid.setPadding(new Insets(20, 20, 10, 10));
-
-        // Spinner pour la capacité (de 10 à 5000 m², avec 50 par défaut)
-        Spinner<Double> capacitySpinner = new Spinner<>(1, 5000.0, 5.0, 2.0);
-        capacitySpinner.setEditable(true);
-
-        grid.add(new Label("Capacité (m²) :"), 0, 0);
-        grid.add(capacitySpinner, 1, 0);
-        grid.add(exitBox, 0, 1, 2, 1);
-
-        dialogPane.setContent(grid);
-
-        dialog.setResultConverter(btn -> {
-            if (btn == createBtnType) {
-                return new NodeParams(capacitySpinner.getValue(), exitBox.isSelected());
-            }
-            return null;
-        });
-
-        return dialog.showAndWait();
     }
 }
