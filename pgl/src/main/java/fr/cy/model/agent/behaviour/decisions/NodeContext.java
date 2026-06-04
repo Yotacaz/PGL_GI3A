@@ -3,6 +3,7 @@ package fr.cy.model.agent.behaviour.decisions;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -12,22 +13,22 @@ import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.pathfinding.GraphPath;
 
-public class NodeDecisionContext implements Serializable {
+public class NodeContext implements Serializable {
     private static final long serialVersionUID = 1L;
     /** The node from which the decision is made */
     private Node sourceNode;
     private GraphPath recommendedPath;
     private GraphPath shortestPathToExit;
     private List<Edge> outgoingEdges;
+    /**
+     * Map of edges to the agents currently taking or planning to take that edge.
+     */
     private Map<Edge, List<Agent>> incomingNearbyAgents;
     private Map<Edge, List<Agent>> outgoingNearbyAgents;
+    private Map<Edge, Double> spaceOccupiedAgentEnteringEdge = new HashMap<>();
     private CongestionStats<Edge> congestionStatsForOutgoingEdges;
-    /*
-     * Map of edges to the number of agents currently taking or planning to next
-     * take that edge
-     */
 
-    NodeDecisionContext(Node sourceNode, GraphPath recommendedPath, GraphPath shortestPathToExit,
+    NodeContext(Node sourceNode, GraphPath recommendedPath, GraphPath shortestPathToExit,
             List<Edge> outgoingEdges,
             Map<Edge, List<Agent>> incomingNearbyAgents,
             Map<Edge, List<Agent>> outgoingNearbyAgents) {
@@ -38,6 +39,7 @@ public class NodeDecisionContext implements Serializable {
         this.incomingNearbyAgents = incomingNearbyAgents;
         this.outgoingNearbyAgents = outgoingNearbyAgents;
         this.congestionStatsForOutgoingEdges = CongestionStats.computeCongestionStats(outgoingEdges);
+        
     }
 
     // public void clear() {
@@ -89,25 +91,25 @@ public class NodeDecisionContext implements Serializable {
         return outgoingNearbyAgents;
     }
 
-    void registerOutgoingIntent(Edge edge, Agent agent) {
+    boolean registerOutgoingIntent(Edge edge, Agent agent) {
         if (edge == null || agent == null) {
-            return;
+            return true;
         }
-        // removeOutgoingIntent(agent);
+
+        double pendingSpaceOnEdge = spaceOccupiedAgentEnteringEdge.getOrDefault(edge, 0.0);
+
+        double futureOccupiedSpace = pendingSpaceOnEdge + agent.getSurfaceAreaTakenByAgent();
+        if (futureOccupiedSpace > edge.getWidth()) {
+            return false;
+        }
+
         List<Agent> agents = outgoingNearbyAgents.computeIfAbsent(edge, k -> new ArrayList<>());
         if (!agents.contains(agent)) {
             agents.add(agent);
+            spaceOccupiedAgentEnteringEdge.put(edge, futureOccupiedSpace);
         }
+        return true;
     }
-
-    // void removeOutgoingIntent(Agent agent) {
-    // if (agent == null) {
-    // return;
-    // }
-    // for (List<Agent> agents : outgoingNearbyAgents.values()) {
-    // agents.remove(agent);
-    // }
-    // }
 
     public GraphPath getRecommendedPath() {
         return recommendedPath;
@@ -134,7 +136,7 @@ public class NodeDecisionContext implements Serializable {
         if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-        NodeDecisionContext other = (NodeDecisionContext) obj;
+        NodeContext other = (NodeContext) obj;
         return sourceNode.equals(other.sourceNode);
     }
 

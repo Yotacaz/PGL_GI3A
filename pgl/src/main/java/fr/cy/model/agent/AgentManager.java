@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Objects;
 
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
+import fr.cy.model.agent.behaviour.agentActions.WaitBeforeOtherAction;
 import fr.cy.model.agent.behaviour.decisions.NodeContext;
 import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 import fr.cy.model.agent.behaviour.properties.AgentPhysicalProperties;
@@ -29,7 +30,7 @@ public class AgentManager implements Serializable {
     private AgentSettings agentSettings = AgentSettings.getInstance();
     private List<Agent> agentsToEvacuate;
     private List<Agent> deadAgents = new ArrayList<>();
-    private List<Agent> evacuatedAgents = new ArrayList<>(); // TODO
+    private List<Agent> evacuatedAgents = new ArrayList<>();
     private NodeContextProvider decisionContextProvider;
     private AgentGenerator agentGenerator;
     private final SimulationSettings simulationSettings;
@@ -123,141 +124,65 @@ public class AgentManager implements Serializable {
         decisionContextProvider.clearCache();
         sortAgentsByOwnDecisionMakingFactor();
 
-        List<Agent> agentsHavingReachedExit = new ArrayList<>();
-        List<Agent> agentsKilledThisTick = new ArrayList<>();
         // generate and register decisions for all agents before performing any action,
         // to ensure that all agents have the same information when making their
         // decisions
         for (Agent agent : agentsToEvacuate) {
             if (agent.isOnNode()) {
-                if (agent.isEvacuated()) {
-                    agentsHavingReachedExit.add(agent);
-                    continue;
-                }
-                if (!agent.isAlive()) {
-                    agentsKilledThisTick.add(agent);
-                    continue;
-                }
+
                 NodeContext decisionContext = decisionContextProvider.getContext(agent);
+                if (decisionContext == null) {
+                    continue;
+                }
                 AgentAction action = agent.makeDecision(decisionContext, agentSettings);
-                decisionContextProvider.registerChosenAction(agent, action);
+                boolean registered = decisionContextProvider.registerChosenAction(agent, action);
+                if (!registered) {
+                    agent.setCurrentAction(new WaitBeforeOtherAction(agent, tickDuration, action));
+                }
             }
         }
-        for (Agent agent : agentsKilledThisTick) {
-            killAgent(agent);
-        }
-        for (Agent agent : agentsHavingReachedExit) {
-            evacuateAgent(agent);
-        }
-
-
-        // =========================================================
-        // REGISTRES DE TICKETS (Initialisés au bon endroit !)
-        // =========================================================
-        java.util.Map<Edge, Integer> agentsEnteringThisTick = new java.util.HashMap<>();
-        java.util.Set<Agent> agentsPassedVigile = new java.util.HashSet<>();
 
         for (Agent agent : agentsToEvacuate) {
-            double remainingTime = tickDuration;
-            while (remainingTime > 0.0) {
-                if (agent.isEvacuated()) {
-                    agentsHavingReachedExit.add(agent);
-                    break;
-                }
-                if ((agent.getCurrentAction() == null
-                        || agent.getCurrentAction().isCompleted()) && agent.isOnNode()) {
-                    if (agent.getCurrentAction() != null) {
-                        agent.setCurrentAction(null);
-                    }
-                    if (!agent.isOnNode()) {
-                        break;
-                    }
-                    NodeContext decisionContext = decisionContextProvider.getContext(agent);
-                    if (decisionContext == null) {
-                        break;
-                    }
-                    AgentAction action = agent.makeDecision(decisionContext, agentSettings);
-                    decisionContextProvider.registerChosenAction(agent, action);
-                    if (action == null) {
-                        break;
-                    }
-                }
-                // =========================================================
-                // 2. LE VIGILE D'ENTRÉE (Anti-Amnésie & File d'attente)
-                // =========================================================
-                if (agent.getCurrentAction() != null && agent.isOnNode()) {
-                    Edge targetEdge = agent.getCurrentAction().getClosestTargetEdge();
 
-                    if (targetEdge != null && !agentsPassedVigile.contains(agent)) {
-
-                        int agentsEnteringNow = agentsEnteringThisTick.getOrDefault(targetEdge, 0);
-
-                        // A. L'arête est-elle pleine physiquement ?
-                        int futureSize = targetEdge.getAgents().size() + agentsEnteringNow;
-                        if (futureSize >= targetEdge.getCapacity()) {
-                            break; // ⚠️ PAUSE PATIENTE : On garde l'action, on attend.
-                        }
-
-                        // B. Le débit max est-il atteint pour cette fraction de seconde ?
-                        int maxEntriesPerTick = Math.max(1, (int) (targetEdge.getWidth() / 0.5));
-                        if (agentsEnteringNow >= maxEntriesPerTick) {
-                            break; // ⚠️ PAUSE PATIENTE : Le goulot sature, on attend.
-                        }
-
-                        // Feu vert : L'agent reçoit son ticket
-                        agentsEnteringThisTick.put(targetEdge, agentsEnteringNow + 1);
-                        agentsPassedVigile.add(agent);
-                    }
-                }
-                // =========================================================
-
-                // 3. EXÉCUTION DU MOUVEMENT
-                double consumed = agent.performCurrentAction(agentSettings, remainingTime);
-                if (consumed <= 1E-32) {
-                    break;
-                }
-                remainingTime -= consumed;
-
-                // =========================================================
-                // 4. LE VIGILE DE SORTIE (Transfert Arête -> Nœud)
-                // =========================================================
-                if (agent.getCurrentAction() != null && agent.getCurrentAction().isCompleted()) {
-
-                    if (!agent.isOnNode() && agent.getCurrentEdge() != null) {
-                        Edge currentEdge = agent.getCurrentEdge();
-                        Node targetNode = currentEdge.getOppositeNode(agent.getPreviousOrCurrentNode());
-
-                        if (targetNode.getAgents().size() < targetNode.getCapacity()) {
-                            currentEdge.removeAgent(agent);
-                            targetNode.addAgent(agent);
-
-                            agent.putOnNode(targetNode);
-                            agent.setCurrentAction(null);
-                        } else {
-                            // Le Nœud est plein, l'agent reste bloqué dans l'arête en attendant !
-                        }
-                    } else {
-                        agent.setCurrentAction(null);
-                    }
-                }
-                // =========================================================
-
-                if (remainingTime <= 0.0) {
-                    break;
-                }
+            AgentAction currentAction = agent.getCurrentAction();
+            if (currentAction == null) {
+                continue;
             }
-        }
 
-        for (Agent agent : agentsHavingReachedExit) {
-            evacuateAgent(agent);
+            double consumed = agent.performCurrentAction(agentSettings, tickDuration);
+            if (consumed <= 1E-32) {
+                continue;
+            }
+
+            if (agent.getCurrentAction() != null && agent.getCurrentAction().isCompleted()) {
+                agent.setCurrentAction(null);
+            }
+
         }
 
     }
 
+    /** @return the unmodifiable list of agents that are still to evacuate */
     public List<Agent> getAgentsToEvacuate() {
-        return agentsToEvacuate;
+        return Collections.unmodifiableList(agentsToEvacuate);
     }
 
+    /** @return the unmodifiable list of evacuated agents */
+    public List<Agent> getEvacuatedAgents() {
+        return Collections.unmodifiableList(evacuatedAgents);
+    }
+
+    /** @return the unmodifiable list of dead agents */
+    public List<Agent> getDeadAgents() {
+        return Collections.unmodifiableList(deadAgents);
+    }
+
+    /**
+     * Evacuates the specified agent and moves them to the list of evacuated agents.
+     *
+     * @param agent the agent to evacuate
+     * @return the evacuated agent
+     */
     public Agent evacuateAgent(Agent agent) {
         if (!agentsToEvacuate.remove(agent)) {
             throw new IllegalArgumentException("Agent not found in alive agents list");
@@ -268,7 +193,7 @@ public class AgentManager implements Serializable {
     }
 
     /**
-     * Removes the specified agent from the graph and resets its state,
+     * Removes the specified agent from the graph,
      * but does not release its ID or add it to the list of dead agents.
      *
      * @param agent the agent to remove
@@ -276,8 +201,9 @@ public class AgentManager implements Serializable {
      */
     public Agent removeAgentFromGraph(Agent agent) {
         if (!agentsToEvacuate.remove(agent)) {
-            if (deadAgents.remove(agent) != true || evacuatedAgents.remove(agent) != true) {
-                throw new IllegalArgumentException("Agent not found in either agents or deadAgents list");
+            if (deadAgents.remove(agent) != true && evacuatedAgents.remove(agent) != true) {
+                throw new IllegalArgumentException(
+                        "Agent not found in either agents, deadAgents or evacuatedAgents list");
             }
         }
         agent.removeFromGraph();
@@ -287,6 +213,8 @@ public class AgentManager implements Serializable {
     /**
      * Kills the agent and removes the main agent list, but keeps it in the list of
      * dead agents for statistics purposes and does not remove him from the graph
+     * 
+     * @return the killed agent
      */
     public Agent killAgent(Agent agent) {
         agent.kill();
@@ -295,32 +223,38 @@ public class AgentManager implements Serializable {
         return agent;
     }
 
-    /** @return the unmodifiable list of dead agents */
-    public List<Agent> getDeadAgents() {
-        return Collections.unmodifiableList(deadAgents);
-    }
-
     /**
      * Clears the list of dead agents and releases their IDs
      * <b>Agents removed with this method should not be used anymore</b>
      */
     public void clearDeadAgents() {
-        for (Agent agent : deadAgents) {
-            agent.releaseId();
+        for (int i = deadAgents.size() - 1; i >= 0; i--) {
+            Agent agent = deadAgents.get(i);
+            deleteAgent(agent);
         }
         deadAgents.clear();
+    }
+
+    /**
+     * Clears the list of evacuated agents and releases their IDs
+     * <b>Agents removed with this method should not be used anymore</b>
+     */
+    public void clearAgentsToEvacuate() {
+        for (int i = agentsToEvacuate.size() - 1; i >= 0; i--) {
+            Agent agent = agentsToEvacuate.get(i);
+            deleteAgent(agent);
+        }
+        agentsToEvacuate.clear();
     }
 
     /**
      * Deletes the agent from the graph and releases its ID, but does not add it to
      * the list of dead agents
      * <b>Agents removed with this method should not be used anymore</b>
-     * 
-     * @return the removed agent
      */
-    public Agent deleteAgent(Agent agent) {
+    public void deleteAgent(Agent agent) {
         agent.releaseId();
-        return removeAgentFromGraph(agent);
+        removeAgentFromGraph(agent);
     }
 
     /**
@@ -329,8 +263,25 @@ public class AgentManager implements Serializable {
      * factors updated beforehand
      */
     private void updateAgentsState(double tickDuration) {
+        List<Agent> agentsToKill = new ArrayList<>();
+        List<Agent> agentsToPutInEvacuated = new ArrayList<>();
         for (Agent agent : agentsToEvacuate) {
             agent.updateState(tickDuration);
+            if (agent.isEvacuated()) {
+                agentsToPutInEvacuated.add(agent);
+                continue;
+            }
+            if (!agent.isAlive()) {
+                agentsToKill.add(agent);
+                continue;
+            }
+
+        }
+        for (Agent agent : agentsToKill) {
+            killAgent(agent);
+        }
+        for (Agent agent : agentsToPutInEvacuated) {
+            evacuateAgent(agent);
         }
     }
 
@@ -358,18 +309,13 @@ public class AgentManager implements Serializable {
      */
     public void reset() {
         if (this.initialAgentSnapshots == null) {
-            setInitialState();
+            return; // No initial state set, nothing to reset to
         }
 
         // do not reset the settings
-        for (int i = this.agentsToEvacuate.size() - 1; i >= 0; i--) {
-            deleteAgent(this.agentsToEvacuate.get(i));
-        }
+        clearAgentsToEvacuate();
+        clearDeadAgents();
         this.agentsToEvacuate.clear();
-        for (int i = this.deadAgents.size() - 1; i >= 0; i--) {
-            deleteAgent(this.deadAgents.get(i));
-        }
-        this.deadAgents.clear();
 
         // Recreate agents from snapshots
         for (AgentSnapshot snapshot : this.initialAgentSnapshots) {

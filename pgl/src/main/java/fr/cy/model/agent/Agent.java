@@ -11,7 +11,7 @@ import java.io.*;
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.agent.behaviour.decisions.AgentDecisionScore;
 import fr.cy.model.agent.behaviour.decisions.AgentPossibleNodeDecision;
-import fr.cy.model.agent.behaviour.decisions.NodeDecisionContext;
+import fr.cy.model.agent.behaviour.decisions.NodeContext;
 import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 import fr.cy.model.agent.behaviour.properties.AgentPhysicalProperties;
 import fr.cy.model.agent.behaviour.properties.EmotionalState;
@@ -103,7 +103,7 @@ public class Agent implements StressInducing, Serializable {
         this(name, null, maxSpeed, stressTolerance, crowdingTolerance, 0.5, 1.25, 100, 0.5);
     }
 
-    AgentAction makeDecision(NodeDecisionContext decisionContext, AgentSettings agentSettings) {
+    AgentAction makeDecision(NodeContext decisionContext, AgentSettings agentSettings) {
         double totalScore = computeAgentDecisionsScore(agentSettings, decisionContext);
         if (totalScore <= 0.0) {
             AgentPossibleNodeDecision fallbackDecision = AgentPossibleNodeDecision.WAIT;
@@ -137,14 +137,14 @@ public class Agent implements StressInducing, Serializable {
      * @param decisionScore the score associated with the selected decision, which may influence the action's parameters
      * @return the AgentAction corresponding to the selected decision, or null if the action cannot be created
      */
-    private AgentAction setActionFromDecision(AgentPossibleNodeDecision decision, NodeDecisionContext decisionContext,
+    private AgentAction setActionFromDecision(AgentPossibleNodeDecision decision, NodeContext decisionContext,
             AgentDecisionScore decisionScore) {
         AgentAction action = decision.toAgentAction(decisionContext, this, decisionScore);
         setCurrentAction(action);
         return action;
     }
 
-    private double computeAgentDecisionsScore(AgentSettings agentSettings, NodeDecisionContext decisionContext) {
+    private double computeAgentDecisionsScore(AgentSettings agentSettings, NodeContext decisionContext) {
         // No need to clear the map as it is overwritten at each decision step
         // Precompute edge score multipliers once to avoid recalculation for each
         // decision
@@ -170,7 +170,7 @@ public class Agent implements StressInducing, Serializable {
      *                        edges
      * @return a list of score multipliers in the same order as the outgoing edges
      */
-    private List<Double> computeEdgeScoreMultipliers(NodeDecisionContext decisionContext) {
+    private List<Double> computeEdgeScoreMultipliers(NodeContext decisionContext) {
         List<Edge> outgoingEdges = decisionContext.getOutgoingEdges();
         List<Double> multipliers = new ArrayList<>(outgoingEdges.size());
         Node sourceNode = decisionContext.getSourceNode();
@@ -211,6 +211,26 @@ public class Agent implements StressInducing, Serializable {
         return currentAction.perform(agentSettings, availableTime);
     }
 
+    public double getEffectiveSpeedOutsideOfGraph() {
+        double agentMaxSpeed = getMaxSpeed();
+        double walkSpeedReductionFactor = AgentSettings.getInstance().getWALK_SPEED_REDUCTION_FACTOR();
+        double effectiveSpeed = 0.0;
+        switch (behavioralState.getEmotionnalState()) {
+            case CALM:
+                effectiveSpeed = agentMaxSpeed * walkSpeedReductionFactor*0.75;
+                break;
+            case SELFISH:
+                effectiveSpeed = agentMaxSpeed * walkSpeedReductionFactor;
+                break;
+            case PANICKING:
+                effectiveSpeed = agentMaxSpeed; //Running
+                break;
+            default:
+                throw new IllegalStateException("Unexpected emotional state: " + behavioralState.getEmotionnalState());
+        }
+        return effectiveSpeed;
+    }
+
     public double getEffectiveSpeed(AgentSettings agentSettings) {
         double maxElemSpeed = Double.MAX_VALUE;
         if (!isOnNode()) {
@@ -219,29 +239,10 @@ public class Agent implements StressInducing, Serializable {
             maxElemSpeed = currentOrPreviousEdge == null ? Double.MAX_VALUE
                     : currentOrPreviousEdge.getMaxAgentSpeedInDirection(previousOrCurrentNode);
         }
-        double agentMaxSpeed = getMaxSpeed();
-        double effectiveMaxSpeed = Math.min(agentMaxSpeed, maxElemSpeed);
-        assert effectiveMaxSpeed >= 0 : "Effective max speed should be non-negative";
-        double speed = 0.0;
-        double walkSpeedReductionFactor = agentSettings.getWALK_SPEED_REDUCTION_FACTOR();
-        switch (behavioralState.getEmotionnalState()) {
-            case CALM:
-                speed = Math.min(agentMaxSpeed * walkSpeedReductionFactor, effectiveMaxSpeed);
-                break;
-            case SELFISH:
-                speed = Math.min(agentMaxSpeed * walkSpeedReductionFactor * 1.5, effectiveMaxSpeed);
-                // System.out.println("Agent " + id + " is selfish and tries to run at speed " +
-                // speed);
-                break;
-            case PANICKING:
-                speed = effectiveMaxSpeed;
-                // System.out.println("Agent " + id + " is panicking and tries to run at max
-                // speed " + speed);
-                break;
-            default:
-                throw new IllegalStateException("Unexpected emotional state: " + behavioralState.getEmotionnalState());
-        }
-        return speed;
+        double agentMaxSpeed = getEffectiveSpeedOutsideOfGraph();
+        double effectiveSpeed = Math.min(agentMaxSpeed, maxElemSpeed);
+        assert effectiveSpeed >= 0 : "Effective max speed should be non-negative";
+        return effectiveSpeed;
     }
 
     @Override
@@ -264,7 +265,7 @@ public class Agent implements StressInducing, Serializable {
         return id;
     }
 
-    void setCurrentAction(AgentAction currentAction) {
+    public void setCurrentAction(AgentAction currentAction) {
         this.currentAction = currentAction;
     }
 

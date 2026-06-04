@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.io.*;
 
 import fr.cy.model.agent.Agent;
+import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 import fr.cy.model.fire.Fire;
 import fr.cy.model.stress.StressInducing;
@@ -377,13 +378,29 @@ public abstract class GraphElement implements StressInducing, Serializable {
     /**
      * @return the damage caused by this element, based on its properties such as fire intensity
      */
-    public double getDamage() {
+    public double getDamage() { //FIXME: TEMPORATY 
         double damage = getCongestion() > 1 ? 1 : 0;
         if (isOnFire()) {
             assert getFire() != null;
             return damage + getFire().getDamage();
         }
         return damage;
+    }
+
+    public double getMaxAgentSpeed(){
+        // We prevent mathematical congestion from exceeding 0.9 (90%) in the calculation
+        // so that the crowd can always trample very slowly.
+        double effectiveCongestion = Math.min(getCongestion(), 0.9);
+        double congestionFactor = 1.0 - effectiveCongestion;
+
+        double calculatedSpeed = AgentSettings.getInstance().getMAX_RUNNING_SPEED() * congestionFactor;
+
+        if (isOnFire()) {
+            return calculatedSpeed * 1.5;
+        }
+
+        // We guarantee a microscopic survival speed (0.1) instead of 0.0
+        return Math.max(calculatedSpeed, 0.1);
     }
 
     public void setInitialState() {
