@@ -203,27 +203,6 @@ public class Edge extends GraphElement {
         return nb;
     }
 
-    /**
-     * Calcule la vitesse maximale de déplacement des agents dans cette arête
-     * en fonction de la congestion et de la longueur.
-     * 
-     * @return la vitesse maximale calculée
-     */
-    public double getMaxAgentSpeed() {
-        // On empêche la congestion mathématique de dépasser 0.9 (90%) dans le calcul
-        // pour que la foule puisse toujours piétiner très lentement.
-        double effectiveCongestion = Math.min(getCongestion(), 0.9);
-        double congestionFactor = 1.0 - effectiveCongestion;
-
-        double calculatedSpeed = AgentSettings.getInstance().getMAX_RUNNING_SPEED() * congestionFactor;
-
-        if (isOnFire()) {
-            return calculatedSpeed * 1.5;
-        }
-
-        // On garantit une vitesse microscopique de survie (0.1) au lieu de 0.0
-        return Math.max(calculatedSpeed, 0.1);
-    }
 
     /**
      * Compute the maximum allowed agent speed when entering this edge from

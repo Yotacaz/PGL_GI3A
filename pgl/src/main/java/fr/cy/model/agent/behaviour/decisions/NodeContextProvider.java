@@ -14,24 +14,24 @@ import fr.cy.model.graph.element.Node;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.pathfinding.PathFinder;
 
-public class NodeDecisionContextProvider implements Serializable {
+public class NodeContextProvider implements Serializable {
     private static final long serialVersionUID = 1L;
     private final Graph graph;
     private final PathFinder pathFinder;
-    private Map<Node, NodeDecisionContext> cachedContexts = new HashMap<>();
+    private Map<Node, NodeContext> cachedContexts = new HashMap<>();
 
     // private final
-    public NodeDecisionContextProvider(Graph graph, PathFinder pathFinder) {
+    public NodeContextProvider(Graph graph, PathFinder pathFinder) {
         this.graph = graph;
         this.pathFinder = pathFinder;
     }
 
-    public NodeDecisionContext getContext(Agent agent) {
+    public NodeContext getContext(Agent agent) {
         Node node = agent.getCurrentNode();
         if (node == null) {
             return null;
         }
-        NodeDecisionContext cachedContext = cachedContexts.get(node);
+        NodeContext cachedContext = cachedContexts.get(node);
         if (cachedContext == null) {
             cachedContext = constructContext(agent);
             cachedContexts.put(node, cachedContext);
@@ -43,22 +43,22 @@ public class NodeDecisionContextProvider implements Serializable {
         cachedContexts.clear();
     }
 
-    public void registerChosenAction(Agent agent, AgentAction action) {
+    public boolean registerChosenAction(Agent agent, AgentAction action) {
         if (agent == null || action == null) {
-            return;
+            return false;
         }
         Node currentNode = agent.getCurrentNode();
         if (currentNode == null) {
-            return;
+            return false;
         }
-        NodeDecisionContext context = cachedContexts.get(currentNode);
+        NodeContext context = cachedContexts.get(currentNode);
         if (context == null) {
-            return;
+            return false;
         }
-        context.registerOutgoingIntent(action.getClosestTargetEdge(), agent);
+        return context.registerOutgoingIntent(action.getClosestTargetEdge(), agent);
     }
 
-    private NodeDecisionContext constructContext(Agent agent) {
+    private NodeContext constructContext(Agent agent) {
         // List<Node> recommendedPath = pathFinder.findPath(agent.getCurrentNode(),
         // agent.getDestinationNode());
         Node currentNode = Objects.requireNonNull(agent.getCurrentNode(),
@@ -90,7 +90,7 @@ public class NodeDecisionContextProvider implements Serializable {
         }
 
         List<Edge> outgoingEdges = currentNode.getOutgoingEdges();
-        return new NodeDecisionContext(currentNode, null, null, outgoingEdges, nearbyIncomingAgents,
+        return new NodeContext(currentNode, null, null, outgoingEdges, nearbyIncomingAgents,
                 nearbyOutgoingAgents);
     }
 

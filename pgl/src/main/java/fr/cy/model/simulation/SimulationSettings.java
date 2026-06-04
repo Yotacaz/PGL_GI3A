@@ -15,6 +15,16 @@ public class SimulationSettings implements Serializable {
     private double speedMultiplier = DEFAULT_SPEED_MULTIPLIER;
     private int speedLevelIndex = DEFAULT_SPEED_LEVEL_INDEX;
 
+    private static SimulationSettings instance = new SimulationSettings();
+
+    private SimulationSettings() {
+        // Private constructor to prevent instantiation without using the singleton instance
+    }
+
+    public static SimulationSettings getInstance() {
+        return instance;
+    }
+
     public double getTickDuration() {
         return tickDuration;
     }

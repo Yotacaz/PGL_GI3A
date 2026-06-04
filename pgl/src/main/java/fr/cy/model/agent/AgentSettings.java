@@ -86,6 +86,8 @@ public class AgentSettings implements Serializable {
 
     private double backtrackingEdgeScoreMultiplier = 0.5;
 
+    private double timeStepDurationForSpaceOccupationEstimation = 0.1; // in seconds
+
     public Map<AgentPossibleNodeDecision, Double> getImmutableDecisionMakingFactors() {
         return Collections.unmodifiableMap(defaultDecisionMakingFactors);
     }
@@ -228,6 +230,10 @@ public class AgentSettings implements Serializable {
 
     public void setBacktrackingEdgeScoreMultiplier(double backtrackingEdgeScoreMultiplier) {
         this.backtrackingEdgeScoreMultiplier = backtrackingEdgeScoreMultiplier;
+    }
+
+    public double getTimeStepDurationForSpaceOccupationEstimation() {
+        return timeStepDurationForSpaceOccupationEstimation;
     }
 
     public double generateRandomSpeed(Random random) {

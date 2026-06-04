@@ -4,7 +4,7 @@ import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentGenerator;
 import fr.cy.model.agent.AgentManager;
 import fr.cy.model.agent.AgentSettings;
-import fr.cy.model.agent.behaviour.decisions.NodeDecisionContextProvider;
+import fr.cy.model.agent.behaviour.decisions.NodeContextProvider;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
@@ -30,9 +30,9 @@ public class AgentManagerResetTest {
         graph.addEdge(edge);
 
         // Create AgentManager
-        SimulationSettings simSettings = new SimulationSettings();
+        SimulationSettings simSettings = SimulationSettings.getInstance();
         AgentGenerator agentGenerator = new AgentGenerator(graph);
-        NodeDecisionContextProvider contextProvider = null; // Would need proper implementation
+        NodeContextProvider contextProvider = null; // Would need proper implementation
 
         AgentManager agentManager = new AgentManager(contextProvider, agentGenerator, simSettings);
 
