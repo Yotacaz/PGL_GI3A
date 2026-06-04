@@ -53,6 +53,11 @@ public class CongestionStats<T extends GraphElement> implements Serializable {
      */
     public static <T extends GraphElement> CongestionStats<T> computeCongestionStats(List<T> graphElements) {
         // sorted by congestion level, from the most to the least congested
+
+        if (graphElements == null || graphElements.isEmpty()) {
+            return null;
+        }
+
         graphElements.sort(new CongestionsGraphElementComparator());
         double totalCongestionLevel = graphElements.stream().mapToDouble(T::getCongestion).sum();
         int count = graphElements.size();
