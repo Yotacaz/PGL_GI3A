@@ -84,6 +84,8 @@ public class AgentSettings implements Serializable {
 
     private double STRESS_MULTIPLIER = 40.0;
 
+    private double backtrackingEdgeScoreMultiplier = 0.5;
+
     public Map<AgentPossibleNodeDecision, Double> getImmutableDecisionMakingFactors() {
         return Collections.unmodifiableMap(defaultDecisionMakingFactors);
     }
@@ -218,6 +220,14 @@ public class AgentSettings implements Serializable {
 
     public void setSTRESS_MULTIPLIER(double sTRESS_MULTIPLIER) {
         STRESS_MULTIPLIER = sTRESS_MULTIPLIER;
+    }
+
+    public double getBacktrackingEdgeScoreMultiplier() {
+        return backtrackingEdgeScoreMultiplier;
+    }
+
+    public void setBacktrackingEdgeScoreMultiplier(double backtrackingEdgeScoreMultiplier) {
+        this.backtrackingEdgeScoreMultiplier = backtrackingEdgeScoreMultiplier;
     }
 
     public double generateRandomSpeed(Random random) {

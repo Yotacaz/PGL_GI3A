@@ -50,7 +50,7 @@ public class Node extends GraphElement {
     public double getScoreMultiplierForAgent(AgentDecisionalProperties agentState) {
         double scoreMultiplier = super.getScoreMultiplierForAgent(agentState);
         if (isExit()) {
-            scoreMultiplier *= 10; //prefer exits
+            scoreMultiplier *= 10; // prefer exits
         }
         return scoreMultiplier;
     }
@@ -106,6 +106,10 @@ public class Node extends GraphElement {
 
     public void setY(double y) {
         this.y = y;
+    }
+
+    public void setCapacity(double capacity) {
+        this.capacity = capacity;
     }
 
     /**

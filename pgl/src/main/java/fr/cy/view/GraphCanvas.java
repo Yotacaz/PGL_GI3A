@@ -16,7 +16,7 @@ public class GraphCanvas extends Canvas {
     private double zoom = 1.0;
 
     // --- NOUVEAU : Mémoire de la sélection UI ---
-    private Agent selectedAgent = null;
+    private Object selectedEntity = null;
 
     @Override
     public boolean isResizable() {
@@ -59,11 +59,13 @@ public class GraphCanvas extends Canvas {
     }
 
     // --- Getters & Setters Sélection ---
-    public Agent getSelectedAgent() {
-        return selectedAgent;
+
+    public Object getSelectedEntity() {
+        return this.selectedEntity;
     }
 
-    public void setSelectedAgent(Agent selectedAgent) {
-        this.selectedAgent = selectedAgent;
+    public void setSelectedEntity(Object selectedEntity) {
+        this.selectedEntity = selectedEntity;
     }
+
 }

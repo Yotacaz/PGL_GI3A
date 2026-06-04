@@ -210,14 +210,19 @@ public class Edge extends GraphElement {
      * @return la vitesse maximale calculée
      */
     public double getMaxAgentSpeed() {
-        double congestionFactor = 1.0 - getCongestion();
+        // On empêche la congestion mathématique de dépasser 0.9 (90%) dans le calcul
+        // pour que la foule puisse toujours piétiner très lentement.
+        double effectiveCongestion = Math.min(getCongestion(), 0.9);
+        double congestionFactor = 1.0 - effectiveCongestion;
+
         double calculatedSpeed = AgentSettings.getInstance().getMAX_RUNNING_SPEED() * congestionFactor;
 
         if (isOnFire()) {
             return calculatedSpeed * 1.5;
         }
 
-        return Math.max(calculatedSpeed, 0.0);
+        // On garantit une vitesse microscopique de survie (0.1) au lieu de 0.0
+        return Math.max(calculatedSpeed, 0.1);
     }
 
     /**
@@ -291,12 +296,8 @@ public class Edge extends GraphElement {
      * @return a score multiplier for an agent on this edge, based on its properties
      *         and the agent's properties,
      */
-    public double getScoreMultiplierForAgentGoingToNode(AgentDecisionalProperties agentState, Node destinationNode,
-            Edge previousEdge) {
+    public double getScoreMultiplierForAgentGoingToNode(AgentDecisionalProperties agentState, Node destinationNode) {
         double scoreMult = getScoreMultiplierForAgent(agentState);
-        if (previousEdge != null) {
-            scoreMult *= 0.8; // prefer new edges over going back and forth on the same edge
-        }
         scoreMult *= destinationNode.getScoreMultiplierForAgent(agentState);
         return scoreMult;
     }
@@ -377,6 +378,13 @@ public class Edge extends GraphElement {
         return distance >= length;
     }
 
+    @Override
+    public void removeFire() {
+        super.removeFire();
+        this.burningFromStart = false;
+        this.burningFromEnd = false;
+    }
+
     /**
      * Calcule le pourcentage de l'arête recouvert par les flammes (de 0.0 à 1.0).
      * 
@@ -405,6 +413,7 @@ public class Edge extends GraphElement {
     public void reset() {
         super.reset();
 
+        // 2. On restaure les directions du feu
         this.burningFromStart = this.initialBurningFromStart;
         this.burningFromEnd = this.initialBurningFromEnd;
     }
