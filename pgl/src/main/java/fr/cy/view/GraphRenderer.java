@@ -222,39 +222,45 @@ public class GraphRenderer {
     private void drawNode(Node node, Object selectedEntity) {
         boolean isSelected = node.equals(selectedEntity);
         double radius = getNodeVisualRadius(node);
-        double diameter = radius * 2.0;
+        double x = node.getX();
+        double y = node.getY();
 
-        double x = node.getX() - radius;
-        double y = node.getY() - radius;
-
+        // 1. Dessiner le halo de sélection si nécessaire
         if (isSelected) {
-            // Padding de 6 pixels autour du nœud
-            drawCircularHalo(node.getX(), node.getY(), radius, 6.0);
+            drawCircularHalo(x, y, radius, 6.0);
         }
 
+        // 2. Déterminer la couleur de base
         Color nodeColor = CALM_NODE_COLOR.interpolate(STRESS_COLOR, node.getStressInducingImpact());
-
-        if (node.isExit()) {
+        if (node.isExit())
             nodeColor = EXIT_NODE_COLOR;
-            DropShadow glow = new DropShadow(1, FIRE_COLOR);
-            gc.setEffect(glow);
-        }
-
         if (node.isOnFire()) {
             double intensity = node.getFire().getIntensity();
             nodeColor = FIRE_COLOR.interpolate(Color.web("#B71C1C"), intensity);
-            DropShadow glow = new DropShadow(15 * intensity, FIRE_COLOR);
-            gc.setEffect(glow);
-        } else {
-            gc.setEffect(null);
         }
 
+        // 3. Dessiner l'effet de Lueur (Glow) manuel
+        // On dessine 3 cercles de plus en plus grands et transparents
+        if (node.isExit() || node.isOnFire()) {
+            double glowRadius = node.isOnFire() ? 15 * node.getFire().getIntensity() : 10;
+            Color glowColor = node.isExit() ? EXIT_NODE_COLOR : FIRE_COLOR;
+
+            for (int i = 1; i <= 3; i++) {
+                gc.setFill(glowColor.deriveColor(0, 1, 1, 0.2 / i)); // Opacité qui diminue
+                double pulse = 1.0 + 0.1 * Math.sin(System.currentTimeMillis() * 0.008);
+                double r = (radius + (glowRadius * i / 3)) * pulse;
+                gc.fillOval(x - r, y - r, r * 2, r * 2);
+            }
+        }
+
+        // 4. Dessiner le nœud lui-même
         gc.setFill(nodeColor);
-        gc.fillOval(x, y, diameter, diameter);
+        gc.fillOval(x - radius, y - radius, radius * 2, radius * 2);
+
+        // 5. Bordure
         gc.setStroke(Color.web("#2A2A35"));
         gc.setLineWidth(2);
-        gc.strokeOval(x, y, diameter, diameter);
-        gc.setEffect(null);
+        gc.strokeOval(x - radius, y - radius, radius * 2, radius * 2);
     }
 
     private void drawAgent(Agent agent, Object selectedEntity) {
