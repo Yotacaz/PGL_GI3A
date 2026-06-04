@@ -63,7 +63,10 @@ public class Agent implements StressInducing, Serializable {
     private Edge currentOrPreviousEdge;
     /** True if the agent is currently on a node, false if on an edge */
     private boolean isOnNode = true; // True if the agent is currently on a node, false if on an edge
-    /** Current node or previous node visited by the agent, used in case of backtracking */
+    /**
+     * Current node or previous node visited by the agent, used in case of
+     * backtracking
+     */
     private Node previousOrCurrentNode = null;
     /**
      * The current action being performed by the agent, which can be null if the
@@ -143,7 +146,8 @@ public class Agent implements StressInducing, Serializable {
 
     private double computeAgentDecisionsScore(AgentSettings agentSettings, NodeDecisionContext decisionContext) {
         // No need to clear the map as it is overwritten at each decision step
-        // Precompute edge score multipliers once to avoid recalculation for each decision
+        // Precompute edge score multipliers once to avoid recalculation for each
+        // decision
         List<Double> edgeScoreMultipliers = computeEdgeScoreMultipliers(decisionContext);
 
         double totalScore = 0.0;
@@ -159,8 +163,11 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Compute edge score multipliers for all outgoing edges from the current node.
-     * These multipliers are based on the agent's behavioral state and the destination nodes.
-     * @param decisionContext the context containing the source node and outgoing edges
+     * These multipliers are based on the agent's behavioral state and the
+     * destination nodes.
+     * 
+     * @param decisionContext the context containing the source node and outgoing
+     *                        edges
      * @return a list of score multipliers in the same order as the outgoing edges
      */
     private List<Double> computeEdgeScoreMultipliers(NodeDecisionContext decisionContext) {
@@ -174,17 +181,27 @@ public class Agent implements StressInducing, Serializable {
         for (Edge edge : decisionContext.getOutgoingEdges()) {
 
             double multiplier = edge.getScoreMultiplierForAgentGoingToNode(behavioralState,
-                    edge.getOppositeNode(sourceNode), previousEdge);
+                    edge.getOppositeNode(sourceNode));
+            if (edge.equals(previousEdge)) {
+                multiplier *= AgentSettings.getInstance().getBacktrackingEdgeScoreMultiplier();
+            }
             multipliers.add(multiplier);
         }
         return multipliers;
     }
 
     /**
-     * Perform the current action of the agent for a given duration, updating the agent's position and state accordingly.
-     * @param agentSettings the general  agent's settings, used to determine effective speed and other factors influencing the action performance
-     * @param availableTime the remaining time available for the current tick, in tick units
-     * @return the time effectively consumed by performing the action, which may be less than the available time if the action completes or if the agent reaches the end of an edge
+     * Perform the current action of the agent for a given duration, updating the
+     * agent's position and state accordingly.
+     * 
+     * @param agentSettings the general agent's settings, used to determine
+     *                      effective speed and other factors influencing the action
+     *                      performance
+     * @param availableTime the remaining time available for the current tick, in
+     *                      tick units
+     * @return the time effectively consumed by performing the action, which may be
+     *         less than the available time if the action completes or if the agent
+     *         reaches the end of an edge
      */
     double performCurrentAction(AgentSettings agentSettings, double availableTime) {
         GraphElement position = getCurrentGraphElement();
@@ -213,11 +230,13 @@ public class Agent implements StressInducing, Serializable {
                 break;
             case SELFISH:
                 speed = Math.min(agentMaxSpeed * walkSpeedReductionFactor * 1.5, effectiveMaxSpeed);
-                // System.out.println("Agent " + id + " is selfish and tries to run at speed " + speed);
+                // System.out.println("Agent " + id + " is selfish and tries to run at speed " +
+                // speed);
                 break;
             case PANICKING:
                 speed = effectiveMaxSpeed;
-                // System.out.println("Agent " + id + " is panicking and tries to run at max speed " + speed);
+                // System.out.println("Agent " + id + " is panicking and tries to run at max
+                // speed " + speed);
                 break;
             default:
                 throw new IllegalStateException("Unexpected emotional state: " + behavioralState.getEmotionnalState());
