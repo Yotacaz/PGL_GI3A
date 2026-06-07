@@ -321,7 +321,7 @@ public class CanvasInteractionController {
                 Edge edge = agent.getCurrentOrPreviousEdge();
                 Node previous = agent.getPreviousOrCurrentNode();
                 Node target = edge.getOppositeNode(previous);
-                double ratio = Math.max(0, agent.getTravelProgressPercentageOnEdge());
+                double ratio = Math.max(0, agent.getCurrentEdgeProgress());
                 double baseX = previous.getX() + (target.getX() - previous.getX()) * ratio;
                 double baseY = previous.getY() + (target.getY() - previous.getY()) * ratio;
                 double angle = (agent.getId() * 137.508) % 360;

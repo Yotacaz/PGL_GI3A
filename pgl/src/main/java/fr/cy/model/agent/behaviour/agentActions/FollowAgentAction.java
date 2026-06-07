@@ -5,6 +5,7 @@ import java.util.Objects;
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.graph.element.Edge;
+import fr.cy.model.graph.element.Node;
 
 /**
  * Action representing behavior where an agent follows another agent.
@@ -33,8 +34,15 @@ public class FollowAgentAction extends AgentAction {
 
 	@Override
 	public Edge getClosestTargetEdge() {
-		// TODO
+		// TODO path to the elem
 		return targetAgent.getCurrentEdgeOrNextEdgeIfOnNode();
+	}
+
+	@Override
+	public Node getClosestTargetNode() {
+		
+		// TODO Auto-generated method stub
+		return targetAgent.getCurrentNodeOrNextNodeIfOnEdge();
 	}
 
 	@Override

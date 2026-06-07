@@ -9,12 +9,13 @@ import java.util.Objects;
 
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.agent.behaviour.agentActions.WaitBeforeOtherAction;
+import fr.cy.model.agent.behaviour.decisions.EdgeContext;
 import fr.cy.model.agent.behaviour.decisions.NodeContext;
 import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 import fr.cy.model.agent.behaviour.properties.AgentPhysicalProperties;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
-import fr.cy.model.agent.behaviour.decisions.NodeContextProvider;
+import fr.cy.model.agent.behaviour.decisions.ContextProvider;
 import fr.cy.model.simulation.SimulationSettings;
 
 /**
@@ -31,7 +32,7 @@ public class AgentManager implements Serializable {
     private List<Agent> agentsToEvacuate;
     private List<Agent> deadAgents = new ArrayList<>();
     private List<Agent> evacuatedAgents = new ArrayList<>();
-    private NodeContextProvider decisionContextProvider;
+    private ContextProvider decisionContextProvider;
     private AgentGenerator agentGenerator;
     private final SimulationSettings simulationSettings;
     // private Map<Agent, AgentAction> agentActionsPreviousTick = new HashMap<>();
@@ -39,7 +40,7 @@ public class AgentManager implements Serializable {
     /** For storing initial snapshots of agents (for reset functionality) */
     private List<AgentSnapshot> initialAgentSnapshots = null;
 
-    public AgentManager(List<Agent> agents, NodeContextProvider decisionContextProvider,
+    public AgentManager(List<Agent> agents, ContextProvider decisionContextProvider,
             AgentGenerator agentGenerator, SimulationSettings simulationSettings) {
         this.agentsToEvacuate = agents;
         this.decisionContextProvider = decisionContextProvider;
@@ -47,7 +48,7 @@ public class AgentManager implements Serializable {
         this.simulationSettings = simulationSettings;
     }
 
-    public AgentManager(NodeContextProvider decisionContextProvider, AgentGenerator agentGenerator,
+    public AgentManager(ContextProvider decisionContextProvider, AgentGenerator agentGenerator,
             SimulationSettings simulationSettings) {
         this(new ArrayList<>(), decisionContextProvider, agentGenerator, simulationSettings);
     }
@@ -130,15 +131,25 @@ public class AgentManager implements Serializable {
         for (Agent agent : agentsToEvacuate) {
             if (agent.isOnNode()) {
 
-                NodeContext decisionContext = decisionContextProvider.getContext(agent);
+                NodeContext decisionContext = decisionContextProvider.getNodeContext(agent.getCurrentNode());
                 if (decisionContext == null) {
                     continue;
                 }
-                AgentAction action = agent.makeDecision(decisionContext, agentSettings);
+                AgentAction action = agent.makeNodeDecision(decisionContext, agentSettings);
                 boolean registered = decisionContextProvider.registerChosenAction(agent, action);
                 if (!registered) {
                     agent.setCurrentAction(new WaitBeforeOtherAction(agent, tickDuration, action));
                 }
+            } else if (agent.isOnEdge()) {
+                // EdgeContext decisionContext = decisionContextProvider.getEdgeContext(agent.getCurrentEdge());
+                // if (decisionContext == null) {
+                //     continue;
+                // }
+                // AgentAction action = agent.makeEdgeDecision(decisionContext, agentSettings);
+                // boolean registered = decisionContextProvider.registerChosenAction(agent, action);
+                // if (!registered) {
+                //     agent.setCurrentAction(new WaitBeforeOtherAction(agent, tickDuration, action));
+                // }
             }
         }
 
@@ -353,6 +364,7 @@ public class AgentManager implements Serializable {
         private final double stressLevel;
 
         // Position and state
+        private final double currentEdgeProgress;
         private final Node previousOrCurrentNode;
         private final Edge currentOrPreviousEdge;
         private final boolean isOnNode;
@@ -387,6 +399,7 @@ public class AgentManager implements Serializable {
             this.currentOrPreviousEdge = agent.getCurrentOrPreviousEdge();
             this.isOnNode = agent.isOnNode();
             this.nOfNodeVisited = agent.getnOfNodeVisited();
+            this.currentEdgeProgress = agent.getCurrentEdgeProgress();
 
             // Current action (will be serialized as-is)
             this.currentAction = agent.getCurrentAction();
@@ -433,6 +446,7 @@ public class AgentManager implements Serializable {
             if (!this.isOnNode && this.currentOrPreviousEdge != null) {
                 // Agent was on an edge, restore that state
                 agent.putOnEdge(this.currentOrPreviousEdge);
+                agent.setCurrentEdgeProgress(this.currentEdgeProgress);
                 // Restore the action if it exists
                 if (this.currentAction != null) {
                     agent.setCurrentAction(this.currentAction);

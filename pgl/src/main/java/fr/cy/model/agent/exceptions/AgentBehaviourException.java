@@ -1,4 +1,4 @@
-package fr.cy.model.agent.behaviour;
+package fr.cy.model.agent.exceptions;
 
 /**
  * Custom exception class for errors related to agent behavior processing.

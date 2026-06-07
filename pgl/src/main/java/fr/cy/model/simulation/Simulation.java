@@ -3,7 +3,7 @@ package fr.cy.model.simulation;
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentGenerator;
 import fr.cy.model.agent.AgentManager;
-import fr.cy.model.agent.behaviour.decisions.NodeContextProvider;
+import fr.cy.model.agent.behaviour.decisions.ContextProvider;
 import fr.cy.model.fire.FireService;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Node;
@@ -38,7 +38,7 @@ public class Simulation implements Serializable {
         this.pathFinder = new PathFinder(graph);
         this.fireService = new FireService();
 
-        NodeContextProvider decisionContextProvider = new NodeContextProvider(graph, pathFinder);
+        ContextProvider decisionContextProvider = new ContextProvider(graph, pathFinder);
         AgentGenerator agentGenerator = new AgentGenerator(graph);
 
         this.agentManager = new AgentManager(decisionContextProvider, agentGenerator, simulationSettings);

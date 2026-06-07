@@ -10,6 +10,7 @@ import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 import fr.cy.model.fire.Fire;
+import fr.cy.model.simulation.SimulationSettings;
 import fr.cy.model.stress.StressInducing;
 
 /**
@@ -133,6 +134,7 @@ public abstract class GraphElement implements StressInducing, Serializable {
         this.fire = null;
     }
 
+    /**@return the list of all agents on the element */
     public List<Agent> getAgents() {
         return agents;
     }
@@ -379,18 +381,26 @@ public abstract class GraphElement implements StressInducing, Serializable {
     }
 
     /**
+     * @return the damage caused by this element for a whole tick, based on its properties such as fire intensity
+     */
+    public double getDamage() {
+        double duration = SimulationSettings.getInstance().getTickDuration();
+        return getDamage(duration);
+    }
+
+    /**
      * @return the damage caused by this element, based on its properties such as fire intensity
      */
-    public double getDamage() { //FIXME: TEMPORATY 
-        double damage = getCongestion() > 1 ? 1 : 0;
+    public double getDamage(double duration) { //FIXME: TEMPORATY 
+        double damage = (getCongestion() > 1 ? 1 : 0) * duration;
         if (isOnFire()) {
             assert getFire() != null;
-            return damage + getFire().getDamage();
+            return damage + getFire().getDamage(duration);
         }
         return damage;
     }
 
-    public double getMaxAgentSpeed(){
+    public double getMaxAgentSpeed() {
         // We prevent mathematical congestion from exceeding 0.9 (90%) in the calculation
         // so that the crowd can always trample very slowly.
         double effectiveCongestion = Math.min(getCongestion(), 0.9);

@@ -6,6 +6,7 @@ import java.util.Objects;
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.graph.element.Edge;
+import fr.cy.model.graph.element.Node;
 
 /**
  * Represents an action that an {@link Agent} can perform.
@@ -13,12 +14,12 @@ import fr.cy.model.graph.element.Edge;
  */
 public abstract class AgentAction implements Serializable {
 	private static final long serialVersionUID = 1L;
-	private Agent agent;
+	protected final Agent agent;
 	/** The progress of the action, between 0 and 1 */
 	private double progress = 0.0;
 
 	public AgentAction(Agent agent) {
-		this.agent = agent;
+		this.agent = Objects.requireNonNull(agent);
 	}
 
 	protected Agent getAgent() {
@@ -39,7 +40,7 @@ public abstract class AgentAction implements Serializable {
 		}
 		progress = Math.min(newProgress, 1.0);
 	}
-	
+
 	/**
 	 * Execute the action with a limited time budget.
 	 * 
@@ -58,6 +59,8 @@ public abstract class AgentAction implements Serializable {
 	 * This is used for conflict resolution and should reflect the agent's intentions as closely as possible.
 	 */
 	public abstract Edge getClosestTargetEdge();
+
+	public abstract Node getClosestTargetNode();
 
 	//TODO
 	/** @return the final destination graph element of this action, or null if none. For visualization purposes.*/

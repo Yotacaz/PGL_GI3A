@@ -1,9 +1,6 @@
 package fr.cy.model.agent.behaviour.decisions;
 
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,32 +10,31 @@ import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.pathfinding.GraphPath;
 
-public class NodeContext implements Serializable {
+/** Context for agents on a node */
+public class NodeContext extends AbstractGraphElementContext<Edge> {
     private static final long serialVersionUID = 1L;
     /** The node from which the decision is made */
     private Node sourceNode;
     private GraphPath recommendedPath;
     private GraphPath shortestPathToExit;
-    private List<Edge> outgoingEdges;
     /**
      * Map of edges to the agents currently taking or planning to take that edge.
      */
     private Map<Edge, List<Agent>> incomingNearbyAgents;
     private Map<Edge, List<Agent>> outgoingNearbyAgents;
-    private Map<Edge, Double> spaceOccupiedAgentEnteringEdge = new HashMap<>();
-    private CongestionStats<Edge> congestionStatsForOutgoingEdges;
+    private Map<Edge, Double> spaceOccupiedAgentEnteringEdge;
 
     NodeContext(Node sourceNode, GraphPath recommendedPath, GraphPath shortestPathToExit,
             List<Edge> outgoingEdges,
             Map<Edge, List<Agent>> incomingNearbyAgents,
-            Map<Edge, List<Agent>> outgoingNearbyAgents) {
+            Map<Edge, List<Agent>> outgoingNearbyAgents, Map<Edge, Double> spaceOccupiedAgentEnteringEdge) {
+        super(outgoingEdges);
         this.sourceNode = sourceNode;
         this.recommendedPath = recommendedPath;
         this.shortestPathToExit = shortestPathToExit;
-        this.outgoingEdges = outgoingEdges;
         this.incomingNearbyAgents = incomingNearbyAgents;
         this.outgoingNearbyAgents = outgoingNearbyAgents;
-        this.congestionStatsForOutgoingEdges = CongestionStats.computeCongestionStats(outgoingEdges);
+        this.spaceOccupiedAgentEnteringEdge = spaceOccupiedAgentEnteringEdge;
         
     }
 
@@ -49,16 +45,15 @@ public class NodeContext implements Serializable {
     // }
 
     public List<Edge> getOutgoingEdges() {
-        return Collections.unmodifiableList(outgoingEdges);
+        return getAccessibleElements();
     }
 
     public CongestionStats<Edge> getCongestionStatsForOutgoingEdges() {
-        return congestionStatsForOutgoingEdges;
+        return getCongestionStatsForAccessibleElements();
     }
 
     public List<Edge> getSortedOutgoingEdgesByCongestion() {
-        List<Edge> sortedEdges = congestionStatsForOutgoingEdges.getSortedByCongestion();
-        return Collections.unmodifiableList(sortedEdges);
+        return getSortedAccessibleElementsByCongestion();
     }
 
     /**
@@ -144,7 +139,7 @@ public class NodeContext implements Serializable {
     public String toString() {
         return "DecisionNodeContext{" +
                 "sourceNode=" + (sourceNode == null ? "null" : sourceNode.toString()) +
-                ", outgoingEdges=" + (outgoingEdges == null ? 0 : outgoingEdges.size()) +
+                ", outgoingEdges=" + getOutgoingEdges().size() +
                 '}';
     }
 

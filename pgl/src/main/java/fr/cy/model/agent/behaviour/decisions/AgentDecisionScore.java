@@ -1,85 +1,67 @@
 package fr.cy.model.agent.behaviour.decisions;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
-import fr.cy.model.graph.element.Edge;
-
 /**
- * Holds the aggregated score for a possible decision and whether the
- * decision is considered valid in the current context.
+ * Holds the aggregated score for a possible decision and its weighted
+ * neighboring graph-element choices.
  */
-public class AgentDecisionScore implements Serializable {
+public abstract class AgentDecisionScore<T> implements Serializable {
     private static final long serialVersionUID = 1L;
-    private double decisionScore = 0.0;
-    private boolean isValid = true;
-    /** A map of preferred neighboring edges and their associated scores */
-    private Map<Edge, Double> preferredNeighboringEdges;
-    private double totalScoreForPreferredNeighboringEdges;
 
-    public AgentDecisionScore(double totalScore, Map<Edge, Double> preferredNeighboringEdges,
-            double totalScoreForPreferredNeighboringEdges) {
-        this.decisionScore = Math.max(0.0, totalScore);
-        this.preferredNeighboringEdges = preferredNeighboringEdges;
-        this.totalScoreForPreferredNeighboringEdges = totalScoreForPreferredNeighboringEdges;
+    private final double decisionScore;
+    private final Map<T, Double> preferredNeighboringElements;
+    private final double totalScoreForPreferredNeighboringElements;
+
+    AgentDecisionScore(double decisionScore, Map<T, Double> preferredNeighboringElements,
+            double totalScoreForPreferredNeighboringElements) {
+        this.decisionScore = Math.max(0.0, decisionScore);
+        this.preferredNeighboringElements = Objects.requireNonNull(preferredNeighboringElements,
+                "preferredNeighboringElements");
+        this.totalScoreForPreferredNeighboringElements = Math.max(0.0, totalScoreForPreferredNeighboringElements);
     }
 
-    // public AgentDecisionScore(double totalScore, Map<Edge, Double>
-    // preferredNeighboringEdges) {
-    // this(totalScore, true, preferredNeighboringEdges);
-    // }
-
-    /** Add a partial score to the total. */
-    public void addScore(double score) {
-        this.decisionScore += score;
-    }
-
-    /** Get the aggregated score. */
     public double getScore() {
         return decisionScore;
     }
 
-    /** True if the decision is currently valid for selection. */
-    public boolean isValid() {
-        return isValid;
+    public Map<T, Double> getPreferredNeighboringElements() {
+        return Collections.unmodifiableMap(preferredNeighboringElements);
     }
 
-    /** Get the map of preferred neighboring edges and their associated scores. */
-    public Map<Edge, Double> getPreferredNeighboringEdges() {
-        return preferredNeighboringEdges;
-    }
-
-    public double getTotalScoreForPreferredNeighboringEdges() {
-        return totalScoreForPreferredNeighboringEdges;
+    public double getTotalScoreForPreferredNeighboringElements() {
+        return totalScoreForPreferredNeighboringElements;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(decisionScore, isValid, preferredNeighboringEdges, totalScoreForPreferredNeighboringEdges);
+        return Objects.hash(decisionScore, preferredNeighboringElements, totalScoreForPreferredNeighboringElements);
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null || getClass() != obj.getClass())
+        }
+        if (obj == null || getClass() != obj.getClass()) {
             return false;
-        AgentDecisionScore other = (AgentDecisionScore) obj;
-        return Double.compare(decisionScore, other.decisionScore) == 0 && isValid == other.isValid
-                && Objects.equals(preferredNeighboringEdges, other.preferredNeighboringEdges)
-                && Double.compare(totalScoreForPreferredNeighboringEdges,
-                        other.totalScoreForPreferredNeighboringEdges) == 0;
+        }
+        AgentDecisionScore<?> other = (AgentDecisionScore<?>) obj;
+        return Double.compare(decisionScore, other.decisionScore) == 0
+                && Objects.equals(preferredNeighboringElements, other.preferredNeighboringElements)
+                && Double.compare(totalScoreForPreferredNeighboringElements,
+                        other.totalScoreForPreferredNeighboringElements) == 0;
     }
 
     @Override
     public String toString() {
         return "AgentDecisionScore{" +
                 "score=" + decisionScore +
-                ", valid=" + isValid +
-                ", preferredEdges=" + (preferredNeighboringEdges == null ? "null" : preferredNeighboringEdges.keySet())
-                +
-                ", totalPreferredScore=" + totalScoreForPreferredNeighboringEdges +
+                ", preferredElements=" + preferredNeighboringElements.keySet() +
+                ", totalPreferredScore=" + totalScoreForPreferredNeighboringElements +
                 '}';
     }
 }
