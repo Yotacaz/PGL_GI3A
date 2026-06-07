@@ -4,11 +4,11 @@ import java.util.Optional;
 
 public enum EmotionalState {
     /** Agent is calm and behaves normally, reducing stress to others around them */
-    CALM(0.0f, 0.3f, -0.1),
+    CALM(0.0f, 0.3f, -0.05),
     /** Agent is selfish and may start pushing others to escape faster */
-    SELFISH(0.3f, 0.7f, 0.1),
+    SELFISH(0.3f, 0.7f, 0.05),
     /** Agent is panicking and may cause more stress to others around it */
-    PANICKING(0.7f, 1.01d, 0.5);
+    PANICKING(0.7f, 1.01d, 0.2);
 
     private final double minStressLevel;
     private final double maxStressLevel;

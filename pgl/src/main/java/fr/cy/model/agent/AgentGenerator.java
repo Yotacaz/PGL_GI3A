@@ -2,6 +2,7 @@ package fr.cy.model.agent;
 
 import java.io.Serializable;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Random;
 
 import fr.cy.model.graph.Graph;
@@ -68,7 +69,8 @@ public class AgentGenerator implements Serializable {
 		}
 		Agent agent = createRandomAgent(baseName, startingNode);
 		agent.putOnEdge(edge);
-		agent.setCurrentAction(new FollowSingleEdgeAction(agent, edge, edgeProgress));
+		Node oppositeNode = Objects.requireNonNull(edge.getOppositeNode(startingNode));
+		agent.setCurrentAction(new FollowSingleEdgeAction(agent, edge, oppositeNode, edgeProgress));
 		return agent;
 	}
 

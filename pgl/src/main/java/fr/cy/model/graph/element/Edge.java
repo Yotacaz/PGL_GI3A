@@ -2,7 +2,6 @@ package fr.cy.model.graph.element;
 
 import fr.cy.model.graph.GraphConfig;
 import fr.cy.model.agent.Agent;
-import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 import fr.cy.model.fire.Fire;
 import java.util.*;
@@ -23,6 +22,9 @@ public class Edge extends GraphElement {
     /** Nœud de départ/arrivée de l'arête */
     private final Node start;
     private final Node end;
+
+    private int agentGoingToStartNode;
+    private int agentGoingToEndNode;
 
     /** Indique si l'arête est dirigée */
     private boolean directed;

@@ -291,14 +291,14 @@ public class DetailsSidePanel extends ScrollPane {
             } else if (agent.getCurrentOrPreviousEdge() != null) {
                 Node target = agent.getCurrentOrPreviousEdge().getOppositeNode(agent.getPreviousOrCurrentNode());
                 capacityValue.setText("Vers Nœud " + target.getId());
-                safeSetProgress(congestionBar, agent.getTravelProgressPercentageOnEdge());
+                safeSetProgress(congestionBar, agent.getCurrentEdgeProgress());
             } else {
                 capacityValue.setText("Échappé / Inconnu");
                 safeSetProgress(congestionBar, 0);
             }
 
             congestionTitle.setText("PROGRESSION SUR ARÊTE");
-            congestionValue.setText(String.format("%.0f%%", agent.getTravelProgressPercentageOnEdge() * 100));
+            congestionValue.setText(String.format("%.0f%%", agent.getCurrentEdgeProgress() * 100));
 
             stressTitle.setText("STRESS LEVEL");
             stressValue.setText(String.format("%.0f%%", agent.getStressLevel() * 100));

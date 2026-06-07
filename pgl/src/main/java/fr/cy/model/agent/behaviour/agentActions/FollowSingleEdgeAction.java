@@ -2,28 +2,39 @@ package fr.cy.model.agent.behaviour.agentActions;
 
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentSettings;
+import fr.cy.model.agent.exceptions.AgentStateException;
 import fr.cy.model.graph.element.Edge;
+import fr.cy.model.graph.element.Node;
 import java.util.Objects;
 
 public class FollowSingleEdgeAction extends AbstractMoveAction {
     private static final long serialVersionUID = 1L;
     private final Edge edgeToFollow;
+    private final Node destinationNode;
 
-    public FollowSingleEdgeAction(Agent agent, Edge edgeToFollow) {
+    public FollowSingleEdgeAction(Agent agent, Edge edgeToFollow, Node destinationNode) {
         super(agent);
+        this.destinationNode = Objects.requireNonNull(destinationNode);
         this.edgeToFollow = Objects.requireNonNull(edgeToFollow);
     }
 
-    public FollowSingleEdgeAction(Agent agent, Edge edgeToFollow, double initialProgress) {
-        this(agent, edgeToFollow);
+    public FollowSingleEdgeAction(Agent agent, Edge edgeToFollow, Node destinationNode, double initialProgress) {
+        this(agent, edgeToFollow, destinationNode);
         setProgress(initialProgress);
     }
 
+    // @Override
+    // public void setProgress(double newProgress) {
+    //     super.setProgress(newProgress);
+    //     setEdgeProgress(newProgress); // keep edge progress in sync with overall action progress
+    // }
+
     @Override
-    public void setProgress(double newProgress) {
-        super.setProgress(newProgress);
-        setEdgeProgress(newProgress); // keep edge progress in sync with overall action progress
+    public void setEdgeProgress(double newProgress) {
+        super.setEdgeProgress(newProgress);
+        setProgress(newProgress); // keep edge progress in sync with overall action progress
     }
+
 
     @Override
     public Edge getClosestTargetEdge() {
@@ -31,10 +42,17 @@ public class FollowSingleEdgeAction extends AbstractMoveAction {
     }
 
     @Override
+    public Node getClosestTargetNode() {
+        return agent.isOnNode() ? agent.getCurrentNode() : destinationNode;
+    }
+
+    @Override
     public double perform(AgentSettings agentSettings, double availableTime) {
-        assert getProgress() < 1.0 : "Action should not be performed if already completed";
+        if (getProgress() >= 1.0)
+            throw new AgentStateException("Action should not be performed if already completed");
         double consumedTime = travelAlongEdge(agentSettings, edgeToFollow, availableTime);
-        setProgress(getEdgeProgress()); // single edge progress is the overall action progress
+        // setProgress(getEdgeProgress()); // single edge progress is the overall action progress
+        
         return consumedTime;
     }
 

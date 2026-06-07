@@ -1,5 +1,7 @@
 package fr.cy.view;
 
+import java.util.Objects;
+
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.behaviour.properties.EmotionalState;
 import fr.cy.model.graph.Graph;
@@ -281,10 +283,11 @@ public class GraphRenderer {
             ax = node.getX() + Math.cos(Math.toRadians(angle)) * dist;
             ay = node.getY() + Math.sin(Math.toRadians(angle)) * dist;
 
-        } else if (!agent.isOnNode() && agent.getCurrentOrPreviousEdge() != null) {
+        } else if (agent.isOnGraph() && agent.getCurrentOrPreviousEdge() != null) {
             Edge edge = agent.getCurrentOrPreviousEdge();
-            Node previous = agent.getPreviousOrCurrentNode();
-            Node target = edge.getOppositeNode(previous);
+            // Node previous = agent.getPreviousOrCurrentNode();
+            Node target = Objects.requireNonNull(agent.getCurrentNodeOrNextNodeIfOnEdge());
+            Node previous = Objects.requireNonNull(edge.getOppositeNode(target));
 
             // Logique de raccourcissement bord-à-bord (déjà implémentée précédemment)
             double startRadius = getNodeVisualRadius(previous);
@@ -302,7 +305,7 @@ public class GraphRenderer {
                 borderEndY = ey - (dy / centerDist) * endRadius;
             }
 
-            double ratio = Math.max(0, agent.getTravelProgressPercentageOnEdge());
+            double ratio = Math.max(0, agent.getCurrentEdgeProgress());
             double baseX = borderStartX + (borderEndX - borderStartX) * ratio;
             double baseY = borderStartY + (borderEndY - borderStartY) * ratio;
 

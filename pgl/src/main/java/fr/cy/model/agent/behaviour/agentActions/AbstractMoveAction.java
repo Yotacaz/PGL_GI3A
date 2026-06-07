@@ -4,13 +4,15 @@ import java.util.Objects;
 
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentSettings;
+import fr.cy.model.agent.exceptions.AgentStateException;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 
 public abstract class AbstractMoveAction extends AgentAction {
     private static final long serialVersionUID = 1L;
+
     /** The progress of the agent along the current edge, between 0 and 1 */
-    private double edgeProgress = 0.0;
+    protected double edgeProgress = 0.0;
 
     public AbstractMoveAction(Agent agent) {
         super(agent);
@@ -20,22 +22,27 @@ public abstract class AbstractMoveAction extends AgentAction {
         return edgeProgress;
     }
 
-    public void setEdgeProgress(double edgeProgress) {
-        if (edgeProgress < 0.0) {
+    public void setEdgeProgress(double newEdgeProgress) {
+        if (newEdgeProgress < 0.0) {
             throw new IllegalArgumentException("Edge progress must be positive");
         }
-        this.edgeProgress = Math.min(edgeProgress, 1.0);
+        this.edgeProgress = Math.min(newEdgeProgress, 1.0);
+        agent.setCurrentEdgeProgress(edgeProgress); //keep in sync
     }
 
     public boolean isEdgeCompleted() {
-        return edgeProgress >= 0.999999; // consider edge completed when progress is close enough to 1.0 to avoid
-                                         // floating-point issues
+        return getEdgeProgress() >= 0.999999; // consider edge completed when progress is close enough to 1.0 to avoid
+        // floating-point issues
     }
 
     protected double travelAlongEdge(AgentSettings agentSettings, Edge edge, double availableTime) {
         Agent agent = getAgent();
-
-        agent.putOnEdge(edge);
+        Objects.requireNonNull(edge, "invalid param");
+        if (!agent.isOnEdge()) {
+            agent.putOnEdge(edge);
+        } else if (!edge.equals(agent.getCurrentEdge())) {
+            throw new AgentStateException("agent is trying to travel on an edge while being in another one");
+        }
 
         if (availableTime <= 0.0) {
             return 0.0;
@@ -66,39 +73,16 @@ public abstract class AbstractMoveAction extends AgentAction {
 
     private void goToNextNodeIfEdgeCompleted() {
         if (isEdgeCompleted()) {
-            Agent agent = getAgent();
             agent.incrementNodeVisited();
-            Edge currentEdge = agent.getCurrentEdge();
-            if (currentEdge == null) {
-                throw new IllegalStateException("Current edge cannot be null when edge is completed");
-            }
-            if (!agent.isOnNode()) {
-                Node nextNode = currentEdge.getOppositeNode(agent.getPreviousOrCurrentNode());
+            if (agent.isOnEdge()) {
+                // Node nextNode = currentEdge.getOppositeNode(agent.getPreviousOrCurrentNode());
+                Node nextNode = getClosestTargetNode();
                 agent.putOnNode(nextNode);
+                assert getProgress() > 0.99;
+            } else {
+                throw new AgentStateException("Current edge cannot be null when edge is completed");
             }
         }
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), edgeProgress);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (!super.equals(obj))
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        AbstractMoveAction other = (AbstractMoveAction) obj;
-        return Double.compare(edgeProgress, other.edgeProgress) == 0;
-    }
-
-    @Override
-    public String toString() {
-        return super.toString().replace("}", "") + ", edgeProgress=" + String.format("%.3f", edgeProgress) + '}';
     }
 
 }

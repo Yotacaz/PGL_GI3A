@@ -5,6 +5,7 @@ import java.util.Objects;
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.graph.element.Edge;
+import fr.cy.model.graph.element.Node;
 import fr.cy.model.pathfinding.GraphPath;
 
 public class FollowPathAction extends AbstractMoveAction {
@@ -25,6 +26,15 @@ public class FollowPathAction extends AbstractMoveAction {
     }
 
     @Override
+    public Node getClosestTargetNode() {
+        int i = currentEdgeIndex + (getAgent().isOnEdge() ? 1:0);
+        if (path == null || i >= path.getNodes().size()) {
+            return null; // No more no to follow
+        }
+        return path.getNodeAt(i);
+    }
+
+    @Override
     public boolean isCompleted() {
         return path != null && currentEdgeIndex >= path.getEdges().size();
     }
@@ -33,7 +43,7 @@ public class FollowPathAction extends AbstractMoveAction {
     public double perform(AgentSettings agentSettings, double availableTime) {
         Edge currentEdge = getClosestTargetEdge();
         if (currentEdge == null) {
-            setProgress(1.0);   //no more edge
+            setProgress(1.0); //no more edge
             return 0.0; //nothing done = no time consumed
         }
         //no looping done for each edge of the path because we want to allow the agent to make another decision
@@ -46,6 +56,14 @@ public class FollowPathAction extends AbstractMoveAction {
         return consumedTime;
     }
 
+    public int getCurrentEdgeIndex() {
+        return currentEdgeIndex;
+    }
+
+    public int getNextNodeIndex() {
+        return currentEdgeIndex + 1; //there is always 1 more node than there is edges and the first node is the starting point 
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), path, currentEdgeIndex);
@@ -53,16 +71,19 @@ public class FollowPathAction extends AbstractMoveAction {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (!super.equals(obj)) return false;
-        if (getClass() != obj.getClass()) return false;
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
         FollowPathAction other = (FollowPathAction) obj;
         return currentEdgeIndex == other.currentEdgeIndex && Objects.equals(path, other.path);
     }
 
     @Override
     public String toString() {
-        return super.toString().replace("}", "") + ", path=" + (path == null ? "null" : path.toString()) + 
+        return super.toString().replace("}", "") + ", path=" + (path == null ? "null" : path.toString()) +
                 ", index=" + currentEdgeIndex + '}';
     }
 

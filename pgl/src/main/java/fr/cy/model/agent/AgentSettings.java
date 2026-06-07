@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Random;
 
 import fr.cy.model.agent.behaviour.decisions.AgentPossibleNodeDecision;
+import fr.cy.model.agent.behaviour.decisions.AgentPossibleEdgeDecision;
 
 /**
  * Singleton class to hold global settings for agents, such as decision-making
@@ -30,25 +31,31 @@ public class AgentSettings implements Serializable {
     }
 
     /** Immutable map of default decision-making factors for each possible agent decision type */
-    private final Map<AgentPossibleNodeDecision, Double> defaultDecisionMakingFactors = new EnumMap<>(
+    private final Map<AgentPossibleNodeDecision, Double> defaultNodeDecisionMakingFactors = new EnumMap<>(
             AgentPossibleNodeDecision.class);
+    private final Map<AgentPossibleEdgeDecision, Double> defaultEdgeDecisionMakingFactors = new EnumMap<>(
+            AgentPossibleEdgeDecision.class);
     {
         // Initialize decision-making factors for each decision type
-        defaultDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_CROWD, 2.0);
-        defaultDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_LESS_CROWDED_PATH, 0.1);
-        defaultDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_RECOMMENDED_PATH, 1.5);
-        defaultDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_SHORTEST_PATH, 0.05);
-        defaultDecisionMakingFactors.put(AgentPossibleNodeDecision.NICEST_PATH, 0.2);
-        defaultDecisionMakingFactors.put(AgentPossibleNodeDecision.RANDOM, 0.5);
-        defaultDecisionMakingFactors.put(AgentPossibleNodeDecision.CONTINUE_LAST_ACTION, 2.5);
-        defaultDecisionMakingFactors.put(AgentPossibleNodeDecision.WAIT, 1.0);
+        defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_CROWD, 2.0);
+        defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_LESS_CROWDED_PATH, 0.1);
+        defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_RECOMMENDED_PATH, 1.5);
+        defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_SHORTEST_PATH, 0.05);
+        defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.NICEST_PATH, 0.2);
+        defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.RANDOM, 0.5);
+        defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.CONTINUE_LAST_ACTION, 2.5);
+        defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.WAIT, 1.0);
+
+        defaultEdgeDecisionMakingFactors.put(AgentPossibleEdgeDecision.CONTINUE, 5.0);  //prefer continuing on the current edge
+        defaultEdgeDecisionMakingFactors.put(AgentPossibleEdgeDecision.BACKTRACK, 1.0);
+        defaultEdgeDecisionMakingFactors.put(AgentPossibleEdgeDecision.WAIT, 0.5);
     }
 
     /* Default speeds and tolerances for agents, can be overridden by individual agents */
     /** Walking speed for agents */
     private double WALKING_SPEED = 1.0;
     /** Running speed for agents */
-    private double RUNNING_SPEED = 3.0;
+    private double RUNNING_SPEED = 2.0;
     /** Maximum running speed for agents, derived from RUNNING_SPEED */
     private double MAX_RUNNING_SPEED = RUNNING_SPEED * 1.5;
     /** Reduction factor applied to speed when walking instead of running, derived from WALKING_SPEED and RUNNING_SPEED */
@@ -83,13 +90,15 @@ public class AgentSettings implements Serializable {
     private double MAX_SURFACE_AREA_TAKEN_BY_AGENT = 1.5;
 
     private double STRESS_MULTIPLIER = 40.0;
+    private double stressIncreaseRate = 0.15;
+    private double stressDecreaseRate = 0.03;
 
     private double backtrackingEdgeScoreMultiplier = 0.5;
 
-    private double timeStepDurationForSpaceOccupationEstimation = 0.1; // in seconds
+    private double timeStepBetweenEdgeDecisions = 0.1; // in seconds
 
     public Map<AgentPossibleNodeDecision, Double> getImmutableDecisionMakingFactors() {
-        return Collections.unmodifiableMap(defaultDecisionMakingFactors);
+        return Collections.unmodifiableMap(defaultNodeDecisionMakingFactors);
     }
 
     /**
@@ -99,7 +108,11 @@ public class AgentSettings implements Serializable {
      * @return The decision-making factor associated with the specified decision type
      */
     public double getDecisionMakingFactor(AgentPossibleNodeDecision decision) {
-        return defaultDecisionMakingFactors.get(decision);
+        return defaultNodeDecisionMakingFactors.get(decision);
+    }
+
+    public double getDecisionMakingFactor(AgentPossibleEdgeDecision decision) {
+        return defaultEdgeDecisionMakingFactors.get(decision);
     }
 
     private void updateWALK_SPEED_REDUCTION_FACTOR() {
@@ -216,10 +229,12 @@ public class AgentSettings implements Serializable {
         return MAX_SURFACE_AREA_TAKEN_BY_AGENT;
     }
 
+    @Deprecated
     public double getSTRESS_MULTIPLIER() {
         return STRESS_MULTIPLIER;
     }
 
+    @Deprecated
     public void setSTRESS_MULTIPLIER(double sTRESS_MULTIPLIER) {
         STRESS_MULTIPLIER = sTRESS_MULTIPLIER;
     }
@@ -232,8 +247,24 @@ public class AgentSettings implements Serializable {
         this.backtrackingEdgeScoreMultiplier = backtrackingEdgeScoreMultiplier;
     }
 
-    public double getTimeStepDurationForSpaceOccupationEstimation() {
-        return timeStepDurationForSpaceOccupationEstimation;
+    public double getStressDecreaseRate() {
+        return stressDecreaseRate;
+    }
+
+    public double getStressIncreaseRate() {
+        return stressIncreaseRate;
+    }
+
+    public void setStressDecreaseRate(double stressDecreaseRate) {
+        this.stressDecreaseRate = stressDecreaseRate;
+    }
+
+    public void setStressIncreaseRate(double stressIncreaseRate) {
+        this.stressIncreaseRate = stressIncreaseRate;
+    }
+
+    public double getTimeStepBetweenEdgeDecisions() {
+        return timeStepBetweenEdgeDecisions;
     }
 
     public double generateRandomSpeed(Random random) {
@@ -325,12 +356,12 @@ public class AgentSettings implements Serializable {
                 && MAX_HEALTH == other.MAX_HEALTH
                 && Double.compare(other.MIN_SURFACE_AREA_TAKEN_BY_AGENT, MIN_SURFACE_AREA_TAKEN_BY_AGENT) == 0
                 && Double.compare(other.MAX_SURFACE_AREA_TAKEN_BY_AGENT, MAX_SURFACE_AREA_TAKEN_BY_AGENT) == 0
-                && Objects.equals(defaultDecisionMakingFactors, other.defaultDecisionMakingFactors);
+                && Objects.equals(defaultNodeDecisionMakingFactors, other.defaultNodeDecisionMakingFactors);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(defaultDecisionMakingFactors, WALKING_SPEED, RUNNING_SPEED, MAX_RUNNING_SPEED,
+        return Objects.hash(defaultNodeDecisionMakingFactors, WALKING_SPEED, RUNNING_SPEED, MAX_RUNNING_SPEED,
                 WALK_SPEED_REDUCTION_FACTOR, MIN_AGENT_MAX_SPEED, MIN_STRESS_TOLERANCE, MAX_STRESS_TOLERANCE,
                 MIN_CROWDING_TOLERANCE, MAX_CROWDING_TOLERANCE, MIN_REPEAT_LAST_DECISION_TENDENCY,
                 MAX_REPEAT_LAST_DECISION_TENDENCY, MIN_BASE_OWN_DECISION_MAKING_FACTOR,
@@ -341,7 +372,7 @@ public class AgentSettings implements Serializable {
     @Override
     public String toString() {
         return "AgentSettings{" +
-                "decisionFactors=" + defaultDecisionMakingFactors +
+                "decisionFactors=" + defaultNodeDecisionMakingFactors +
                 ", WALKING_SPEED=" + WALKING_SPEED +
                 ", RUNNING_SPEED=" + RUNNING_SPEED +
                 ", MAX_RUNNING_SPEED=" + MAX_RUNNING_SPEED +
