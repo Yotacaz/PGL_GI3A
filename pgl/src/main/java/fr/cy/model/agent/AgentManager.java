@@ -9,7 +9,6 @@ import java.util.Objects;
 
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.agent.behaviour.agentActions.WaitBeforeOtherAction;
-import fr.cy.model.agent.behaviour.decisions.EdgeContext;
 import fr.cy.model.agent.behaviour.decisions.NodeContext;
 import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 import fr.cy.model.agent.behaviour.properties.AgentPhysicalProperties;
@@ -20,7 +19,13 @@ import fr.cy.model.simulation.SimulationSettings;
 
 /**
  * Manager responsible for higher-level operations on {@link Agent} instances.
- * Currently holds configuration values used when evaluating decisions.
+ * 
+ * <p>This class handles agent creation, management, and decision-making processes.
+ * It maintains lists of active, dead, and evacuated agents, and provides methods
+ * for generating agents with various configurations.</p>
+ * 
+ * <p>Currently holds configuration values used when evaluating decisions and
+ * manages the overall agent lifecycle during simulation.</p>
  */
 public class AgentManager implements Serializable {
 
@@ -74,10 +79,23 @@ public class AgentManager implements Serializable {
         agentsToEvacuate.sort(new AgentByOwnDecisionMakingComparator());
     }
 
+    /**
+     * Gets the current agent settings used by this manager.
+     * 
+     * @return the agent settings instance
+     */
     public AgentSettings getAgentSettings() {
         return agentSettings;
     }
 
+    /**
+     * Generates a specified number of random agents and adds them to the simulation.
+     * 
+     * <p>Each agent is placed on a random node in the graph and given a unique name
+     * based on the current count of agents.</p>
+     * 
+     * @param count the number of random agents to generate
+     */
     public void generateRandomsAgents(int count) {
         for (int i = 0; i < count; i++) {
             Agent newAgent = agentGenerator.generateRandomAgentOnRandomNode("Agent" + (agentsToEvacuate.size() + 1));
@@ -85,11 +103,25 @@ public class AgentManager implements Serializable {
         }
     }
 
+    /**
+     * Generates an agent on a specific edge at a given progress position.
+     * 
+     * @param baseName the base name for the agent
+     * @param edge the edge where the agent should be placed
+     * @param edgeProgress the progress along the edge (0.0 to 1.0)
+     */
     public void generateAgentOnEdge(String baseName, Edge edge, double edgeProgress) {
         Agent newAgent = agentGenerator.generateAgent(baseName, edge, edgeProgress);
         agentsToEvacuate.add(newAgent);
     }
 
+    /**
+     * Generates multiple agents on the same node.
+     * 
+     * @param baseName the base name for the agents
+     * @param node the node where agents should be placed
+     * @param count the number of agents to generate
+     */
     public void generateAgentsOnNode(String baseName, Node node, int count) {
         for (int i = 0; i < count; i++) {
             Agent newAgent = agentGenerator.generateAgent(baseName + (i + 1), node);
@@ -97,6 +129,12 @@ public class AgentManager implements Serializable {
         }
     }
 
+    /**
+     * Generates a single agent on a specific node.
+     * 
+     * @param baseName the base name for the agent
+     * @param node the node where the agent should be placed
+     */
     public void generateAgentOnNode(String baseName, Node node) {
         Agent newAgent = agentGenerator.generateAgent(baseName, node);
         agentsToEvacuate.add(newAgent);

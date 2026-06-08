@@ -22,17 +22,29 @@ public class AgentSettings implements Serializable {
         // Private constructor to prevent instantiation
     }
 
-    /** Factors used to influence agent decision-making */
+    /** The singleton instance of AgentSettings */
     private static final AgentSettings instance = new AgentSettings();
 
-    /** @return the singleton instance of AgentSettings */
+    /**
+     * Gets the singleton instance of AgentSettings.
+     * 
+     * @return the singleton instance of AgentSettings
+     */
     public static AgentSettings getInstance() {
         return instance;
     }
 
-    /** Immutable map of default decision-making factors for each possible agent decision type */
+    /**
+     * Immutable map of default decision-making factors for each possible agent decision type.
+     * These factors influence how likely an agent is to choose each type of decision.
+     */
     private final Map<AgentPossibleNodeDecision, Double> defaultNodeDecisionMakingFactors = new EnumMap<>(
             AgentPossibleNodeDecision.class);
+    
+    /**
+     * Immutable map of default decision-making factors for each possible edge decision type.
+     * These factors influence how likely an agent is to choose each type of edge decision.
+     */
     private final Map<AgentPossibleEdgeDecision, Double> defaultEdgeDecisionMakingFactors = new EnumMap<>(
             AgentPossibleEdgeDecision.class);
     {
@@ -51,26 +63,26 @@ public class AgentSettings implements Serializable {
         defaultEdgeDecisionMakingFactors.put(AgentPossibleEdgeDecision.WAIT, 0.5);
     }
 
-    /* Default speeds and tolerances for agents, can be overridden by individual agents */
-    /** Walking speed for agents */
-    private double WALKING_SPEED = 1.0;
-    /** Running speed for agents */
-    private double RUNNING_SPEED = 2.0;
-    /** Maximum running speed for agents, derived from RUNNING_SPEED */
+    /* Default speeds and tolerances for agents, can be overridden by individual agents  */
+    /** Walking speed for agents in m/s */
+    private double WALKING_SPEED = 1.0; 
+    /** Running speed for agents in m/s */
+    private double RUNNING_SPEED = 3.0; 
+    /** Maximum running speed for agents, derived from RUNNING_SPEED in m/s */
     private double MAX_RUNNING_SPEED = RUNNING_SPEED * 1.5;
     /** Reduction factor applied to speed when walking instead of running, derived from WALKING_SPEED and RUNNING_SPEED */
     private double WALK_SPEED_REDUCTION_FACTOR = WALKING_SPEED / RUNNING_SPEED;
 
-    /** Minimum max speed for every agent */
+    /** Minimum max speed for every agent in m/s (ie: minimum speed at which an agent goes when running)*/
     private double MIN_AGENT_MAX_SPEED = 1.0;
 
-    /** Minimum stress tolerance for every agent */
+    /** Minimum stress tolerance for every agent between 0 and 1*/
     private double MIN_STRESS_TOLERANCE = 0.0;
-    /** Maximum stress tolerance for every agent */
+    /** Maximum stress tolerance for every agent between 0 and 1*/
     private double MAX_STRESS_TOLERANCE = 1.0;
-    /** Minimum crowding tolerance for every agent */
+    /** Minimum crowding tolerance for every agent between 0 and 1*/
     private double MIN_CROWDING_TOLERANCE = 0.0;
-    /** Maximum crowding tolerance for every agent */
+    /** Maximum crowding tolerance for every agent between 0 and 1*/
     private double MAX_CROWDING_TOLERANCE = 1.0;
     /** Minimum tendency to repeat the last decision */
     private double MIN_REPEAT_LAST_DECISION_TENDENCY = 0.875;

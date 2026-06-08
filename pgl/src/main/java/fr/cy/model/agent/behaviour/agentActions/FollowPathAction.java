@@ -64,6 +64,10 @@ public class FollowPathAction extends AbstractMoveAction {
         return currentEdgeIndex + 1; //there is always 1 more node than there is edges and the first node is the starting point 
     }
 
+    public GraphPath getPath() {
+        return path;
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), path, currentEdgeIndex);
