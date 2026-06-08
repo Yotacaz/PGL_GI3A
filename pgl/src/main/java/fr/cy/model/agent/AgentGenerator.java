@@ -14,15 +14,29 @@ import fr.cy.model.agent.behaviour.agentActions.FollowSingleEdgeAction;
  * Factory class to generate agents with random attributes. Useful for
  * prototypes and tests. The generated values are intentionally simple and
  * should be replaced by a configurable generator if needed.
+ * 
+ * <p>This class provides methods to create agents with randomized properties
+ * and place them at specific locations in the graph. It handles both node-based
+ * and edge-based agent placement.</p>
  */
 public class AgentGenerator implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
+	/** Random number generator used for creating random agent properties */
 	private final Random RNG = new Random();
+	
+	/** Reference to the global agent settings */
 	private final AgentSettings agentSettings = AgentSettings.getInstance();
+	
+	/** The graph in which agents will be placed */
 	private final Graph graph;
 
+	/**
+	 * Creates a new AgentGenerator for the specified graph.
+	 * 
+	 * @param graph the graph in which agents will be created and placed
+	 */
 	public AgentGenerator(Graph graph) {
 		this.graph = graph;
 	}

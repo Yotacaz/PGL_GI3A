@@ -3,7 +3,6 @@ package fr.cy;
 import fr.cy.controller.MainController;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.simulation.Simulation;
-import fr.cy.util.ScenarioBuilder;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;

@@ -10,20 +10,54 @@ import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.pathfinding.GraphPath;
 
-/** Context for agents on a node */
+/**
+ * Context for agents on a node, providing all necessary information for decision-making.
+ * 
+ * <p>This class encapsulates the contextual information that an agent needs when
+ * making decisions at a node, including available edges, nearby agents, recommended
+ * paths, and congestion information.</p>
+ */
 public class NodeContext extends AbstractGraphElementContext<Edge> {
     private static final long serialVersionUID = 1L;
+    
     /** The node from which the decision is made */
     private Node sourceNode;
+    
+    /** The recommended path from this node to an exit */
     private GraphPath recommendedPath;
+    
+    /** The shortest path from this node to the nearest exit */
     private GraphPath shortestPathToExit;
+    
     /**
      * Map of edges to the agents currently taking or planning to take that edge.
+     * This represents agents approaching the node from connected edges.
      */
     private Map<Edge, List<Agent>> incomingNearbyAgents;
+    
+    /**
+     * Map of edges to the agents currently on or planning to use that edge.
+     * This represents agents leaving the node via connected edges.
+     */
     private Map<Edge, List<Agent>> outgoingNearbyAgents;
+    
+    /**
+     * Map of edges to the amount of space occupied by agents entering that edge.
+     * Used to calculate congestion and available capacity.
+     */
     private Map<Edge, Double> spaceOccupiedAgentEnteringEdge;
 
+    /**
+     * Creates a new NodeContext with the specified parameters.
+     * 
+     * @param sourceNode the node from which decisions are being made
+     * @param recommendedPath the recommended path from this node to an exit
+     * @param shortestPathToExit the shortest path from this node to the nearest exit
+     * @param outgoingEdges the list of edges leaving this node
+     * @param incomingNearbyAgents agents approaching this node via incoming edges
+     * @param outgoingNearbyAgents agents leaving this node via outgoing edges
+     * @param spaceOccupiedAgentEnteringEdge space occupation data for each outgoing edge
+     */
     NodeContext(Node sourceNode, GraphPath recommendedPath, GraphPath shortestPathToExit,
             List<Edge> outgoingEdges,
             Map<Edge, List<Agent>> incomingNearbyAgents,
@@ -44,14 +78,29 @@ public class NodeContext extends AbstractGraphElementContext<Edge> {
     // outgoingEdges.clear();
     // }
 
+    /**
+     * Gets the list of edges leaving this node.
+     * 
+     * @return the list of outgoing edges from the source node
+     */
     public List<Edge> getOutgoingEdges() {
         return getAccessibleElements();
     }
 
+    /**
+     * Gets congestion statistics for the outgoing edges from this node.
+     * 
+     * @return congestion statistics containing occupancy and capacity information
+     */
     public CongestionStats<Edge> getCongestionStatsForOutgoingEdges() {
         return getCongestionStatsForAccessibleElements();
     }
 
+    /**
+     * Gets the outgoing edges sorted by congestion level.
+     * 
+     * @return the list of outgoing edges sorted from least to most congested
+     */
     public List<Edge> getSortedOutgoingEdgesByCongestion() {
         return getSortedAccessibleElementsByCongestion();
     }
@@ -86,6 +135,17 @@ public class NodeContext extends AbstractGraphElementContext<Edge> {
         return outgoingNearbyAgents;
     }
 
+    /**
+     * Registers an agent's intent to use an outgoing edge.
+     * 
+     * <p>This method checks if the edge has sufficient capacity for the agent
+     * and updates the space occupation data accordingly. If the edge is already
+     * at capacity, the registration fails.</p>
+     * 
+     * @param edge the edge the agent intends to use
+     * @param agent the agent attempting to register its intent
+     * @return true if the registration was successful, false if the edge is at capacity
+     */
     boolean registerOutgoingIntent(Edge edge, Agent agent) {
         if (edge == null || agent == null) {
             return true;

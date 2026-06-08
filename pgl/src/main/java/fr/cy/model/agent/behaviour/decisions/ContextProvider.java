@@ -15,6 +15,13 @@ import fr.cy.model.graph.element.Node;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.pathfinding.PathFinder;
 
+/**
+ * Provides decision contexts for agents based on their current position in the graph.
+ * 
+ * <p>This class is responsible for creating and caching context objects that contain
+ * information about nodes and edges, which agents use to make informed decisions
+ * during the simulation.</p>
+ */
 public class ContextProvider implements Serializable {
     private static final long serialVersionUID = 1L;
     private final Graph graph;
@@ -28,6 +35,16 @@ public class ContextProvider implements Serializable {
         this.pathFinder = pathFinder;
     }
 
+    /**
+     * Gets the decision context for a specific node.
+     * 
+     * <p>This method provides cached context information about a node, including
+     * its outgoing edges and other relevant data that agents need to make decisions.</p>
+     * 
+     * @param node the node for which to get the context
+     * @return the node context containing decision-relevant information
+     * @throws NullPointerException if node is null
+     */
     public NodeContext getNodeContext(Node node) {
         Objects.requireNonNull(node, "node cannot be null when trying to get NodeContext");
         NodeContext cachedContext = cachedNodeContexts.get(node);
@@ -38,6 +55,17 @@ public class ContextProvider implements Serializable {
         return cachedContext;
     }
 
+    /**
+     * Gets the decision context for a specific edge.
+     * 
+     * <p>This method provides cached context information about an edge, including
+     * accessible nodes and other relevant data that agents need to make decisions
+     * while traversing edges.</p>
+     * 
+     * @param edge the edge for which to get the context
+     * @return the edge context containing decision-relevant information
+     * @throws NullPointerException if edge is null
+     */
     public EdgeContext getEdgeContext(Edge edge) {
         Objects.requireNonNull(edge, "edge cannot be null when trying to get NodeContext");
         EdgeContext cachedContext = cachedEdgesContexts.get(edge);

@@ -7,11 +7,25 @@ import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 
+/**
+ * Represents an action where an agent waits in place for a specified duration.
+ * 
+ * <p>This action causes the agent to remain stationary at its current position
+ * (either on a node or edge) for the configured wait time. The action completes
+ * when the total wait time has elapsed.</p>
+ */
 public class WaitAction extends AgentAction {
     private static final long serialVersionUID = 1L;
     private double totalTimeToWait;
     private double timeWaitedSoFar = 0.0;
 
+    /**
+     * Creates a new WaitAction with the specified agent and wait duration.
+     * 
+     * @param agent the agent that will perform the waiting action
+     * @param totalTimeToWait the total duration to wait (must be positive)
+     * @throws IllegalArgumentException if totalTimeToWait is not positive
+     */
     public WaitAction(Agent agent, double totalTimeToWait) {
         super(agent);
         if (totalTimeToWait <= 1e-16) {

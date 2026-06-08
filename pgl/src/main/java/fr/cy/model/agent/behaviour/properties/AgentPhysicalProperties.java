@@ -2,6 +2,13 @@ package fr.cy.model.agent.behaviour.properties;
 
 import java.io.Serializable;
 
+/**
+ * Represents the physical properties and attributes of an agent.
+ * 
+ * <p>This class encapsulates all the physical characteristics of an agent
+ * that affect its movement and interaction with the environment, including
+ * speed, health, and spatial requirements.</p>
+ */
 public class AgentPhysicalProperties implements Serializable {
     private static final long serialVersionUID = 1L;
     /** Maximum speed of the agent, in units per time step */
@@ -24,14 +31,30 @@ public class AgentPhysicalProperties implements Serializable {
         this.surfaceAreaTakenByAgent = surfaceAreaTakenByAgent;
     }
 
+    /**
+     * Gets the maximum speed of the agent.
+     * 
+     * @return the maximum speed in units per time step
+     */
     public double getMaxSpeed() {
         return maxSpeed;
     }
 
+    /**
+     * Gets the surface area taken by the agent.
+     * 
+     * @return the surface area, used to calculate crowding effects
+     */
     public double getSurfaceAreaTakenByAgent() {
         return surfaceAreaTakenByAgent;
     }
 
+    /**
+     * Sets the current health level of the agent.
+     * 
+     * @param health the new health level (must be between 0 and maxHealth)
+     * @throws IllegalArgumentException if health is outside valid range
+     */
     public void setHealth(double health) {
         if (health < 0 || health > maxHealth) {
             throw new IllegalArgumentException("Health must be between 0 and maxHealth");
@@ -39,6 +62,11 @@ public class AgentPhysicalProperties implements Serializable {
         this.health = health;
     }
 
+    /**
+     * Gets the current health level of the agent.
+     * 
+     * @return the current health level
+     */
     public double getHealth() {
         return health;
     }

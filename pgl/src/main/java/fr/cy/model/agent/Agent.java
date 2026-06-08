@@ -327,23 +327,36 @@ public class Agent implements StressInducing, Serializable {
     }
 
     /**
-     * Release the id when agent is removed from the simulation
+     * Release the id when agent is removed from the simulation.
+     * This method should be called from the AgentManager when an agent is removed.
      */
     void releaseId() { // should be called from agentManager
         idManager.releaseId(id);
     }
 
     /**
+     * Gets the unique identifier of the agent.
+     * 
      * @return the unique identifier of the agent
      */
     public int getId() {
         return id;
     }
 
+    /**
+     * Sets the current action being performed by the agent.
+     * 
+     * @param currentAction the action to set as current, can be null if the agent is idle
+     */
     public void setCurrentAction(AgentAction currentAction) {
         this.currentAction = currentAction;
     }
 
+    /**
+     * Gets the name of the agent.
+     * 
+     * @return the name of the agent
+     */
     public String getName() {
         return name;
     }
@@ -397,10 +410,19 @@ public class Agent implements StressInducing, Serializable {
         return damage;
     }
 
+    /**
+     * Gets the number of nodes visited by the agent.
+     * 
+     * @return the number of nodes visited by the agent
+     */
     public int getnOfNodeVisited() {
         return nOfNodeVisited;
     }
 
+    /**
+     * Increments the count of visited nodes by 1.
+     * This should be called when the agent successfully moves to a new node.
+     */
     public void incrementNodeVisited() {
         nOfNodeVisited++;
     }
