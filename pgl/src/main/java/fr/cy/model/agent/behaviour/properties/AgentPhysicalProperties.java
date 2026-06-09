@@ -5,9 +5,11 @@ import java.io.Serializable;
 /**
  * Represents the physical properties and attributes of an agent.
  * 
- * <p>This class encapsulates all the physical characteristics of an agent
+ * <p>
+ * This class encapsulates all the physical characteristics of an agent
  * that affect its movement and interaction with the environment, including
- * speed, health, and spatial requirements.</p>
+ * speed, health, and spatial requirements.
+ * </p>
  */
 public class AgentPhysicalProperties implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -41,12 +43,30 @@ public class AgentPhysicalProperties implements Serializable {
     }
 
     /**
+     * Sets the maximum speed of the agent.
+     * 
+     * @param maxSpeed
+     */
+    public void setMaxSpeed(double maxSpeed) {
+        this.maxSpeed = maxSpeed;
+    }
+
+    /**
      * Gets the surface area taken by the agent.
      * 
      * @return the surface area, used to calculate crowding effects
      */
     public double getSurfaceAreaTakenByAgent() {
         return surfaceAreaTakenByAgent;
+    }
+
+    /**
+     * Sets the surface area taken by the agent.
+     * 
+     * @param surfaceAreaTakenByAgent
+     */
+    public void setSurfaceAreaTakenByAgent(double surfaceAreaTakenByAgent) {
+        this.surfaceAreaTakenByAgent = surfaceAreaTakenByAgent;
     }
 
     /**
@@ -106,7 +126,8 @@ public class AgentPhysicalProperties implements Serializable {
     }
 
     /**
-     * Gets the current health level of the agent as a percentage of its maximum health.
+     * Gets the current health level of the agent as a percentage of its maximum
+     * health.
      * 
      * @return the health percentage, between 0.0 and 1.0
      */

@@ -11,9 +11,11 @@ import fr.cy.model.agent.behaviour.properties.personalityTraits.AgentPersonality
 /**
  * Represents the decisional and behavioral properties of an agent.
  * 
- * <p>This class encapsulates all the psychological and behavioral characteristics
+ * <p>
+ * This class encapsulates all the psychological and behavioral characteristics
  * that influence an agent's decision-making process, including stress levels,
- * emotional states, tolerances, and decision-making factors.</p>
+ * emotional states, tolerances, and decision-making factors.
+ * </p>
  */
 public class AgentDecisionalProperties implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -93,7 +95,8 @@ public class AgentDecisionalProperties implements Serializable {
     }
 
     /**
-     * Sets the current stress level of the agent and updates the maximum accumulated stress.
+     * Sets the current stress level of the agent and updates the maximum
+     * accumulated stress.
      * 
      * @param stressLevel the new stress level (0.0 to 1.0)
      */
