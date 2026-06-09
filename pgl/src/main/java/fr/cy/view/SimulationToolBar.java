@@ -9,10 +9,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.control.ToolBar;
 import javafx.scene.control.Dialog;
-import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.TextField;
-import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.layout.HBox;
@@ -21,7 +19,6 @@ import javafx.scene.layout.GridPane;
 import javafx.animation.FadeTransition;
 import javafx.animation.PauseTransition;
 import javafx.geometry.Point2D;
-import javafx.geometry.Pos;
 import javafx.geometry.Insets;
 import javafx.stage.Popup;
 import javafx.util.Duration;
@@ -29,17 +26,36 @@ import javafx.scene.control.Spinner;
 import java.util.List;
 import java.util.Optional;
 
-
+/**
+ * The {@code SimulationToolBar} class provides a graphical user interface
+ * component
+ * for controlling the execution and file management of a simulation.
+ * <p>
+ * It includes buttons to play, pause, reset, step, adjust simulation speed,
+ * and manage simulation files (New, Load, Save).
+ * </p>
+ */
 public class SimulationToolBar extends ToolBar {
 
+    /** The controller managing the simulation logic and state. */
     private final SimulationController simController;
 
+    /**
+     * Constructs a new {@code SimulationToolBar}.
+     *
+     * @param simController The {@link SimulationController} to link UI actions with
+     *                      simulation logic.
+     */
     public SimulationToolBar(SimulationController simController) {
         this.simController = simController;
         this.getStyleClass().add("custom-toolbar");
         initToolBar();
     }
 
+    /**
+     * Initializes the toolbar UI components, sets up event handlers,
+     * and constructs the popups for advanced controls.
+     */
     private void initToolBar() {
         Button playBtn = new Button("▶ Play");
         Button pauseBtn = new Button("⏸ Pause");
@@ -138,10 +154,8 @@ public class SimulationToolBar extends ToolBar {
             speedLabel.setText(formatSpeedMultiplier(simController.getSpeed()));
         });
 
-        // Séparateur avant les boutons de fichiers
         Separator sep2 = new Separator();
 
-        // Boutons Save, Load, New
         Button newBtn = new Button("📄 New");
         Button loadBtn = new Button("📂 Load");
         Button saveBtn = new Button("💾 Save");
@@ -162,6 +176,9 @@ public class SimulationToolBar extends ToolBar {
                 newBtn, loadBtn, saveBtn);
     }
 
+    /**
+     * Displays a confirmation dialog to save the current simulation state.
+     */
     private void showSaveSimulationDialog() {
         Simulation sim = simController.getSimulation();
         if (sim == null) {
@@ -181,11 +198,16 @@ public class SimulationToolBar extends ToolBar {
         }
     }
 
+    /**
+     * Displays a selection dialog to load a previously saved simulation
+     * from the {@link FileManager}.
+     */
     private void showLoadSimulationDialog() {
         List<String> simulations = FileManager.getAvailableSimulations();
-        
+
         if (simulations.isEmpty()) {
-            showAlert("Aucune simulation", "Pas de simulations disponibles", "Veuillez créer une nouvelle simulation d'abord.");
+            showAlert("Aucune simulation", "Pas de simulations disponibles",
+                    "Veuillez créer une nouvelle simulation d'abord.");
             return;
         }
 
@@ -206,6 +228,10 @@ public class SimulationToolBar extends ToolBar {
         });
     }
 
+    /**
+     * Opens a form dialog to input parameters for creating a new simulation
+     * (name, node count, edge count, agent count).
+     */
     private void showNewSimulationDialog() {
         Dialog<SimulationParams> dialog = new Dialog<>();
         dialog.setTitle("Créer une nouvelle simulation");
@@ -247,8 +273,7 @@ public class SimulationToolBar extends ToolBar {
                         nameField.getText(),
                         nodeSpinner.getValue(),
                         edgeSpinner.getValue(),
-                        agentSpinner.getValue()
-                );
+                        agentSpinner.getValue());
             }
             return null;
         });
@@ -256,7 +281,8 @@ public class SimulationToolBar extends ToolBar {
         Optional<SimulationParams> result = dialog.showAndWait();
         result.ifPresent(params -> {
             try {
-                Simulation newSim = new Simulation(params.name, params.nodes, params.edges, params.agents, SimulationSettings.getInstance());
+                Simulation newSim = new Simulation(params.name, params.nodes, params.edges, params.agents,
+                        SimulationSettings.getInstance());
                 simController.loadSimulation(newSim);
                 showAlert("Succès", "Simulation créée", "La simulation " + params.name + " a été créée avec succès.");
             } catch (Exception ex) {
@@ -266,6 +292,13 @@ public class SimulationToolBar extends ToolBar {
         });
     }
 
+    /**
+     * Displays an information alert to the user.
+     *
+     * @param title   The title of the alert window.
+     * @param header  The header text displayed in the alert.
+     * @param content The main message content.
+     */
     private void showAlert(String title, String header, String content) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(title);
@@ -274,6 +307,10 @@ public class SimulationToolBar extends ToolBar {
         alert.showAndWait();
     }
 
+    /**
+     * Data transfer object used to capture parameters from the 'New Simulation'
+     * dialog.
+     */
     private static class SimulationParams {
         String name;
         int nodes;
@@ -288,6 +325,12 @@ public class SimulationToolBar extends ToolBar {
         }
     }
 
+    /**
+     * Formats the speed multiplier value for display in the UI.
+     *
+     * @param speedMultiplier The current speed multiplier.
+     * @return A formatted String (e.g., "x1" or "x1,50").
+     */
     private String formatSpeedMultiplier(double speedMultiplier) {
         if (Math.abs(speedMultiplier - Math.rint(speedMultiplier)) < 0.001) {
             return "x" + (int) Math.rint(speedMultiplier);

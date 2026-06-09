@@ -4,11 +4,16 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 
 /**
- * Panneau latéral gauche affichant les statistiques globales de la simulation.
- * Ne fait qu'afficher des valeurs pré-calculées par le contrôleur.
+ * The {@code SimulationStatsPanel} class represents the left-hand side panel
+ * that displays real-time global statistics of the simulation.
+ * <p>
+ * It acts as a read-only view component, updating its labels based on data
+ * provided by the controller.
+ * </p>
  */
 public class SimulationStatsPanel extends VBox {
 
+    // Style constants for the UI theme
     private static final String BG = "#0F0F1A";
     private static final String HEADER_BG = "#141428";
     private static final String SECTION_BG = "#1C1C32";
@@ -29,12 +34,15 @@ public class SimulationStatsPanel extends VBox {
     private final Label graphEdgesLabel = new Label();
     private final Label globalCongLabel = new Label();
 
+    /**
+     * Constructs the {@code SimulationStatsPanel} and initializes the UI layout.
+     */
     public SimulationStatsPanel() {
         setPrefWidth(215);
         setSpacing(0);
         setStyle("-fx-background-color: " + BG + "; -fx-border-color: " + ACCENT + "; -fx-border-width: 0 3 0 0;");
 
-        Label titleLabel = new Label("STATISTIQUES");
+        Label titleLabel = new Label("STATISTICS");
         titleLabel.setMaxWidth(Double.MAX_VALUE);
         titleLabel.setStyle(
                 "-fx-background-color: " + HEADER_BG + "; " +
@@ -54,12 +62,18 @@ public class SimulationStatsPanel extends VBox {
                 simStateLabel, tickLabel,
                 sectionHeader("AGENTS"),
                 agentTotalLabel, agentNodesLabel, agentEdgesLabel,
-                sectionHeader("INCENDIES"),
+                sectionHeader("FIRE"),
                 fireNodesLabel, fireEdgesLabel,
-                sectionHeader("GRAPHE"),
+                sectionHeader("GRAPH"),
                 graphNodesLabel, graphEdgesLabel, globalCongLabel);
     }
 
+    /**
+     * Creates a styled section header label.
+     * * @param text The section title text.
+     * 
+     * @return A styled {@link Label}.
+     */
     private Label sectionHeader(String text) {
         Label l = new Label(text);
         l.setMaxWidth(Double.MAX_VALUE);
@@ -72,20 +86,20 @@ public class SimulationStatsPanel extends VBox {
     }
 
     /**
-     * Met à jour tous les labels. Toutes les valeurs sont calculées dans le
-     * contrôleur.
+     * Updates the displayed statistics.
+     * All values are calculated by the controller.
      *
-     * @param tick          tick courant
-     * @param running       simulation en cours
-     * @param totalAgents   nombre total d'agents dans la simulation
-     * @param onNodes       agents actuellement sur des nœuds
-     * @param onEdges       agents actuellement sur des arêtes
-     * @param fireNodes     nœuds en feu
-     * @param fireEdges     arêtes en feu
-     * @param totalNodes    total de nœuds dans le graphe
-     * @param totalEdges    total d'arêtes dans le graphe
-     * @param exitNodes     nœuds sorties
-     * @param avgCongestion congestion moyenne (0.0–1.0)
+     * @param tick          The current simulation tick.
+     * @param running       Whether the simulation is currently running.
+     * @param totalAgents   Total number of agents in the simulation.
+     * @param onNodes       Number of agents currently on nodes.
+     * @param onEdges       Number of agents currently on edges.
+     * @param fireNodes     Number of nodes currently on fire.
+     * @param fireEdges     Number of edges currently on fire.
+     * @param totalNodes    Total number of nodes in the graph.
+     * @param totalEdges    Total number of edges in the graph.
+     * @param exitNodes     Number of exit nodes.
+     * @param avgCongestion Average congestion level (0.0–1.0).
      */
     public void update(int tick, boolean running,
             int totalAgents, int onNodes, int onEdges,
@@ -95,24 +109,24 @@ public class SimulationStatsPanel extends VBox {
 
         String data = "-fx-text-fill: " + TEXT + "; -fx-font-size: 12; -fx-padding: 3 16;";
 
-        simStateLabel.setText("État : " + (running ? "En cours" : "En pause"));
+        simStateLabel.setText("Status: " + (running ? "Running" : "Paused"));
         simStateLabel.setStyle(data + "-fx-text-fill: " + (running ? GREEN : ORANGE) + ";");
-        tickLabel.setText("Tick : " + tick);
+        tickLabel.setText("Tick: " + tick);
 
-        agentTotalLabel.setText("Total : " + totalAgents);
-        agentNodesLabel.setText("Sur nœuds : " + onNodes);
-        agentEdgesLabel.setText("Sur arêtes : " + onEdges);
+        agentTotalLabel.setText("Total: " + totalAgents);
+        agentNodesLabel.setText("On nodes: " + onNodes);
+        agentEdgesLabel.setText("On edges: " + onEdges);
 
-        fireNodesLabel.setText("Nœuds en feu : " + fireNodes);
+        fireNodesLabel.setText("Nodes on fire: " + fireNodes);
         fireNodesLabel.setStyle(data + "-fx-text-fill: " + (fireNodes > 0 ? RED : GREEN) + ";");
-        fireEdgesLabel.setText("Arêtes en feu : " + fireEdges);
+        fireEdgesLabel.setText("Edges on fire: " + fireEdges);
         fireEdgesLabel.setStyle(data + "-fx-text-fill: " + (fireEdges > 0 ? RED : GREEN) + ";");
 
-        graphNodesLabel.setText("Nœuds : " + totalNodes + " (" + exitNodes + " sorties)");
-        graphEdgesLabel.setText("Arêtes : " + totalEdges);
+        graphNodesLabel.setText("Nodes: " + totalNodes + " (" + exitNodes + " exits)");
+        graphEdgesLabel.setText("Edges: " + totalEdges);
 
         String congColor = avgCongestion > 0.7 ? RED : (avgCongestion > 0.4 ? ORANGE : GREEN);
-        globalCongLabel.setText("Congestion moy. : " + String.format("%.0f%%", avgCongestion * 100));
+        globalCongLabel.setText("Avg. Congestion: " + String.format("%.0f%%", avgCongestion * 100));
         globalCongLabel.setStyle(data + "-fx-text-fill: " + congColor + ";");
     }
 }

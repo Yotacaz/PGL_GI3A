@@ -10,11 +10,7 @@ import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Separator;
+import javafx.scene.control.*;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -23,23 +19,26 @@ import javafx.util.Duration;
 import java.util.List;
 import java.util.function.Consumer;
 
+/**
+ * The {@code DetailsSidePanel} class is an animated slide-out panel that
+ * displays
+ * detailed information about a selected simulation entity (Agent, Node, or
+ * Edge).
+ */
 public class DetailsSidePanel extends ScrollPane {
 
     private VBox contentBox;
     private Label panelTitle;
-
     private Label capacityTitle, congestionTitle, stressTitle, fireTitle, agentsTitle;
     private Label stressValue, fireValue, agentsValue, capacityValue, congestionValue, widthValue, lengthValue;
     private Label avgStressValue, dominantStateValue, histTotalValue, histMaxCongValue, histAvgCongValue;
     private Label nodeInfoValue;
-
     private Label speedValue;
     private VBox speedBox;
 
     private ProgressBar stressBar, fireBar, congestionBar;
     private VBox widthBox, lengthBox, agentStatsBox, historyBox, nodeInfoBox;
 
-    // --- BOUTONS ET ACTIONS ---
     private VBox actionsBox;
     private Button toggleFireBtn;
     private Button deleteBtn;
@@ -48,14 +47,16 @@ public class DetailsSidePanel extends ScrollPane {
     private Consumer<GraphElement> onToggleFireRequested;
     private Consumer<GraphElement> onDeleteRequested;
 
-    // --- VARIABLES POUR L'ANIMATION ---
     private boolean isPanelVisible = false;
     private Timeline animationTimeline;
 
+    /**
+     * Constructs the side panel and initializes the UI layout.
+     * Starts in a hidden state.
+     */
     public DetailsSidePanel() {
         initUI();
 
-        // --- ON DEMARRE AVEC LE PANNEAU CACHÉ ---
         this.setMinWidth(0);
         this.setPrefWidth(0);
         this.setMaxWidth(0);
@@ -64,6 +65,9 @@ public class DetailsSidePanel extends ScrollPane {
         this.setManaged(false);
     }
 
+    /**
+     * Initializes all UI components, sets up layouts, and applies CSS classes.
+     */
     private void initUI() {
         contentBox = new VBox(20);
         contentBox.getStyleClass().add("details-panel");
@@ -73,6 +77,7 @@ public class DetailsSidePanel extends ScrollPane {
         panelTitle = new Label("ELEMENT DETAILS");
         panelTitle.getStyleClass().add("panel-title");
 
+        // Initialization of labels, progress bars, and containers
         stressValue = new Label("0.0");
         stressValue.getStyleClass().add("stat-value");
         fireValue = new Label("0.0");
@@ -140,9 +145,8 @@ public class DetailsSidePanel extends ScrollPane {
         histTotalValue = new Label("--");
         histMaxCongValue = new Label("--");
         histAvgCongValue = new Label("--");
-        for (Label l : new Label[] { histTotalValue, histMaxCongValue, histAvgCongValue }) {
+        for (Label l : new Label[] { histTotalValue, histMaxCongValue, histAvgCongValue })
             l.getStyleClass().add("stat-value");
-        }
 
         historyBox = new VBox(8);
         historyBox.getStyleClass().add("stat-box");
@@ -150,21 +154,17 @@ public class DetailsSidePanel extends ScrollPane {
         histTitle.getStyleClass().add("stat-title");
         historyBox.getChildren().addAll(histTitle, histTotalValue, histMaxCongValue, histAvgCongValue);
 
-        // --- INITIALISATION DES BOUTONS (DESIGN CSS) ---
-        toggleFireBtn = new Button("🔥 Déclencher le Feu");
+        toggleFireBtn = new Button("🔥 Trigger Fire");
         toggleFireBtn.setMaxWidth(Double.MAX_VALUE);
-        toggleFireBtn.getStyleClass().addAll("action-btn"); // Bouton gris de base
-
-        deleteBtn = new Button("🗑 Supprimer l'élément");
+        toggleFireBtn.getStyleClass().addAll("action-btn");
+        deleteBtn = new Button("🗑 Delete Element");
         deleteBtn.setMaxWidth(Double.MAX_VALUE);
-        deleteBtn.getStyleClass().addAll("action-btn", "danger-btn"); // Bouton rouge
+        deleteBtn.getStyleClass().addAll("action-btn", "danger-btn");
 
         toggleFireBtn.setOnAction(e -> {
-            if (currentEntity instanceof GraphElement element && onToggleFireRequested != null) {
+            if (currentEntity instanceof GraphElement element && onToggleFireRequested != null)
                 onToggleFireRequested.accept(element);
-            }
         });
-
         deleteBtn.setOnAction(e -> {
             if (currentEntity instanceof GraphElement element && onDeleteRequested != null) {
                 onDeleteRequested.accept(element);
@@ -173,18 +173,12 @@ public class DetailsSidePanel extends ScrollPane {
         });
 
         actionsBox = createStatBox(new Label("ACTIONS"), new VBox(10, toggleFireBtn, deleteBtn));
-
         Pane spacer = new Pane();
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
-        // --- ASSEMBLAGE COMME TON PREMIER PROMPT ---
-        contentBox.getChildren().addAll(
-                panelTitle, new Separator(),
-                nodeInfoBox, speedBox,
-                capacityBox, congestionBox, stressBox, fireBox, agentsBox,
-                agentStatsBox, widthBox, lengthBox, historyBox,
-                new Separator(), actionsBox, spacer);
-
+        contentBox.getChildren().addAll(panelTitle, new Separator(), nodeInfoBox, speedBox, capacityBox, congestionBox,
+                stressBox, fireBox, agentsBox, agentStatsBox, widthBox, lengthBox, historyBox, new Separator(),
+                actionsBox, spacer);
         this.setContent(contentBox);
         this.setFitToWidth(true);
         this.setFitToHeight(true);
@@ -192,11 +186,12 @@ public class DetailsSidePanel extends ScrollPane {
         this.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
     }
 
-    // --- SETTERS POUR LES ÉCOUTEURS (MVC) ---
+    /** Sets the consumer to be called when fire toggling is requested. */
     public void setOnToggleFireRequested(Consumer<GraphElement> listener) {
         this.onToggleFireRequested = listener;
     }
 
+    /** Sets the consumer to be called when deletion is requested. */
     public void setOnDeleteRequested(Consumer<GraphElement> listener) {
         this.onDeleteRequested = listener;
     }
@@ -215,15 +210,10 @@ public class DetailsSidePanel extends ScrollPane {
     }
 
     private void safeSetProgress(ProgressBar bar, double value) {
-        if (Double.isNaN(value) || Double.isInfinite(value)) {
-            bar.setProgress(0.0);
-        } else {
-            bar.setProgress(Math.max(0.0, Math.min(1.0, value)));
-        }
+        bar.setProgress(Math.max(0.0, Math.min(1.0, Double.isNaN(value) || Double.isInfinite(value) ? 0.0 : value)));
     }
 
-    // --- METHODES D'ANIMATION ---
-
+    /** Animates the panel into view. */
     public void showPanel() {
         if (isPanelVisible)
             return;
@@ -244,6 +234,7 @@ public class DetailsSidePanel extends ScrollPane {
         animationTimeline.play();
     }
 
+    /** Animates the panel out of view. */
     public void hidePanel() {
         if (!isPanelVisible)
             return;
@@ -266,121 +257,94 @@ public class DetailsSidePanel extends ScrollPane {
         animationTimeline.play();
     }
 
+    /**
+     * Updates the panel with data from the selected entity.
+     * 
+     * @param entity        The selected model object (Agent, Node, or Edge).
+     * @param agentSettings Global agent configuration.
+     */
     public void update(Object entity, AgentSettings agentSettings) {
         if (entity == null)
             return;
         this.currentEntity = entity;
 
-        // 1. On cache toutes les boîtes optionnelles
         for (VBox box : new VBox[] { widthBox, lengthBox, nodeInfoBox, agentStatsBox, historyBox, speedBox,
-                actionsBox }) {
-            box.setVisible(false);
-            box.setManaged(false);
-        }
+                actionsBox })
+            setBoxVisible(box, false);
 
-        // --- 2. GESTION DE L'AFFICHAGE D'UN AGENT ---
         if (entity instanceof Agent agent) {
             panelTitle.setText("AGENT #" + agent.getId());
             setBoxVisible(speedBox, true);
             speedValue.setText(String.format("%.2f m/s", agent.getEffectiveSpeed(agentSettings)));
-
             capacityTitle.setText("POSITION");
             if (agent.isOnNode() && agent.getCurrentNode() != null) {
-                capacityValue.setText("Nœud " + agent.getCurrentNode().getId());
+                capacityValue.setText("Node " + agent.getCurrentNode().getId());
                 safeSetProgress(congestionBar, 0);
             } else if (agent.getCurrentOrPreviousEdge() != null) {
                 Node target = agent.getCurrentOrPreviousEdge().getOppositeNode(agent.getPreviousOrCurrentNode());
-                capacityValue.setText("Vers Nœud " + target.getId());
+                capacityValue.setText("Towards Node " + target.getId());
                 safeSetProgress(congestionBar, agent.getCurrentEdgeProgress());
-            } else {
-                capacityValue.setText("Échappé / Inconnu");
-                safeSetProgress(congestionBar, 0);
             }
-
-            congestionTitle.setText("PROGRESSION SUR ARÊTE");
+            congestionTitle.setText("EDGE PROGRESS");
             congestionValue.setText(String.format("%.0f%%", agent.getCurrentEdgeProgress() * 100));
-
             stressTitle.setText("STRESS LEVEL");
             stressValue.setText(String.format("%.0f%%", agent.getStressLevel() * 100));
             safeSetProgress(stressBar, agent.getStressLevel());
-
-            fireTitle.setText("ÉTAT ÉMOTIONNEL");
+            fireTitle.setText("EMOTIONAL STATE");
             fireValue.setText(agent.getEmotionalState().name());
-            safeSetProgress(fireBar, 0);
-
-            agentsTitle.setText("IDENTIFIANT UNIQUE");
+            agentsTitle.setText("UNIQUE ID");
             agentsValue.setText("#" + agent.getId());
-            return;
-        }
-
-        // --- 3. GESTION DE L'AFFICHAGE CLASSIQUE (NOEUDS/ARÊTES) ---
-        GraphElement element = (GraphElement) entity;
-        setBoxVisible(actionsBox, true);
-
-        // Mise à jour dynamique du style du bouton de feu
-        if (element.isOnFire()) {
-            toggleFireBtn.setText("🧯 Éteindre le Feu");
-            toggleFireBtn.getStyleClass().add("danger-btn"); // Devient rouge
         } else {
-            toggleFireBtn.setText("🔥 Déclencher le Feu");
-            toggleFireBtn.getStyleClass().remove("danger-btn"); // Redevient gris classique
+            GraphElement element = (GraphElement) entity;
+            setBoxVisible(actionsBox, true);
+            if (element.isOnFire()) {
+                toggleFireBtn.setText("🧯 Extinguish");
+                toggleFireBtn.getStyleClass().add("danger-btn");
+            } else {
+                toggleFireBtn.setText("🔥 Trigger Fire");
+                toggleFireBtn.getStyleClass().remove("danger-btn");
+            }
+            panelTitle.setText((element instanceof Node ? "NODE" : "EDGE") + " #" + element.getId());
+            capacityValue.setText(String.format("%.1f", element.getCapacity()));
+            double congestion = element.getCongestion();
+            congestionValue.setText(String.format("%.1f%%", congestion * 100));
+            safeSetProgress(congestionBar, congestion);
+            double stress = element.getStressInducingImpact();
+            stressValue.setText(String.format("%.0f%%", stress * 100));
+            safeSetProgress(stressBar, stress);
+            if (element.isOnFire()) {
+                fireValue.setText(String.format("%.2f (Smoke %.2f)", element.getFire().getIntensity(),
+                        element.getFire().getSmokeLevel()));
+                safeSetProgress(fireBar, element.getFire().getIntensity());
+            } else {
+                fireValue.setText("None");
+                safeSetProgress(fireBar, 0);
+            }
+            List<Agent> agents = element.getAgents();
+            agentsValue.setText(String.valueOf(agents.size()));
+            if (element instanceof Node node) {
+                nodeInfoValue.setText(
+                        String.format("(%.0f, %.0f) %s", node.getX(), node.getY(), node.isExit() ? "★ EXIT" : "node"));
+                setBoxVisible(nodeInfoBox, true);
+            }
+            if (element instanceof Edge edge) {
+                widthValue.setText(String.format("%.2f", edge.getWidth()));
+                lengthValue.setText(String.format("%.2f", edge.getLength()));
+                setBoxVisible(widthBox, true);
+                setBoxVisible(lengthBox, true);
+            }
+            if (!agents.isEmpty()) {
+                double avgStress = agents.stream().mapToDouble(Agent::getStressLevel).average().orElse(0);
+                avgStressValue.setText("Avg Stress: " + String.format("%.0f%%", avgStress * 100));
+                dominantStateValue.setText("State: " + dominantState(agents).name());
+                setBoxVisible(agentStatsBox, true);
+            }
+            histTotalValue.setText("Total passed: " + element.getTotalAgentsCount());
+            histMaxCongValue.setText("Max Congestion: " + String.format("%.0f%%", element.getMaxCongestion() * 100));
+            histAvgCongValue
+                    .setText("Avg Congestion: " + String.format("%.0f%%", element.getAverageCongestion() * 100));
+            setBoxVisible(historyBox, true);
         }
-
-        capacityTitle.setText("CAPACITY");
-        congestionTitle.setText("CONGESTION");
-        stressTitle.setText("STRESS LEVEL");
-        fireTitle.setText("FIRE INTENSITY");
-        agentsTitle.setText("AGENTS ON SITE");
-
-        String typeName = element instanceof Node ? "NODE" : "EDGE";
-        panelTitle.setText(typeName + " #" + element.getId());
-
-        capacityValue.setText(String.format("%.1f", element.getCapacity()));
-        double congestion = element.getCongestion();
-        congestionValue.setText(String.format("%.1f%%", congestion * 100));
-        safeSetProgress(congestionBar, congestion);
-
-        double stress = element.getStressInducingImpact();
-        stressValue.setText(String.format("%.0f%%", stress * 100));
-        safeSetProgress(stressBar, stress);
-
-        if (element.isOnFire()) {
-            fireValue.setText(String.format("%.2f (fumée %.2f)",
-                    element.getFire().getIntensity(), element.getFire().getSmokeLevel()));
-            safeSetProgress(fireBar, element.getFire().getIntensity());
-        } else {
-            fireValue.setText("None");
-            safeSetProgress(fireBar, 0);
-        }
-
-        List<Agent> agents = element.getAgents();
-        agentsValue.setText(String.valueOf(agents.size()));
-
-        if (element instanceof Node node) {
-            nodeInfoValue.setText(String.format("(%.0f, %.0f)  %s",
-                    node.getX(), node.getY(), node.isExit() ? "★ SORTIE" : "nœud"));
-            setBoxVisible(nodeInfoBox, true);
-        }
-
-        if (element instanceof Edge edge) {
-            widthValue.setText(String.format("%.2f", edge.getWidth()));
-            lengthValue.setText(String.format("%.2f", edge.getLength()));
-            setBoxVisible(widthBox, true);
-            setBoxVisible(lengthBox, true);
-        }
-
-        if (!agents.isEmpty()) {
-            double avgStress = agents.stream().mapToDouble(Agent::getStressLevel).average().orElse(0);
-            avgStressValue.setText("Stress moy. : " + String.format("%.0f%%", avgStress * 100));
-            EmotionalState dominant = dominantState(agents);
-            dominantStateValue.setText("État : " + dominant.name());
-            setBoxVisible(agentStatsBox, true);
-        }
-
-        histTotalValue.setText("Total passés : " + element.getTotalAgentsCount());
-        histMaxCongValue.setText("Congestion max : " + String.format("%.0f%%", element.getMaxCongestion() * 100));
-        histAvgCongValue.setText("Congestion moy. : " + String.format("%.0f%%", element.getAverageCongestion() * 100));
-        setBoxVisible(historyBox, true);
     }
 
     private EmotionalState dominantState(List<Agent> agents) {
