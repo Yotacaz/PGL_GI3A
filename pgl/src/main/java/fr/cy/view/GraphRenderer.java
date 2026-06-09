@@ -12,9 +12,13 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 
 /**
- * The {@code GraphRenderer} class is responsible for the graphical rendering
- * of the simulation world, including the graph structure (nodes/edges) and
- * agents.
+ * The {@code GraphRenderer} class handles the real-time drawing operations
+ * of the simulation engine onto a JavaFX Canvas context.
+ * <p>
+ * It renders background grids, graph components (nodes, edges), dynamic hazards
+ * (fires), crowd populations (agents), and interactive selection target
+ * highlights.
+ * </p>
  */
 public class GraphRenderer {
 
@@ -33,8 +37,10 @@ public class GraphRenderer {
     private static final Color AGENT_CALM = Color.web("#4ADE80");
     private static final Color AGENT_SELFISH = Color.web("#FF8C00");
     private static final Color AGENT_PANICKING = Color.web("#FF2020");
+    private static final Color AGENT_DEAD = Color.web("#7F8C8D");
 
     private static final Color SELECTED_COLOR = Color.web("#00FFFF");
+    private static final Color TARGET_HIGHLIGHT_COLOR = Color.ORANGE;
 
     private static final double NODE_RADIUS = 22.0;
     private static final double PIXELS_PER_UNIT = 5.0;
@@ -42,22 +48,28 @@ public class GraphRenderer {
 
     /**
      * Constructs the renderer with the specified {@link GraphicsContext}.
-     * * @param gc The JavaFX GraphicsContext used for all drawing operations.
+     *
+     * @param gc The JavaFX GraphicsContext used for all drawing operations.
      */
     public GraphRenderer(GraphicsContext gc) {
         this.gc = gc;
     }
 
     /**
-     * Renders the entire simulation state onto the provided canvas.
-     * * @param simulation The simulation instance containing the graph and agents.
-     * 
-     * @param canvas The canvas component providing view coordinates (pan/zoom).
+     * Renders the entire simulation state onto the provided canvas view scope.
+     * <p>
+     * Updates background frames, graph components, and runs individual rendering
+     * iterations for both living evacuation crowds and recorded casualties.
+     * </p>
+     *
+     * @param simulation The active simulation instance.
+     * @param canvas     The canvas component managing camera view parameters.
      */
     public void render(Simulation simulation, GraphCanvas canvas) {
         double width = canvas.getWidth();
         double height = canvas.getHeight();
 
+        // 1. Reset base view bounds
         gc.save();
         gc.setTransform(1, 0, 0, 1, 0, 0);
         gc.setFill(BG_COLOR);
@@ -70,12 +82,14 @@ public class GraphRenderer {
         if (graph == null)
             return;
 
+        // 2. Apply camera transformations
         gc.save();
         gc.translate(canvas.getPanX(), canvas.getPanY());
         gc.scale(canvas.getZoom(), canvas.getZoom());
 
         Object selectedEntity = canvas.getSelectedEntity();
 
+        // 3. Render graph structural topology layers
         for (Edge edge : graph.getEdges()) {
             drawEdge(edge, selectedEntity);
         }
@@ -84,9 +98,19 @@ public class GraphRenderer {
             drawNode(node, selectedEntity);
         }
 
+        // 4. Render active agent crowds (both alive and dead populations)
         if (simulation.getAgentManager() != null) {
+            // Isolate selection entity casting once to keep loop calls clean
+            Agent selectedAgent = selectedEntity instanceof Agent ? (Agent) selectedEntity : null;
+
+            // Render live evacuation population vectors
             for (Agent agent : simulation.getAgentManager().getAgentsToEvacuate()) {
-                drawAgent(agent, selectedEntity instanceof Agent ? (Agent) selectedEntity : null);
+                drawAgent(agent, selectedAgent, false);
+            }
+
+            // Render static casualty populations in place
+            for (Agent agent : simulation.getAgentManager().getDeadAgents()) {
+                drawAgent(agent, selectedAgent, true);
             }
         }
 
@@ -94,11 +118,10 @@ public class GraphRenderer {
     }
 
     /**
-     * Calculates the dynamic visual radius of a node, accounting for its
-     * capacity and the width of connected edges.
-     * * @param node The node to calculate the radius for.
-     * 
-     * @return The calculated radius in pixels.
+     * Calculates the dynamic visual scaling radius of a given node.
+     *
+     * @param node The node target.
+     * @return The derived layout radius dimensions in pixels.
      */
     private double getNodeVisualRadius(Node node) {
         double maxEdgeWidth = 0.0;
@@ -114,32 +137,33 @@ public class GraphRenderer {
     }
 
     /**
-     * Draws an edge, including its body, potential congestion colors,
-     * direction markers, and fire effects.
-     * * @param edge The edge to render.
-     * 
-     * @param selectedEntity The currently selected entity, for highlighting.
+     * Extracts and bounds standard normalized edge width metrics.
+     *
+     * @param edge The edge segment layout to scale.
+     * @return The scaled layout width bounds in pixels.
+     */
+    private double getEdgeVisualWidth(Edge edge) {
+        return Math.max(EDGE_MIN_WIDTH, edge.getWidth() * PIXELS_PER_UNIT);
+    }
+
+    /**
+     * Draws an edge layout segment including direction markers, heatmaps, and
+     * hazards.
      */
     private void drawEdge(Edge edge, Object selectedEntity) {
         boolean isSelected = edge.equals(selectedEntity);
         Node start = edge.getStart();
         Node end = edge.getEnd();
 
-        double sx = start.getX();
-        double sy = start.getY();
-        double ex = end.getX();
-        double ey = end.getY();
+        double sx = start.getX(), sy = start.getY();
+        double ex = end.getX(), ey = end.getY();
 
         double dx = ex - sx;
         double dy = ey - sy;
-        double centerDistance = Math.sqrt(dx * dx + dy * dy);
+        double centerDistance = Math.hypot(dx, dy);
 
-        double startRadius = getNodeVisualRadius(start);
-        double endRadius = getNodeVisualRadius(end);
-
-        double overlap = 3.0;
-        startRadius = Math.max(0, startRadius - overlap);
-        endRadius = Math.max(0, endRadius - overlap);
+        double startRadius = Math.max(0, getNodeVisualRadius(start) - 3.0);
+        double endRadius = Math.max(0, getNodeVisualRadius(end) - 3.0);
 
         double borderStartX = sx, borderStartY = sy;
         double borderEndX = ex, borderEndY = ey;
@@ -153,18 +177,18 @@ public class GraphRenderer {
 
         double visDx = borderEndX - borderStartX;
         double visDy = borderEndY - borderStartY;
-        double visualLength = Math.sqrt(visDx * visDx + visDy * visDy);
-        double visualWidth = Math.max(EDGE_MIN_WIDTH, edge.getWidth() * PIXELS_PER_UNIT);
+        double visualLength = Math.hypot(visDx, visDy);
+        double visualWidth = getEdgeVisualWidth(edge);
 
+        // Render backing selection glow if highlighted
         if (isSelected) {
-            drawLineHalo(borderStartX, borderStartY, borderEndX, borderEndY, visualWidth, 4.0);
+            drawLineHalo(borderStartX, borderStartY, borderEndX, borderEndY, visualWidth, 4.0, SELECTED_COLOR);
         }
 
-        double congestionRatio = 0.0;
-        if (edge.getCapacity() > 0) {
-            congestionRatio = Math.min(1.0, (double) edge.getAgents().size() / edge.getCapacity());
-        }
-
+        // Render core structural network lane
+        double congestionRatio = edge.getCapacity() > 0
+                ? Math.min(1.0, (double) edge.getAgents().size() / edge.getCapacity())
+                : 0.0;
         Color currentEdgeColor = EDGE_COLOR.interpolate(EDGE_CONGESTED_COLOR, congestionRatio);
 
         gc.setStroke(currentEdgeColor);
@@ -197,7 +221,7 @@ public class GraphRenderer {
             }
         }
 
-        // Fire rendering
+        // Fire propagation path tracing
         if (edge.isOnFire() && (edge.isBurningFromStart() || edge.isBurningFromEnd()) && visualLength > 0) {
             double ratio = Math.min(1.0, edge.getBurnedDistance() / edge.getLength());
             gc.setLineWidth(visualWidth);
@@ -212,19 +236,17 @@ public class GraphRenderer {
     }
 
     /**
-     * Draws a node, handling selection, state-based colors (fire/exit/stress),
-     * and visual glow effects.
-     * * @param node The node to render.
-     * 
-     * @param selectedEntity The currently selected entity.
+     * Draws a node infrastructure item handling color blending states and radial
+     * glows.
      */
     private void drawNode(Node node, Object selectedEntity) {
         boolean isSelected = node.equals(selectedEntity);
         double radius = getNodeVisualRadius(node);
         double x = node.getX(), y = node.getY();
 
-        if (isSelected)
+        if (isSelected) {
             drawCircularHalo(x, y, radius, 6.0);
+        }
 
         Color nodeColor = CALM_NODE_COLOR.interpolate(STRESS_COLOR, node.getStressInducingImpact());
         if (node.isExit())
@@ -252,17 +274,30 @@ public class GraphRenderer {
     }
 
     /**
-     * Draws an agent, calculating its position either on a node or interpolated
-     * along an edge, with color reflecting its emotional state.
-     * * @param agent The agent to render.
-     * 
-     * @param selectedEntity The currently selected entity.
+     * Draws an individual agent calculation model mapped either inside nodes or
+     * traversing tracking lines.
      */
-    private void drawAgent(Agent agent, Object selectedEntity) {
+    /**
+     * Draws an individual agent model mapped either inside nodes or traversing
+     * tracking lines.
+     * <p>
+     * It handles contextual selections by overlaying route guidance vectors if the
+     * agent is alive.
+     * Dead agents automatically bypass path decorations and drop down to a static
+     * gray color palette.
+     * </p>
+     *
+     * @param agent          The agent instance to render.
+     * @param selectedEntity The currently selected tracking entity context.
+     * @param isDead         True if the entity belongs to the static dead tracking
+     *                       database layer.
+     */
+    private void drawAgent(Agent agent, Object selectedEntity, boolean isDead) {
         double ax, ay;
         double visualRadius = Math.sqrt(agent.getSurfaceAreaTakenByAgent() / Math.PI) * PIXELS_PER_UNIT;
         double visualDiameter = visualRadius * 2.0;
 
+        // 1. Calculate structural rendering coordinates
         if (agent.isOnNode()) {
             Node node = agent.getCurrentNode();
             double maxOffset = Math.max(0, getNodeVisualRadius(node) - visualRadius);
@@ -285,16 +320,42 @@ public class GraphRenderer {
             return; //not on graph
         }
 
-        if (agent.equals(selectedEntity))
+        // 2. Process interactive selection overlays
+        if (agent.equals(selectedEntity)) {
             drawCircularHalo(ax, ay, visualRadius, 3.0);
 
-        EmotionalState state = agent.getEmotionalState();
-        Color agentColor = switch (state) {
-            case CALM -> AGENT_CALM;
-            case SELFISH -> AGENT_SELFISH;
-            case PANICKING -> AGENT_PANICKING;
-        };
+            // Only display route path bounding boxes if the agent is still alive and moving
+            if (!isDead) {
+                Node targetNode = agent.getCurrentNodeOrNextNodeIfOnEdge();
+                double progress = agent.getCurrentEdgeProgress();
 
+                if (progress >= 0.0 && progress <= 1.0) {
+                    Edge currentEdge = agent.getCurrentOrPreviousEdge();
+                    if (currentEdge != null) {
+                        drawEdgeTargetHighlight(gc, currentEdge, agent, progress);
+                    }
+                }
+
+                if (targetNode != null) {
+                    drawTargetNodeHighlight(gc, targetNode);
+                }
+            }
+        }
+
+        // 3. Resolve profile paint mapping configs
+        Color agentColor;
+        if (isDead) {
+            agentColor = AGENT_DEAD;
+        } else {
+            EmotionalState state = agent.getEmotionalState();
+            agentColor = switch (state) {
+                case CALM -> AGENT_CALM;
+                case SELFISH -> AGENT_SELFISH;
+                case PANICKING -> AGENT_PANICKING;
+            };
+        }
+
+        // 4. Execute final canvas stroke commands
         gc.setFill(agentColor);
         gc.fillOval(ax - visualRadius, ay - visualRadius, visualDiameter, visualDiameter);
         gc.setStroke(Color.web("#121212"));
@@ -303,12 +364,8 @@ public class GraphRenderer {
     }
 
     /**
-     * Helper to draw a selection halo around circular entities (nodes/agents).
-     * * @param centerX The center X coordinate.
-     * 
-     * @param centerY    The center Y coordinate.
-     * @param baseRadius The radius of the object.
-     * @param padding    The thickness/padding of the halo.
+     * Helper layout component to generate backing selections behind circular
+     * profiles.
      */
     private void drawCircularHalo(double centerX, double centerY, double baseRadius, double padding) {
         double totalRadius = baseRadius + padding;
@@ -320,20 +377,91 @@ public class GraphRenderer {
     }
 
     /**
-     * Helper to draw a selection halo around linear entities (edges).
-     * * @param startX Start X coordinate.
-     * 
-     * @param startY    Start Y coordinate.
-     * @param endX      End X coordinate.
-     * @param endY      End Y coordinate.
-     * @param baseWidth The original width of the edge.
-     * @param padding   The extra width to add for the halo effect.
+     * Helper layout component to generate selection backings behind linear vectors.
      */
     private void drawLineHalo(double startX, double startY, double endX, double endY, double baseWidth,
-            double padding) {
-        gc.setStroke(SELECTED_COLOR.deriveColor(0, 1, 1, 0.6));
+            double padding, Color color) {
+        gc.setStroke(color.deriveColor(0, 1, 1, 0.6));
         gc.setLineWidth(baseWidth + (padding * 2));
         gc.setLineCap(javafx.scene.shape.StrokeLineCap.BUTT);
         gc.strokeLine(startX, startY, endX, endY);
+    }
+
+    /**
+     * Draws a dynamically scaled visual highlight ring around an agent's current
+     * destination node.
+     */
+    private void drawTargetNodeHighlight(GraphicsContext gc, Node node) {
+        gc.save();
+        gc.setStroke(TARGET_HIGHLIGHT_COLOR);
+        gc.setLineWidth(3.0);
+
+        // Dynamically adapts scale relative to the targets actual layout parameters
+        double highlightRadius = getNodeVisualRadius(node) + 5.0;
+
+        gc.strokeOval(
+                node.getX() - highlightRadius,
+                node.getY() - highlightRadius,
+                highlightRadius * 2,
+                highlightRadius * 2);
+        gc.restore();
+    }
+
+    /**
+     * Renders a hollow frame profiling only the exterior boundaries of the
+     * remaining path segment.
+     */
+    private void drawEdgeTargetHighlight(GraphicsContext gc, Edge edge, Agent agent, double progress) {
+        Node targetNode = agent.getCurrentNodeOrNextNodeIfOnEdge();
+        if (targetNode == null)
+            return;
+
+        Node departureNode = edge.getOppositeNode(targetNode);
+        if (departureNode == null)
+            return;
+
+        double depX = departureNode.getX(), depY = departureNode.getY();
+        double destX = targetNode.getX(), destY = targetNode.getY();
+
+        // Trace position via linear interpolations
+        double currentX = depX + (destX - depX) * progress;
+        double currentY = depY + (destY - depY) * progress;
+
+        double dx = destX - currentX;
+        double dy = destY - currentY;
+        double distanceRemaining = Math.hypot(dx, dy);
+        double targetRadius = getNodeVisualRadius(targetNode);
+
+        // Only draw if agent is positioned clear of the perimeter boundaries
+        if (distanceRemaining > targetRadius) {
+            double nx = -dy / distanceRemaining;
+            double ny = dx / distanceRemaining;
+
+            // Adjust target vectors to dock perfectly flush on the perimeter border
+            double adjDestX = destX - (dx / distanceRemaining) * targetRadius;
+            double adjDestY = destY - (dy / distanceRemaining) * targetRadius;
+            double visualWidth = getEdgeVisualWidth(edge);
+
+            gc.save();
+            gc.setStroke(TARGET_HIGHLIGHT_COLOR);
+            gc.setLineWidth(2.0);
+            gc.setLineCap(javafx.scene.shape.StrokeLineCap.BUTT);
+
+            double outerOffset = visualWidth / 2.0;
+
+            // Generate twin left/right tracking segment boundaries
+            double startLeftX = currentX + nx * outerOffset, startLeftY = currentY + ny * outerOffset;
+            double endLeftX = adjDestX + nx * outerOffset, endLeftY = adjDestY + ny * outerOffset;
+
+            double startRightX = currentX - nx * outerOffset, startRightY = currentY - ny * outerOffset;
+            double endRightX = adjDestX - nx * outerOffset, endRightY = adjDestY - ny * outerOffset;
+
+            // Render hollow wireframe boundaries
+            gc.strokeLine(startLeftX, startLeftY, endLeftX, endLeftY);
+            gc.strokeLine(startRightX, startRightY, endRightX, endRightY);
+            gc.strokeLine(startLeftX, startLeftY, startRightX, startRightY); // Closing cap behind agent
+
+            gc.restore();
+        }
     }
 }

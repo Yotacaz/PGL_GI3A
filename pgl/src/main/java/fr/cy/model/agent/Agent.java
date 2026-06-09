@@ -49,7 +49,8 @@ public class Agent implements StressInducing, Serializable {
     private String name;
 
     /**
-     * The physical properties of the agent including speed, health, and surface area
+     * The physical properties of the agent including speed, health, and surface
+     * area
      */
     private final AgentPhysicalProperties physicalProperties;
 
@@ -60,7 +61,7 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Map to store the scores of different possible decisions for the agent, used
-     * in decision-making. This is a class attribute in order to avoid creating a 
+     * in decision-making. This is a class attribute in order to avoid creating a
      * new map for each agent at each decision step
      */
     private final Map<AgentPossibleNodeDecision, AgentNodeDecisionScore> decisionsScore = new HashMap<>();
@@ -70,9 +71,13 @@ public class Agent implements StressInducing, Serializable {
      */
     private final Map<AgentPossibleEdgeDecision, Double> edgeDecisionsScore = new HashMap<>();
 
-    /** Map to track how many times each node decision was selected, for statistics */
+    /**
+     * Map to track how many times each node decision was selected, for statistics
+     */
     private final Map<AgentPossibleNodeDecision, Long> nOfTimesNodeDecisionWasSelected = new HashMap<>();
-    /** Map to track how many times each edge decision was selected, for statistics */
+    /**
+     * Map to track how many times each edge decision was selected, for statistics
+     */
     private final Map<AgentPossibleEdgeDecision, Long> nOfTimesEdgeDecisionWasSelected = new HashMap<>();
 
     /**
@@ -121,12 +126,12 @@ public class Agent implements StressInducing, Serializable {
     /**
      * Index in graph element list (TODO: document purpose)
      */
-    private int indexInGraphElemList = -1; //TODO
+    private int indexInGraphElemList = -1; // TODO
 
     /**
      * Index in directional list (TODO: document purpose)
      */
-    private int indexInDirectionnalList = -1; //TODO
+    private int indexInDirectionnalList = -1; // TODO
 
     /**
      * Static IdManager to generate unique identifiers for agents
@@ -136,15 +141,19 @@ public class Agent implements StressInducing, Serializable {
     /**
      * Constructs a new Agent with the specified parameters.
      *
-     * @param name the name of the agent
-     * @param startingNode the starting node where the agent will be placed
-     * @param maxSpeed the maximum speed of the agent in units per time step
-     * @param stressTolerance the stress tolerance of the agent, between 0 and 1
-     * @param crowdingTolerance the crowding tolerance of the agent, between 0 and 1
+     * @param name                        the name of the agent
+     * @param startingNode                the starting node where the agent will be
+     *                                    placed
+     * @param maxSpeed                    the maximum speed of the agent in units
+     *                                    per time step
+     * @param stressTolerance             the stress tolerance of the agent, between
+     *                                    0 and 1
+     * @param crowdingTolerance           the crowding tolerance of the agent,
+     *                                    between 0 and 1
      * @param baseOwnDecisionMakingFactor the base decision-making factor (0..1)
-     * @param repeatLastDecisionTendency the tendency to repeat the last decision
-     * @param health the initial health of the agent
-     * @param surfaceAreaTakenByAgent the surface area taken by the agent
+     * @param repeatLastDecisionTendency  the tendency to repeat the last decision
+     * @param health                      the initial health of the agent
+     * @param surfaceAreaTakenByAgent     the surface area taken by the agent
      */
     public Agent(String name, Node startingNode, double maxSpeed, double stressTolerance, double crowdingTolerance,
             double baseOwnDecisionMakingFactor, double repeatLastDecisionTendency, double health,
@@ -183,8 +192,9 @@ public class Agent implements StressInducing, Serializable {
     /**
      * Makes a decision for the agent when it is on a node.
      *
-     * @param decisionContext the context containing information about the current node and possible actions
-     * @param agentSettings the general agent settings
+     * @param decisionContext the context containing information about the current
+     *                        node and possible actions
+     * @param agentSettings   the general agent settings
      * @return the AgentAction to be performed based on the decision
      */
     AgentAction makeNodeDecision(NodeContext decisionContext, AgentSettings agentSettings) {
@@ -203,8 +213,9 @@ public class Agent implements StressInducing, Serializable {
     /**
      * Makes a decision for the agent when it is on an edge.
      *
-     * @param decisionContext the context containing information about the current edge and possible actions
-     * @param agentSettings the general agent settings
+     * @param decisionContext the context containing information about the current
+     *                        edge and possible actions
+     * @param agentSettings   the general agent settings
      * @return the AgentAction to be performed based on the decision
      */
     AgentAction makeEdgeDecision(EdgeContext decisionContext, AgentSettings agentSettings) {
@@ -223,13 +234,14 @@ public class Agent implements StressInducing, Serializable {
     /**
      * Generic method to make a decision based on scores and create an action.
      *
-     * @param <D> the type of decision
-     * @param <S> the type of score
-     * @param totalScore the total score of all decisions
-     * @param decisionScores the map of decisions to their scores
+     * @param <D>              the type of decision
+     * @param <S>              the type of score
+     * @param totalScore       the total score of all decisions
+     * @param decisionScores   the map of decisions to their scores
      * @param fallbackDecision the fallback decision to use if total score is <= 0
-     * @param scoreExtractor function to extract the score from the score object
-     * @param actionFactory function to create an action from a decision and its score
+     * @param scoreExtractor   function to extract the score from the score object
+     * @param actionFactory    function to create an action from a decision and its
+     *                         score
      * @return the AgentAction to be performed, or null if no decision could be made
      */
     private <D, S> AgentAction makeDecision(double totalScore, Map<D, S> decisionScores, D fallbackDecision,
@@ -256,11 +268,16 @@ public class Agent implements StressInducing, Serializable {
     }
 
     /**
-     * Set the current action of the agent based on the selected decision and its score, and return the action.
-     * @param decision the selected decision for which to set the action
-     * @param decisionContext the context of the decision, containing information about the current node and possible actions
-     * @param decisionScore the score associated with the selected decision, which may influence the action's parameters
-     * @return the AgentAction corresponding to the selected decision, or null if the action cannot be created
+     * Set the current action of the agent based on the selected decision and its
+     * score, and return the action.
+     * 
+     * @param decision        the selected decision for which to set the action
+     * @param decisionContext the context of the decision, containing information
+     *                        about the current node and possible actions
+     * @param decisionScore   the score associated with the selected decision, which
+     *                        may influence the action's parameters
+     * @return the AgentAction corresponding to the selected decision, or null if
+     *         the action cannot be created
      */
     private AgentAction setActionFromNodeDecision(AgentPossibleNodeDecision decision, NodeContext decisionContext,
             AgentNodeDecisionScore decisionScore) {
@@ -271,11 +288,16 @@ public class Agent implements StressInducing, Serializable {
     }
 
     /**
-     * Sets the current action of the agent based on the selected decision and its score, and return the action.
-     * @param decision the selected decision for which to set the action
-     * @param decisionContext the context of the decision, containing information about the current edge and possible actions
-     * @param decisionScore the score associated with the selected decision, which may influence the action's parameters
-     * @return the AgentAction corresponding to the selected decision, or null if the action cannot be created
+     * Sets the current action of the agent based on the selected decision and its
+     * score, and return the action.
+     * 
+     * @param decision        the selected decision for which to set the action
+     * @param decisionContext the context of the decision, containing information
+     *                        about the current edge and possible actions
+     * @param decisionScore   the score associated with the selected decision, which
+     *                        may influence the action's parameters
+     * @return the AgentAction corresponding to the selected decision, or null if
+     *         the action cannot be created
      */
     private AgentAction setActionFromDecision(AgentPossibleEdgeDecision decision, EdgeContext decisionContext,
             double decisionScore) {
@@ -288,8 +310,9 @@ public class Agent implements StressInducing, Serializable {
     /**
      * Computes the scores for all possible node decisions.
      *
-     * @param agentSettings the general agent settings
-     * @param decisionContext the context containing information about the current node
+     * @param agentSettings   the general agent settings
+     * @param decisionContext the context containing information about the current
+     *                        node
      * @return the total score of all possible decisions
      */
     private double computeNodeDecisionsScore(AgentSettings agentSettings, NodeContext decisionContext) {
@@ -313,8 +336,9 @@ public class Agent implements StressInducing, Serializable {
     /**
      * Computes the scores for all possible edge decisions.
      *
-     * @param agentSettings the general agent settings
-     * @param decisionContext the context containing information about the current edge
+     * @param agentSettings   the general agent settings
+     * @param decisionContext the context containing information about the current
+     *                        edge
      * @return the total score of all possible edge decisions
      * @throws AgentStateException if the agent is not on an edge
      */
@@ -415,7 +439,9 @@ public class Agent implements StressInducing, Serializable {
         return currentAction.perform(agentSettings, availableTime);
     }
 
-    /** @return the effective speed (m/s) of the agent considering it's state only */
+    /**
+     * @return the effective speed (m/s) of the agent considering it's state only
+     */
     public double getEffectiveSpeedOutsideOfGraph() {
         double agentMaxSpeed = getMaxSpeed();
         double walkSpeedReductionFactor = AgentSettings.getInstance().getWALK_SPEED_REDUCTION_FACTOR();
@@ -428,7 +454,7 @@ public class Agent implements StressInducing, Serializable {
                 effectiveSpeed = agentMaxSpeed * walkSpeedReductionFactor;
                 break;
             case PANICKING:
-                effectiveSpeed = agentMaxSpeed; //Running
+                effectiveSpeed = agentMaxSpeed; // Running
                 break;
             default:
                 throw new IllegalStateException("Unexpected emotional state: " + behavioralState.getEmotionnalState());
@@ -436,7 +462,10 @@ public class Agent implements StressInducing, Serializable {
         return effectiveSpeed;
     }
 
-    /** @return the effective speed of the agent, considering its state and the environment */
+    /**
+     * @return the effective speed of the agent, considering its state and the
+     *         environment
+     */
     public double getEffectiveSpeed(AgentSettings agentSettings) {
         double maxElemSpeed = Double.MAX_VALUE;
         if (!isOnNode()) {
@@ -477,7 +506,8 @@ public class Agent implements StressInducing, Serializable {
     /**
      * Sets the current action being performed by the agent.
      * 
-     * @param currentAction the action to set as current, can be null if the agent is idle
+     * @param currentAction the action to set as current, can be null if the agent
+     *                      is idle
      */
     public void setCurrentAction(AgentAction currentAction) {
         this.currentAction = currentAction;
@@ -526,11 +556,11 @@ public class Agent implements StressInducing, Serializable {
         double stressIncreaseRate = settings.getStressIncreaseRate();
         double stressDecreaseRate = settings.getStressDecreaseRate();
 
-        if (targetStress > currentStress) { //formula for stress increase
+        if (targetStress > currentStress) { // formula for stress increase
             currentStress += (targetStress - currentStress)
                     * stressIncreaseRate
                     * tickDuration;
-        } else { //formula for stress deacrease
+        } else { // formula for stress deacrease
             currentStress -= (currentStress - targetStress)
                     * stressDecreaseRate
                     * tickDuration;
@@ -555,8 +585,10 @@ public class Agent implements StressInducing, Serializable {
         }
         double damage = current.getDamageForAgent(this, tickDuration);
         // double dps = damage / tickDuration;
-        // System.out.println("Agent " + getId() + " takes " + damage + " damage (" + dps + " DPS) from "
-        //         + current.getClass().getSimpleName() + " with stress level " + getStressLevel());
+        // System.out.println("Agent " + getId() + " takes " + damage + " damage (" +
+        // dps + " DPS) from "
+        // + current.getClass().getSimpleName() + " with stress level " +
+        // getStressLevel());
         decreaseHealth(damage);
         return damage;
     }
@@ -587,8 +619,10 @@ public class Agent implements StressInducing, Serializable {
         return previousOrCurrentNode;
     }
 
-    /** Remove from graph element list but keep references, 
-     * should be used carefully as can break isOnNode and isOnEdge */
+    /**
+     * Remove from graph element list but keep references,
+     * should be used carefully as can break isOnNode and isOnEdge
+     */
     private void removeFromGraphElemButKeepReferences() {
         GraphElement currentElement = getCurrentGraphElement();
         if (currentElement != null) {
@@ -596,7 +630,8 @@ public class Agent implements StressInducing, Serializable {
         }
     }
 
-    /** Removes the agent from the graph, clearing all references.
+    /**
+     * Removes the agent from the graph, clearing all references.
      */
     void removeFromGraph() {
         removeFromGraphElemButKeepReferences();
@@ -676,13 +711,14 @@ public class Agent implements StressInducing, Serializable {
         }
         removeFromGraphElemButKeepReferences();
         this.currentOrPreviousEdge = edge;
-        //do not reset current edge progress
+        // do not reset current edge progress
         setIsOnNode(false);
         return true;
     }
 
     /**
-     * @return the current edge the agent is on, or {@code null} if the agent is not on an edge
+     * @return the current edge the agent is on, or {@code null} if the agent is not
+     *         on an edge
      */
     public Edge getCurrentEdge() {
         return isOnNode() ? null : getCurrentOrPreviousEdge();
@@ -715,7 +751,8 @@ public class Agent implements StressInducing, Serializable {
     }
 
     /**
-     * @return the current graph element the agent is on, or {@code null} if the agent is not on a graph element
+     * @return the current graph element the agent is on, or {@code null} if the
+     *         agent is not on a graph element
      */
     public GraphElement getCurrentGraphElement() {
         return isOnNode ? getCurrentNode() : getCurrentOrPreviousEdge();
@@ -754,7 +791,9 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Checks if the agent is currently on a node.
-     * @return true if the agent is on a node and has a valid current or previous node reference, false otherwise
+     * 
+     * @return true if the agent is on a node and has a valid current or previous
+     *         node reference, false otherwise
      */
     public boolean isOnNode() {
         return isOnNode && getPreviousOrCurrentNode() != null;
@@ -762,7 +801,9 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Checks if the agent is currently on an edge.
-     * @return true if the agent is on an edge and has a valid current or previous edge reference, false otherwise
+     * 
+     * @return true if the agent is on an edge and has a valid current or previous
+     *         edge reference, false otherwise
      */
     public boolean isOnEdge() {
         return !isOnNode && getCurrentOrPreviousEdge() != null;
@@ -770,6 +811,7 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Checks if the agent is currently on a graph element (node or edge).
+     * 
      * @return true if the agent is on a node or an edge, false otherwise
      */
     public boolean isOnGraph() {
@@ -778,6 +820,7 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Sets whether the agent is on a node.
+     * 
      * @param isOnNode true if the agent is on a node, false otherwise
      */
     private void setIsOnNode(boolean isOnNode) {
@@ -787,7 +830,8 @@ public class Agent implements StressInducing, Serializable {
     /**
      * Checks if the agent needs to make a decision.
      *
-     * @return true if the agent is on a node and needs to make a decision, false otherwise
+     * @return true if the agent is on a node and needs to make a decision, false
+     *         otherwise
      */
     public boolean needToMakeDecision() {
         return isOnNode();
@@ -795,6 +839,7 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Sets the last selected decision for the agent.
+     * 
      * @param lastSelectedDecision the last selected decision
      */
     void setLastSelectedDecision(AgentPossibleNodeDecision lastSelectedDecision) {
@@ -803,6 +848,7 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Sets the last selected edge decision for the agent.
+     * 
      * @param lastSelectedEdgeDecision the last selected edge decision
      */
     void setLastSelectedEdgeDecision(AgentPossibleEdgeDecision lastSelectedEdgeDecision) {
@@ -811,6 +857,7 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Gets the current action being performed by the agent.
+     * 
      * @return the current action, or null if the agent is idle
      */
     public AgentAction getCurrentAction() {
@@ -819,6 +866,7 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Gets the last selected node decision for the agent.
+     * 
      * @return the last selected node decision, or null if no decision has been made
      */
     public AgentPossibleNodeDecision getLastSelectedDecision() {
@@ -827,6 +875,7 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Gets the last selected edge decision for the agent.
+     * 
      * @return the last selected edge decision, or null if no decision has been made
      */
     public AgentPossibleEdgeDecision getLastSelectedEdgeDecision() {
@@ -842,6 +891,7 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Gets the congestion tolerance of the agent.
+     * 
      * @return the congestion tolerance
      */
     public double getCongestionTolerance() {
@@ -850,6 +900,7 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Gets the stress tolerance of the agent.
+     * 
      * @return the stress tolerance (between 0 and 1)
      */
     public double getStressTolerance() {
@@ -858,6 +909,7 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Sets the congestion tolerance of the agent.
+     * 
      * @param congestionTolerance the congestion tolerance to set
      */
     public void setCongestionTolerance(double congestionTolerance) {
@@ -866,6 +918,7 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Gets the current own decision-making factor of the agent.
+     * 
      * @return the current own decision-making factor (0..1)
      */
     public double getCurrentOwnDecisionMakingFactor() {
@@ -874,6 +927,7 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Gets the maximum accumulated stress of the agent.
+     * 
      * @return the maximum accumulated stress
      */
     public double getMaxAccumulatedStress() {
@@ -882,6 +936,7 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Sets the stress level of the agent.
+     * 
      * @param stressLevel the stress level to set
      */
     public void setStressLevel(double stressLevel) {
@@ -890,6 +945,7 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Gets the current stress level of the agent.
+     * 
      * @return the stress level
      */
     public double getStressLevel() {
@@ -898,6 +954,7 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Adds the specified amount of stress to the agent's current stress level.
+     * 
      * @param stress the amount of stress to add
      */
     public void addStress(double stress) {
@@ -913,7 +970,9 @@ public class Agent implements StressInducing, Serializable {
 
     // Physical properties related methods
 
-    /** @return the surface area taken by the agent, used for congestion calculations */
+    /**
+     * @return the surface area taken by the agent, used for congestion calculations
+     */
     public double getSurfaceAreaTakenByAgent() {
         return physicalProperties.getSurfaceAreaTakenByAgent();
     }
@@ -925,6 +984,7 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Sets the health of the agent.
+     * 
      * @param health the health to set
      */
     public void setHealth(double health) {
@@ -933,6 +993,7 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Gets the health of the agent.
+     * 
      * @return the health
      */
     public double getHealth() {
@@ -941,6 +1002,7 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Decreases the health of the agent.
+     * 
      * @param amount the amount by which to decrease the health
      */
     public void decreaseHealth(double amount) {
@@ -949,6 +1011,7 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Restores the health of the agent.
+     * 
      * @param amount the amount by which to restore the health
      */
     public void restoreHealth(double amount) {
@@ -964,6 +1027,7 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Gets the health percentage of the agent.
+     * 
      * @return the health percentage
      */
     public double getHealthPercentage() {
@@ -972,6 +1036,7 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Checks if the agent is alive (health > 0).
+     * 
      * @return true if the agent is alive, false if the agent is dead (health <= 0)
      */
     public boolean isAlive() {
@@ -994,8 +1059,10 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Gets the number of times a specific node decision was selected by the agent.
+     * 
      * @param decision the node decision for which to get the count
-     * @return the number of times the specified node decision was selected, or 0 if it was never selected
+     * @return the number of times the specified node decision was selected, or 0 if
+     *         it was never selected
      */
     public long getTimesNodeDecisionWasSelected(AgentPossibleNodeDecision decision) {
         return nOfTimesNodeDecisionWasSelected.getOrDefault(decision, 0L);
@@ -1003,8 +1070,10 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Gets the number of times a specific edge decision was selected by the agent.
+     * 
      * @param decision the edge decision for which to get the count
-     * @return the number of times the specified edge decision was selected, or 0 if it was never selected
+     * @return the number of times the specified edge decision was selected, or 0 if
+     *         it was never selected
      */
     public long getTimesEdgeDecisionWasSelected(AgentPossibleEdgeDecision decision) {
         return nOfTimesEdgeDecisionWasSelected.getOrDefault(decision, 0L);

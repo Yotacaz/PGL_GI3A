@@ -1,5 +1,6 @@
 package fr.cy.controller;
 
+import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Edge;
@@ -17,7 +18,8 @@ import javafx.scene.layout.Pane;
  * canvas)
  * and the underlying {@link SimulationController}, handling cross-component
  * events
- * such as selections, graph editing, and agent population.
+ * such as selections, graph editing, rapid deletion, and agent population
+ * control loops.
  * </p>
  */
 public class MainController {
@@ -36,7 +38,7 @@ public class MainController {
 
     /**
      * Initializes the main interface and sets up event wiring.
-     * 
+     *
      * @param simulation The initial simulation instance.
      */
     public MainController(Simulation simulation) {
@@ -61,7 +63,7 @@ public class MainController {
         root.setLeft(statsPanel);
         this.detailsPanel = new DetailsSidePanel();
 
-        // Wire detail panel actions
+        // Wire detail panel fire management actions
         this.detailsPanel.setOnToggleFireRequested(element -> {
             if (element.isOnFire()) {
                 element.removeFire();
@@ -78,13 +80,25 @@ public class MainController {
             }
         });
 
-        this.detailsPanel.setOnDeleteRequested(element -> {
-            Graph graph = simController.getSimulation().getGraph();
-            if (element instanceof Node node)
-                graph.removeNode(node);
-            else if (element instanceof Edge edge)
-                graph.removeEdge(edge);
-            this.currentSelectedEntity = null;
+        // Wire details panel standard deletion channels to the unified factory pipeline
+        this.detailsPanel.setOnDeleteRequested(this::deleteEntity);
+        this.detailsPanel.setOnDeleteAgentRequested(this::deleteEntity);
+
+        // Wire specific agent tracking execution states (Casualties)
+        this.detailsPanel.setOnKillAgentRequested(agent -> {
+            var agentManager = simController.getSimulation().getAgentManager();
+            if (agentManager != null) {
+                agentManager.killAgent(agent);
+
+                if (agent.isOnNode() && agent.getCurrentNode() != null) {
+                    agent.getCurrentNode().getAgents().remove(agent);
+                } else if (agent.getCurrentOrPreviousEdge() != null) {
+                    agent.getCurrentOrPreviousEdge().getAgents().remove(agent);
+                }
+
+                this.currentSelectedEntity = null;
+                this.graphCanvas.setSelectedEntity(null);
+            }
         });
 
         root.setRight(detailsPanel);
@@ -102,6 +116,9 @@ public class MainController {
         this.interactionController.setOnAddAgentRequested(this::promptAndAddAgentsToNode);
         this.editingToolBar.setOnGenerateRandomAgents(this::generateRandomAgents);
 
+        // Wire rapid canvas deletion mode clicks to the unified deletion pipeline
+        this.interactionController.setOnDeleteElementRequested(this::deleteEntity);
+
         this.interactionController.setOnEntitySelected(entity -> {
             this.currentSelectedEntity = entity;
             graphCanvas.setSelectedEntity(entity);
@@ -115,6 +132,46 @@ public class MainController {
         });
 
         this.simController.startLoop();
+    }
+
+    /**
+     * Unified orchestration routine handling removal tasks for Nodes, Edges, or
+     * Agents.
+     * Shared dynamically between side context bars and rapid canvas tool modes.
+     *
+     * @param entity The generic element target to scrub from the workspace.
+     */
+    private void deleteEntity(Object entity) {
+        if (entity == null || simController.getSimulation() == null)
+            return;
+
+        Graph graph = simController.getSimulation().getGraph();
+        var agentManager = simController.getSimulation().getAgentManager();
+
+        if (entity instanceof Node node && graph != null) {
+            graph.removeNode(node);
+        } else if (entity instanceof Edge edge && graph != null) {
+            graph.removeEdge(edge);
+        } else if (entity instanceof Agent agent) {
+            if (agentManager != null) {
+                agentManager.removeAgentFromGraph(agent);
+
+                // Disconnect container links to prevent structural graph leak tracks
+                if (agent.isOnNode() && agent.getCurrentNode() != null) {
+                    agent.getCurrentNode().getAgents().remove(agent);
+                } else if (agent.getCurrentOrPreviousEdge() != null) {
+                    agent.getCurrentOrPreviousEdge().getAgents().remove(agent);
+                }
+            }
+        }
+
+        // Clean selection state mappings if the removed element matches current view
+        // focus
+        if (entity.equals(currentSelectedEntity)) {
+            this.currentSelectedEntity = null;
+            this.graphCanvas.setSelectedEntity(null);
+            this.detailsPanel.hidePanel();
+        }
     }
 
     /** Generates a random graph layout. */
