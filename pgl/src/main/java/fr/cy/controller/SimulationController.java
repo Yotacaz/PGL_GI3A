@@ -6,7 +6,7 @@ import fr.cy.view.GraphRenderer;
 import javafx.animation.AnimationTimer;
 
 /**
- * Gère la boucle en temps réel à la manière d'un Game Loop de ~60FPS.
+ * Manages the real-time loop like a ~60FPS game loop.
  */
 public class SimulationController {
 
@@ -31,15 +31,15 @@ public class SimulationController {
         timer = new AnimationTimer() {
             @Override
             public void handle(long now) {
-                // Si la simu est en mode Play, on avance la logique (Backend)
+                // If the simulation is in Play mode, advance the logic (backend)
                 if (isRunning) {
                     simulation.tick();
                 }
 
-                // Pour utiliser la caméra, on la passe via le canvas au renderer
+                // To use the camera, pass it through the canvas to the renderer
                 renderer.render(simulation, canvas);
 
-                // Notifie le contrôleur principal pour mettre à jour les stats
+                // Notify the main controller to update the stats
                 if (onRender != null)
                     onRender.run();
             }
@@ -116,7 +116,7 @@ public class SimulationController {
         renderer.render(simulation, canvas);
     }
 
-    // Fournit l'instance de la simu (pour y chercher un élément par ex)
+    // Provides the simulation instance (for example, to look up an element)
     public Simulation getSimulation() {
         return simulation;
     }
