@@ -154,7 +154,11 @@ public class Agent implements StressInducing, Serializable {
         this.behavioralState = new AgentDecisionalProperties(this.id, stressTolerance, baseOwnDecisionMakingFactor,
                 repeatLastDecisionTendency, crowdingTolerance);
         this.physicalProperties = new AgentPhysicalProperties(maxSpeed, health, health, surfaceAreaTakenByAgent);
-        putOnNode(startingNode);
+        if (startingNode != null) {
+            putOnNode(startingNode);
+        } else {
+            this.isOnNode = false; // Agent starts unplaced, not on a node
+        }
     }
 
     /**
