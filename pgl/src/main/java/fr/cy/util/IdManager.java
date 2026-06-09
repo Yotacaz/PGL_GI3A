@@ -7,11 +7,10 @@ import java.util.Queue;
 import java.io.Serializable;
 
 /**
- * Gère la génération et la réutilisation d'identifiants entiers.
+ * Manage the generation and recycling of unique identifiers for graph elements (nodes and edges).
  * <p>
- * Les identifiants libérés via {@link #releaseId(int)} sont réattribués en
- * priorité
- * avant de créer de nouveaux identifiants.
+ * Ids {@link #releaseId(int)} are reattributed with priority
+ * before generating new ones with {@link #generateId()}.
  */
 public class IdManager implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -20,7 +19,7 @@ public class IdManager implements Serializable {
     private Queue<Integer> freeIds;
 
     /**
-     * Crée un gestionnaire d'identifiants initialisé à 0.
+     * Constructor for the IdManager class.
      */
     public IdManager() {
         this.nextId = 0;
@@ -28,12 +27,12 @@ public class IdManager implements Serializable {
     }
 
     /**
-     * Génère un identifiant disponible.
+     * Generates a new unique identifier. If there are any previously released identifiers, they are reused.
      * <p>
-     * Si un identifiant a été libéré, il est réutilisé. Sinon, un nouvel
-     * identifiant incrémental est créé.
+     * If an identifier has been released, it is reused. Otherwise, a new
+     * incremental identifier is created.
      *
-     * @return un identifiant disponible
+     * @return a available identifier
      */
     public int generateId() {
 
@@ -44,9 +43,9 @@ public class IdManager implements Serializable {
     }
 
     /**
-     * Libère un identifiant pour permettre sa réutilisation ultérieure.
+     * Releases an identifier for future reuse.
      *
-     * @param id identifiant à remettre dans la file des identifiants libres
+     * @param id the identifier to release
      */
     public void releaseId(int id) {
         freeIds.add(id);
