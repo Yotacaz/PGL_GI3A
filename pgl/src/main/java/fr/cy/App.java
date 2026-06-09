@@ -5,6 +5,7 @@ import fr.cy.model.graph.Graph;
 import fr.cy.model.simulation.Simulation;
 import javafx.application.Application;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 import java.util.Objects;
@@ -18,6 +19,10 @@ public class App extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+
+        Image icon = new Image(getClass().getResourceAsStream("/icons/icon_5.png"));
+        primaryStage.getIcons().add(icon);
+
         Simulation simulation = new Simulation("Sandbox", new Graph());
 
         MainController mainController = new MainController(simulation);
@@ -44,3 +49,4 @@ public class App extends Application {
         launch(args);
     }
 }
+

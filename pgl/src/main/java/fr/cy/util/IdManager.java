@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
+import java.io.Serializable;
+
 /**
  * Gère la génération et la réutilisation d'identifiants entiers.
  * <p>

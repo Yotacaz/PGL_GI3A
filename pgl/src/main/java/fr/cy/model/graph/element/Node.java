@@ -6,11 +6,11 @@ import java.util.List;
 import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 
 /**
- * Classe représentant un nœud dans le graphe.
+ * Class representing a node in the graph.
  * 
- * Un nœud est un élément du graphe situé à une position donnée (x, y)
- * dans un plan. Il hérite des propriétés communes
- * de GraphElement comme l'identifiant, l'état d'incendie et la congestion.
+ * A node is an element in the graph located at a specific position (x, y)
+ * in a plane. It inherits common properties
+ * from GraphElement such as the identifier, fire state, and congestion.
  * 
  * @author GI3A
  * @version 1.0
@@ -18,23 +18,23 @@ import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 public class Node extends GraphElement {
     private final int id;
 
-    /** Coordonnées X, Y */
+    /** Coordinates X, Y */
     private double x;
     private double y;
 
     private boolean isExit;
 
-    /** Liste des arêtes connectées à ce nœud */
+    /** List of edges connected to this node */
     private final List<Edge> connectedEdges;
-    /** Liste des arêtes sortantes */
+    /** List of outgoing edges */
     private final List<Edge> outgoingEdges;
 
     /**
-     * Constructeur créant un nouveau nœud avec une position spécifiée.
+     * Constructor for the Node class.
      * 
-     * @param id l'identifiant unique du nœud
-     * @param x  la coordonnée X du nœud
-     * @param y  la coordonnée Y du nœud
+     * @param id unique identifier for the node
+     * @param x  the X coordinate of the node
+     * @param y  the Y coordinate of the node
      */
     public Node(int id, double x, double y, double capacity) {
         super(id, capacity);
@@ -56,10 +56,9 @@ public class Node extends GraphElement {
     }
 
     /**
-     * Retourne une représentation textuelle du nœud.
+     * Returns a textual representation of the node.
      * 
-     * @return une chaîne de caractères contenant l'identifiant et les coordonnées
-     *         du nœud
+     * @return a string containing the node's id and coordinates
      */
     @Override
     public String toString() {
@@ -74,18 +73,18 @@ public class Node extends GraphElement {
     }
 
     /**
-     * Récupère l'identifiant unique du nœud.
+     * Returns the unique identifier of the node.
      * 
-     * @return l'identifiant du nœud
+     * @return the node's id
      */
     public int getId() {
         return id;
     }
 
     /**
-     * Récupère la coordonnée X du nœud.
+     * Returns the X coordinate of the node.
      * 
-     * @return la coordonnée X
+     * @return the X coordinate
      */
     public double getX() {
         return x;
@@ -96,9 +95,9 @@ public class Node extends GraphElement {
     }
 
     /**
-     * Récupère la coordonnée Y du nœud.
+     * Returns the Y coordinate of the node.
      * 
-     * @return la coordonnée Y
+     * @return the Y coordinate
      */
     public double getY() {
         return y;
@@ -109,25 +108,32 @@ public class Node extends GraphElement {
     }
 
     public void setCapacity(double capacity) {
-        this.capacity = capacity;
+        super.setCapacity(capacity);
     }
 
     /**
-     * Vérifie si le nœud est une sortie.
+     * Checks if the node is an exit.
      * 
-     * @return true si le nœud est une sortie, false sinon
+     * @return true if the node is an exit, false otherwise
      */
     public boolean isExit() {
         return isExit;
     }
 
     /**
-     * Définit si le nœud est une sortie.
+     * Sets whether the node is an exit.
      * 
-     * @param exit true si le nœud est une sortie, false sinon
+     * @param exit true if the node is an exit, false otherwise
      */
     public void setExit(boolean exit) {
         isExit = exit;
+    }
+
+    /**
+     * Toggles the exit status of the node.
+     */
+    public void switchExit() {
+        isExit = !isExit;
     }
 
     @Override
@@ -145,9 +151,9 @@ public class Node extends GraphElement {
     }
 
     /**
-     * Ajoute une arête connectée à ce nœud.
+     * Adds an edge connected to this node.
      * 
-     * @param edge l'arête à ajouter
+     * @param edge the edge to add
      */
     public void addEdge(Edge edge) {
         if (edge != null) {
@@ -160,8 +166,9 @@ public class Node extends GraphElement {
     }
 
     /**
-     * Supprime une arête connectée à ce nœud
-     * * @param edge l'arête à supprimer
+     * Removes an edge connected to this node.
+     * 
+     * @param edge the edge to remove
      */
     public void removeEdge(Edge edge) {
         if (edge != null) {
@@ -181,9 +188,9 @@ public class Node extends GraphElement {
     }
 
     /**
-     * Retourne toutes les arêtes connectées à ce nœud.
+     * Returns all edges connected to this node.
      * 
-     * @return liste des arêtes
+     * @return list of edges
      */
     public List<Edge> getEdges() {
         return new ArrayList<>(connectedEdges);

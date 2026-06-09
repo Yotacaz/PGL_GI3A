@@ -3,6 +3,7 @@ package fr.cy.model.graph.element;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.io.Serializable;
 
 import java.io.*;
 
@@ -14,11 +15,11 @@ import fr.cy.model.simulation.SimulationSettings;
 import fr.cy.model.stress.StressInducing;
 
 /**
- * Classe abstraite représentant un élément du graphe.
+ * Abstract class representing a graph element.
  * 
- * Cette classe est la base pour tous les éléments du graphe tels que
- * les nœuds et les arêtes. Elle gère les propriétés communes incluant
- * l'identifiant unique, l'état d'incendie et le niveau de congestion.
+ * This class is the base for all graph elements such as
+ * nodes and edges. It manages shared properties including
+ * unique identifier, fire state and congestion level.
  * 
  * @author GI3A
  * @version 1.0
@@ -28,15 +29,13 @@ public abstract class GraphElement implements StressInducing, Serializable {
     /** Identifiant unique de l'élément du graphe */
     private final int id;
 
-    private final List<Agent> agents;
-    protected double capacity;
-
-    protected Fire initialFire = null;
-
+    private List<Agent> agents;
+    private double capacity;
     private boolean isForcedCongested = false;
     private int forcedCongestionTicks = 0;
+    private Fire initialFire; // To store the initial fire state for reset
 
-    // STRESS :
+    // STRESS:
     /**
      * Total stress induced by this element and its neighbors, it is a cached value
      * and should be updated each tick
@@ -50,20 +49,20 @@ public abstract class GraphElement implements StressInducing, Serializable {
 
     private Fire fire;
 
-    // ===== STATISTIQUES =====
-    /** Nombre total d'agents passés par cet élément */
+    // ===== STATISTICS =====
+    /** Total number of agents that passed through this element */
     private int totalAgentsCount = 0;
 
-    /** Nombre de fois où cet élément a été complètement rempli */
+    /** Number of times this element became fully occupied */
     private int timesFull = 0;
 
-    /** Congestion maximale atteinte */
+    /** Maximum congestion reached */
     private double maxCongestion = 0;
 
-    /** Somme des congestions pour calculer la moyenne */
+    /** Sum of congestion values used to calculate the average */
     private double sumCongestion = 0;
 
-    /** Nombre de fois où la congestion a été mesurée */
+    /** Number of times congestion was measured */
     private int congestionMeasureCount = 0;
 
     /**
@@ -79,9 +78,9 @@ public abstract class GraphElement implements StressInducing, Serializable {
     }
 
     /***
-     * Determine la liste des elements voisins
+     * Determines the list of neighboring elements
      * 
-     * @return liste de vosions
+     * @return list of neighbors
      */
     public abstract List<GraphElement> getNeighbors();
 
@@ -105,18 +104,18 @@ public abstract class GraphElement implements StressInducing, Serializable {
     }
 
     /**
-     * Récupère l'identifiant unique de cet élément du graphe.
+     * Returns the unique identifier of this graph element.
      * 
-     * @return l'identifiant de l'élément
+     * @return the identifier of the element
      */
     public int getId() {
         return id;
     }
 
     /**
-     * Vérifie si cet élément est actuellement en feu.
+     * Checks whether this element is currently on fire.
      * 
-     * @return {@code true} si l'élément est en feu, {@code false} sinon
+     * @return {@code true} if the element is on fire, {@code false} otherwise
      */
     public boolean isOnFire() {
         return fire != null;
@@ -140,7 +139,7 @@ public abstract class GraphElement implements StressInducing, Serializable {
     }
 
     /**
-     * Ajoute un agent si la capacité le permet
+     * Adds an agent if capacity allows.
      * 
      * @param a Agent
      * @return true if the agent was added, false if the element is full and the agent cannot be added
@@ -148,11 +147,11 @@ public abstract class GraphElement implements StressInducing, Serializable {
     public boolean addAgent(Agent a) {
         if (!isFull()) {
             agents.add(a);
-            // Mettre à jour les statistiques
+            // Update statistics
             incrementTotalAgentsCount();
             recordCongestionMeasure();
 
-            // Vérifier si on vient de remplir l'élément
+            // Check if the element has just become full
             if (isFull()) {
                 incrementTimesFull();
             }
@@ -195,6 +194,7 @@ public abstract class GraphElement implements StressInducing, Serializable {
         }
         return scoreMult;
     }
+
 
     /**
      * Update the total stress induced by this element alone (without neighbors),
@@ -243,8 +243,8 @@ public abstract class GraphElement implements StressInducing, Serializable {
     }
 
     /**
-     * Sommate the stress level of all agents present on this element, (a single
-     * agent has a value between 0 and 1)
+     * Sums the stress levels of all agents present on this element (a single
+     * agent has a value between 0 and 1).
      * 
      * @return the total stress level of agents on this element
      */
@@ -277,10 +277,14 @@ public abstract class GraphElement implements StressInducing, Serializable {
         return capacity;
     }
 
+    public void setCapacity(double capacity) {
+        this.capacity = Math.max(0.1, capacity);
+    }
+
     /**
-     * Determine espace occupée par les agents
+     * Determines the occupied space by agents.
      * 
-     * @return surface occupée
+     * @return occupied area
      */
     public double getOccupiedSpace() {
         double occupied = 0;
@@ -292,7 +296,7 @@ public abstract class GraphElement implements StressInducing, Serializable {
     }
 
     /**
-     * Calcule la congestion entre 0 et 1 selon les agenrs présents
+     * Calculates congestion between 0 and 1 based on the present agents.
      * 
      * @return congestion
      */
@@ -301,9 +305,9 @@ public abstract class GraphElement implements StressInducing, Serializable {
     }
 
     /**
-     * Determine si l'élement est full
+     * Determines if the element is full.
      * 
-     * @return true si oui
+     * @return true if yes
      */
     public boolean isFull() {
         return getOccupiedSpace() >= capacity;
@@ -317,38 +321,38 @@ public abstract class GraphElement implements StressInducing, Serializable {
         return cachedTotalStressInducedIncludingNeighbors;
     }
 
-    // ===== STATISTIQUES =====
+    // ===== STATISTICS =====
 
     /**
-     * Incrémente le compteur d'agents passés.
+     * Increments the count of agents that passed through.
      */
     public void incrementTotalAgentsCount() {
         this.totalAgentsCount++;
     }
 
     /**
-     * @return le nombre total d'agents passés par cet élément
+     * @return the total number of agents that passed through this element
      */
     public int getTotalAgentsCount() {
         return totalAgentsCount;
     }
 
     /**
-     * Incrémente le compteur de fois où l'élément a été rempli.
+     * Increments the count of times the element was filled.
      */
     public void incrementTimesFull() {
         this.timesFull++;
     }
 
     /**
-     * @return le nombre de fois où l'élément a été complètement rempli
+     * @return the number of times the element was fully filled
      */
     public int getTimesFull() {
         return timesFull;
     }
 
     /**
-     * Enregistre une mesure de congestion.
+     * Records a congestion measurement.
      */
     public void recordCongestionMeasure() {
         double currentCongestion = getCongestion();
@@ -361,14 +365,14 @@ public abstract class GraphElement implements StressInducing, Serializable {
     }
 
     /**
-     * @return la congestion maximale atteinte
+     * @return the maximum congestion reached
      */
     public double getMaxCongestion() {
         return maxCongestion;
     }
 
     /**
-     * @return la congestion moyenne
+     * @return the average congestion
      */
     public double getAverageCongestion() {
         if (congestionMeasureCount == 0) {
@@ -378,7 +382,7 @@ public abstract class GraphElement implements StressInducing, Serializable {
     }
 
     /**
-     * @return le nombre de mesures de congestion enregistrées
+     * @return the number of congestion measurements recorded
      */
     public int getCongestionMeasureCount() {
         return congestionMeasureCount;
@@ -450,7 +454,7 @@ public abstract class GraphElement implements StressInducing, Serializable {
     public void setForcedCongestion(boolean congested) {
         this.isForcedCongested = congested;
         if (congested) {
-            this.forcedCongestionTicks = 0; // Réinitialise le compteur
+            this.forcedCongestionTicks = 0; // Reset the counter
         }
     }
 
@@ -459,7 +463,7 @@ public abstract class GraphElement implements StressInducing, Serializable {
     }
 
     /**
-     * Appelé à chaque tick pour décrémenter le compteur de congestion forcée.
+     * Called each tick to decrement the forced congestion counter.
      */
     public void updateForcedCongestion() {
         if (isForcedCongested) {
@@ -468,6 +472,13 @@ public abstract class GraphElement implements StressInducing, Serializable {
                 isForcedCongested = false;
                 forcedCongestionTicks = 0;
             }
+        }
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        if (agents == null) {
+            agents = new ArrayList<>();
         }
     }
 }
