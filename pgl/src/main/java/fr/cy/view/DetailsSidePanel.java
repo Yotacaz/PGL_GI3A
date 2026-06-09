@@ -10,6 +10,7 @@ import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
@@ -20,6 +21,7 @@ import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public class DetailsSidePanel extends ScrollPane {
 
@@ -36,6 +38,15 @@ public class DetailsSidePanel extends ScrollPane {
 
     private ProgressBar stressBar, fireBar, congestionBar;
     private VBox widthBox, lengthBox, agentStatsBox, historyBox, nodeInfoBox;
+
+    // --- BOUTONS ET ACTIONS ---
+    private VBox actionsBox;
+    private Button toggleFireBtn;
+    private Button deleteBtn;
+    private Object currentEntity;
+
+    private Consumer<GraphElement> onToggleFireRequested;
+    private Consumer<GraphElement> onDeleteRequested;
 
     // --- VARIABLES POUR L'ANIMATION ---
     private boolean isPanelVisible = false;
@@ -56,8 +67,6 @@ public class DetailsSidePanel extends ScrollPane {
     private void initUI() {
         contentBox = new VBox(20);
         contentBox.getStyleClass().add("details-panel");
-        // On force la boîte interne à rester à 300px pour éviter l'écrasement du texte
-        // pendant le slide
         contentBox.setMinWidth(300);
         contentBox.setPrefWidth(300);
 
@@ -87,12 +96,10 @@ public class DetailsSidePanel extends ScrollPane {
         stressBar.setMaxWidth(Double.MAX_VALUE);
         stressBar.setMinHeight(12);
         stressBar.getStyleClass().addAll("progress-bar", "stress-bar");
-
         fireBar = new ProgressBar(0);
         fireBar.setMaxWidth(Double.MAX_VALUE);
         fireBar.setMinHeight(12);
         fireBar.getStyleClass().addAll("progress-bar", "fire-bar");
-
         congestionBar = new ProgressBar(0);
         congestionBar.setMaxWidth(Double.MAX_VALUE);
         congestionBar.setMinHeight(12);
@@ -143,20 +150,55 @@ public class DetailsSidePanel extends ScrollPane {
         histTitle.getStyleClass().add("stat-title");
         historyBox.getChildren().addAll(histTitle, histTotalValue, histMaxCongValue, histAvgCongValue);
 
+        // --- INITIALISATION DES BOUTONS (DESIGN CSS) ---
+        toggleFireBtn = new Button("🔥 Déclencher le Feu");
+        toggleFireBtn.setMaxWidth(Double.MAX_VALUE);
+        toggleFireBtn.getStyleClass().addAll("action-btn"); // Bouton gris de base
+
+        deleteBtn = new Button("🗑 Supprimer l'élément");
+        deleteBtn.setMaxWidth(Double.MAX_VALUE);
+        deleteBtn.getStyleClass().addAll("action-btn", "danger-btn"); // Bouton rouge
+
+        toggleFireBtn.setOnAction(e -> {
+            if (currentEntity instanceof GraphElement element && onToggleFireRequested != null) {
+                onToggleFireRequested.accept(element);
+            }
+        });
+
+        deleteBtn.setOnAction(e -> {
+            if (currentEntity instanceof GraphElement element && onDeleteRequested != null) {
+                onDeleteRequested.accept(element);
+                hidePanel();
+            }
+        });
+
+        actionsBox = createStatBox(new Label("ACTIONS"), new VBox(10, toggleFireBtn, deleteBtn));
+
         Pane spacer = new Pane();
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
+        // --- ASSEMBLAGE COMME TON PREMIER PROMPT ---
         contentBox.getChildren().addAll(
                 panelTitle, new Separator(),
                 nodeInfoBox, speedBox,
                 capacityBox, congestionBox, stressBox, fireBox, agentsBox,
-                agentStatsBox, widthBox, lengthBox, historyBox, spacer);
+                agentStatsBox, widthBox, lengthBox, historyBox,
+                new Separator(), actionsBox, spacer);
 
         this.setContent(contentBox);
         this.setFitToWidth(true);
         this.setFitToHeight(true);
         this.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         this.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+    }
+
+    // --- SETTERS POUR LES ÉCOUTEURS (MVC) ---
+    public void setOnToggleFireRequested(Consumer<GraphElement> listener) {
+        this.onToggleFireRequested = listener;
+    }
+
+    public void setOnDeleteRequested(Consumer<GraphElement> listener) {
+        this.onDeleteRequested = listener;
     }
 
     private VBox createStatBox(Label title, javafx.scene.Node valueNode) {
@@ -186,21 +228,16 @@ public class DetailsSidePanel extends ScrollPane {
         if (isPanelVisible)
             return;
         isPanelVisible = true;
-
         if (animationTimeline != null)
             animationTimeline.stop();
-
         this.setManaged(true);
         this.setVisible(true);
-
         animationTimeline = new Timeline(
-                new KeyFrame(Duration.ZERO,
-                        new KeyValue(this.maxWidthProperty(), this.getWidth()),
+                new KeyFrame(Duration.ZERO, new KeyValue(this.maxWidthProperty(), this.getWidth()),
                         new KeyValue(this.minWidthProperty(), this.getWidth()),
                         new KeyValue(this.prefWidthProperty(), this.getWidth()),
                         new KeyValue(this.opacityProperty(), this.getOpacity())),
-                new KeyFrame(Duration.millis(250),
-                        new KeyValue(this.maxWidthProperty(), 300, Interpolator.EASE_OUT),
+                new KeyFrame(Duration.millis(250), new KeyValue(this.maxWidthProperty(), 300, Interpolator.EASE_OUT),
                         new KeyValue(this.minWidthProperty(), 300, Interpolator.EASE_OUT),
                         new KeyValue(this.prefWidthProperty(), 300, Interpolator.EASE_OUT),
                         new KeyValue(this.opacityProperty(), 1.0, Interpolator.EASE_OUT)));
@@ -211,22 +248,17 @@ public class DetailsSidePanel extends ScrollPane {
         if (!isPanelVisible)
             return;
         isPanelVisible = false;
-
         if (animationTimeline != null)
             animationTimeline.stop();
-
         animationTimeline = new Timeline(
-                new KeyFrame(Duration.ZERO,
-                        new KeyValue(this.maxWidthProperty(), this.getWidth()),
+                new KeyFrame(Duration.ZERO, new KeyValue(this.maxWidthProperty(), this.getWidth()),
                         new KeyValue(this.minWidthProperty(), this.getWidth()),
                         new KeyValue(this.prefWidthProperty(), this.getWidth()),
                         new KeyValue(this.opacityProperty(), this.getOpacity())),
-                new KeyFrame(Duration.millis(200),
-                        new KeyValue(this.maxWidthProperty(), 0, Interpolator.EASE_IN),
+                new KeyFrame(Duration.millis(200), new KeyValue(this.maxWidthProperty(), 0, Interpolator.EASE_IN),
                         new KeyValue(this.minWidthProperty(), 0, Interpolator.EASE_IN),
                         new KeyValue(this.prefWidthProperty(), 0, Interpolator.EASE_IN),
                         new KeyValue(this.opacityProperty(), 0.0, Interpolator.EASE_IN)));
-        // Une fois l'animation finie, on retire le composant du flux visuel
         animationTimeline.setOnFinished(e -> {
             this.setManaged(false);
             this.setVisible(false);
@@ -235,13 +267,13 @@ public class DetailsSidePanel extends ScrollPane {
     }
 
     public void update(Object entity, AgentSettings agentSettings) {
-        // Comme le panneau est caché si 'entity' est null, on est sûr d'avoir un
-        // élément ici
         if (entity == null)
             return;
+        this.currentEntity = entity;
 
         // 1. On cache toutes les boîtes optionnelles
-        for (VBox box : new VBox[] { widthBox, lengthBox, nodeInfoBox, agentStatsBox, historyBox, speedBox }) {
+        for (VBox box : new VBox[] { widthBox, lengthBox, nodeInfoBox, agentStatsBox, historyBox, speedBox,
+                actionsBox }) {
             box.setVisible(false);
             box.setManaged(false);
         }
@@ -249,7 +281,6 @@ public class DetailsSidePanel extends ScrollPane {
         // --- 2. GESTION DE L'AFFICHAGE D'UN AGENT ---
         if (entity instanceof Agent agent) {
             panelTitle.setText("AGENT #" + agent.getId());
-
             setBoxVisible(speedBox, true);
             speedValue.setText(String.format("%.2f m/s", agent.getEffectiveSpeed(agentSettings)));
 
@@ -260,14 +291,14 @@ public class DetailsSidePanel extends ScrollPane {
             } else if (agent.getCurrentOrPreviousEdge() != null) {
                 Node target = agent.getCurrentOrPreviousEdge().getOppositeNode(agent.getPreviousOrCurrentNode());
                 capacityValue.setText("Vers Nœud " + target.getId());
-                safeSetProgress(congestionBar, agent.getTravelProgressPercentageOnEdge());
+                safeSetProgress(congestionBar, agent.getCurrentEdgeProgress());
             } else {
                 capacityValue.setText("Échappé / Inconnu");
                 safeSetProgress(congestionBar, 0);
             }
 
             congestionTitle.setText("PROGRESSION SUR ARÊTE");
-            congestionValue.setText(String.format("%.0f%%", agent.getTravelProgressPercentageOnEdge() * 100));
+            congestionValue.setText(String.format("%.0f%%", agent.getCurrentEdgeProgress() * 100));
 
             stressTitle.setText("STRESS LEVEL");
             stressValue.setText(String.format("%.0f%%", agent.getStressLevel() * 100));
@@ -284,6 +315,16 @@ public class DetailsSidePanel extends ScrollPane {
 
         // --- 3. GESTION DE L'AFFICHAGE CLASSIQUE (NOEUDS/ARÊTES) ---
         GraphElement element = (GraphElement) entity;
+        setBoxVisible(actionsBox, true);
+
+        // Mise à jour dynamique du style du bouton de feu
+        if (element.isOnFire()) {
+            toggleFireBtn.setText("🧯 Éteindre le Feu");
+            toggleFireBtn.getStyleClass().add("danger-btn"); // Devient rouge
+        } else {
+            toggleFireBtn.setText("🔥 Déclencher le Feu");
+            toggleFireBtn.getStyleClass().remove("danger-btn"); // Redevient gris classique
+        }
 
         capacityTitle.setText("CAPACITY");
         congestionTitle.setText("CONGESTION");

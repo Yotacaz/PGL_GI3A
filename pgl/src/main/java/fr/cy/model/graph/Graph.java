@@ -8,6 +8,7 @@ import java.io.Serializable;
 
 import java.io.*;
 
+import fr.cy.model.agent.Agent;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 import fr.cy.util.IdManager;
@@ -31,6 +32,8 @@ public class Graph implements Serializable {
 
     private final IdManager nodeIdManager;
     private final IdManager edgeIdManager;
+
+    private boolean isFirstTick = true;
 
     /**
      * Crée un graphe avec un nombre de nœuds et d'arêtes spécifié, avec des positions aléatoires pour les nœuds
@@ -74,6 +77,24 @@ public class Graph implements Serializable {
      * Give an update to each elements that need it (eg: cached values like stress)
      */
     public void tick() {
+        /** Snapshot auto */
+        if (isFirstTick) {
+            for (Node node : nodes) {
+                node.setInitialState();
+            }
+            for (Edge edge : edges) {
+                edge.setInitialState();
+            }
+            isFirstTick = false;
+        }
+
+        for (Node node : nodes) {
+            node.updateForcedCongestion();
+        }
+        for (Edge edge : edges) {
+            edge.updateForcedCongestion();
+        }
+
         updateStressInducedByElements();
     }
 
@@ -216,16 +237,35 @@ public class Graph implements Serializable {
      *
      * @param node le nœud à supprimer
      */
-    public void removeNode(Node node) {
-        List<Edge> edgesToRemove = new ArrayList<>(adjacencyList.get(node));
-
-        for (Edge edge : edgesToRemove) {
+    public void removeNode(Node nodeToRemove) {
+        // 1. Gérer les agents sur les arêtes connectées avant de supprimer l'arête
+        List<Edge> connectedEdges = new ArrayList<>(nodeToRemove.getEdges());
+        for (Edge edge : connectedEdges) {
+            // Pour chaque agent sur cette arête, on le ramène au nœud de départ de l'arête
+            for (Agent agent : new ArrayList<>(edge.getAgents())) {
+                Node startNode = edge.getStart();
+                // Utilise putOnNode : cela met à jour la position de l'agent
+                // ET met à jour la liste des agents du nœud cible
+                agent.putOnNode(startNode);
+            }
             removeEdge(edge);
         }
 
-        adjacencyList.remove(node);
-        nodes.remove(node);
-        nodeIdManager.releaseId(node.getId());
+        // 2. Gérer les agents sur le nœud supprimé
+        List<Node> neighbors = getNeighbors(nodeToRemove); // Liste des nœuds adjacents
+        if (!neighbors.isEmpty()) {
+            Node target = neighbors.get(0);
+            for (Agent agent : new ArrayList<>(nodeToRemove.getAgents())) {
+                // Déplacement vers le voisin
+                agent.putOnNode(target);
+
+                // Si tu as bien ajouté le flag de congestion dans ta classe Node :
+                target.setForcedCongestion(true);
+            }
+        }
+
+        // 3. Suppression finale
+        nodes.remove(nodeToRemove);
     }
 
     /**

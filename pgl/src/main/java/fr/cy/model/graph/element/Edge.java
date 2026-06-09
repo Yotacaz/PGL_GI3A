@@ -2,7 +2,6 @@ package fr.cy.model.graph.element;
 
 import fr.cy.model.graph.GraphConfig;
 import fr.cy.model.agent.Agent;
-import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 import fr.cy.model.fire.Fire;
 import java.util.*;
@@ -24,6 +23,9 @@ public class Edge extends GraphElement {
     private final Node start;
     private final Node end;
 
+    private int agentGoingToStartNode;
+    private int agentGoingToEndNode;
+
     /** Indique si l'arête est dirigée */
     private boolean directed;
 
@@ -33,6 +35,9 @@ public class Edge extends GraphElement {
     /** Direction du feu */
     private boolean burningFromStart = false;
     private boolean burningFromEnd = false;
+
+    private boolean initialBurningFromStart = false;
+    private boolean initialBurningFromEnd = false;
 
     /**
      * Constructeur simplifié utilisant les valeurs par défaut de
@@ -200,22 +205,6 @@ public class Edge extends GraphElement {
         return nb;
     }
 
-    /**
-     * Calcule la vitesse maximale de déplacement des agents dans cette arête
-     * en fonction de la congestion et de la longueur.
-     * 
-     * @return la vitesse maximale calculée
-     */
-    public double getMaxAgentSpeed() {
-        double congestionFactor = 1.0 - getCongestion();
-        double calculatedSpeed = AgentSettings.getInstance().getMAX_RUNNING_SPEED() * congestionFactor;
-
-        if (isOnFire()) {
-            return calculatedSpeed * 1.5;
-        }
-
-        return Math.max(calculatedSpeed, 0.0);
-    }
 
     /**
      * Compute the maximum allowed agent speed when entering this edge from
@@ -277,18 +266,19 @@ public class Edge extends GraphElement {
     }
 
     /**
-     * Evaluate a score multiplier for an agent on this edge, based on its properties and the agent's properties.
-     * @param agentState the properties of the agent for which we want to evaluate the score multiplier
+     * Evaluate a score multiplier for an agent on this edge, based on its
+     * properties and the agent's properties.
+     * 
+     * @param agentState      the properties of the agent for which we want to
+     *                        evaluate the score multiplier
      * @param destinationNode the node the agent is trying to reach by going through
-     *  this edge (used to evaluate the score multiplier of that node as well)
-     * @return a score multiplier for an agent on this edge, based on its properties and the agent's properties,
+     *                        this edge (used to evaluate the score multiplier of
+     *                        that node as well)
+     * @return a score multiplier for an agent on this edge, based on its properties
+     *         and the agent's properties,
      */
-    public double getScoreMultiplierForAgentGoingToNode(AgentDecisionalProperties agentState, Node destinationNode,
-            Edge previousEdge) {
+    public double getScoreMultiplierForAgentGoingToNode(AgentDecisionalProperties agentState, Node destinationNode) {
         double scoreMult = getScoreMultiplierForAgent(agentState);
-        if (previousEdge != null) {
-            scoreMult *= 0.8; // prefer new edges over going back and forth on the same edge
-        }
         scoreMult *= destinationNode.getScoreMultiplierForAgent(agentState);
         return scoreMult;
     }
@@ -369,6 +359,13 @@ public class Edge extends GraphElement {
         return distance >= length;
     }
 
+    @Override
+    public void removeFire() {
+        super.removeFire();
+        this.burningFromStart = false;
+        this.burningFromEnd = false;
+    }
+
     /**
      * Calcule le pourcentage de l'arête recouvert par les flammes (de 0.0 à 1.0).
      * 
@@ -386,9 +383,19 @@ public class Edge extends GraphElement {
     }
 
     @Override
+    public void setInitialState() {
+        super.setInitialState();
+
+        this.initialBurningFromStart = this.burningFromStart;
+        this.initialBurningFromEnd = this.burningFromEnd;
+    }
+
+    @Override
     public void reset() {
         super.reset();
-        burningFromStart = false;
-        burningFromEnd = false;
+
+        // 2. On restaure les directions du feu
+        this.burningFromStart = this.initialBurningFromStart;
+        this.burningFromEnd = this.initialBurningFromEnd;
     }
 }

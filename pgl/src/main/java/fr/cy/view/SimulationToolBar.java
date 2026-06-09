@@ -6,7 +6,6 @@ import fr.cy.model.simulation.Simulation;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
-import javafx.scene.control.Spinner;
 import javafx.scene.control.ToolBar;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.TextInputDialog;
@@ -119,7 +118,6 @@ public class SimulationToolBar extends ToolBar {
             stepCountValue.setText("+" + stepTicks);
         });
 
-        // Contrôle de la vitesse
         Button decreaseSpeedBtn = new Button("⏪ -");
         Button increaseSpeedBtn = new Button("+ ⏩");
         Label speedLabel = new Label(formatSpeedMultiplier(simController.getSpeed()));
