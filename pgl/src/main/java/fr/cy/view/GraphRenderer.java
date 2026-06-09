@@ -286,7 +286,7 @@ public class GraphRenderer {
         } else if (agent.isOnGraph() && agent.getCurrentOrPreviousEdge() != null) {
             Edge edge = agent.getCurrentOrPreviousEdge();
             // Node previous = agent.getPreviousOrCurrentNode();
-            Node target = Objects.requireNonNull(agent.getCurrentNodeOrNextNodeIfOnEdge());
+            Node target = Objects.requireNonNull(agent.getCurrentNodeOrNextNodeIfOnEdge(), "Agent must have a valid target node when on an edge");
             Node previous = Objects.requireNonNull(edge.getOppositeNode(target));
 
             // Logique de raccourcissement bord-à-bord (déjà implémentée précédemment)

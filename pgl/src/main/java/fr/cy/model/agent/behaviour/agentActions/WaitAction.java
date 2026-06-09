@@ -13,6 +13,7 @@ import fr.cy.model.graph.element.Node;
  * <p>This action causes the agent to remain stationary at its current position
  * (either on a node or edge) for the configured wait time. The action completes
  * when the total wait time has elapsed.</p>
+ * <b> should only be used when an agent is on a node as being on an edge require to have some kind of move action. </b>
  */
 public class WaitAction extends AgentAction {
     private static final long serialVersionUID = 1L;

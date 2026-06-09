@@ -44,7 +44,7 @@ public class FollowSingleEdgeAction extends AbstractMoveAction {
      */
     public FollowSingleEdgeAction(Agent agent, Edge edgeToFollow, Node destinationNode, double initialProgress) {
         this(agent, edgeToFollow, destinationNode);
-        setProgress(initialProgress);
+        setEdgeProgress(initialProgress);
     }
 
     // @Override

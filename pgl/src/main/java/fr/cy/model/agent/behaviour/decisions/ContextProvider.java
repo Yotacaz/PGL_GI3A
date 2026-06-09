@@ -13,6 +13,7 @@ import fr.cy.model.agent.exceptions.AgentStateException;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.graph.element.Edge;
+import fr.cy.model.graph.element.GraphElement;
 import fr.cy.model.pathfinding.PathFinder;
 
 /**
@@ -81,34 +82,48 @@ public class ContextProvider implements Serializable {
         cachedEdgesContexts.clear();
     }
 
+    /**
+     * Registers the chosen action of an agent in the context of its current node or edge.
+     * This should be called after an agent has made a decision and before the action is executed, 
+     * @param agent the agent for which to register the chosen action
+     * @param action the action chosen by the agent based on its decision
+     * @return true if the action was successfully registered in the context, 
+     * false if the action could not be registered (e.g., due to invalid action or context)
+     */
     public boolean registerChosenAction(Agent agent, AgentAction action) {
         Objects.requireNonNull(agent);
         if (action == null) {
             return false;
         }
-        Node currentNode = agent.getCurrentNode();
-        if (currentNode != null) {
-            NodeContext context = Objects.requireNonNull(cachedNodeContexts.get(currentNode));
+
+        if (agent.isOnNode()) {
+            NodeContext context = Objects.requireNonNull(cachedNodeContexts.get(agent.getCurrentNode()));
             return context.registerOutgoingIntent(action.getClosestTargetEdge(), agent);
+        } else if (agent.isOnEdge()) {
+            EdgeContext context = Objects.requireNonNull(cachedEdgesContexts.get(agent.getCurrentEdge()));
+            return context.registerOutgoingIntent(action.getClosestTargetNode(), agent);
+        } else {
+            throw new AgentStateException(
+                    "Agent is not on a node or an edge, cannot register chosen action in context");
         }
 
-        Edge currentEdge = agent.getCurrentEdge();
-        Node previousNode = agent.getPreviousOrCurrentNode();
-        if (currentEdge == null || previousNode == null) {
-            return false;
-        }
+        // Edge currentEdge = agent.getCurrentEdge();
+        // Node previousNode = agent.getPreviousOrCurrentNode();
+        // if (currentEdge == null || previousNode == null) {
+        //     return false;
+        // }
 
-        EdgeContext context = cachedEdgesContexts.get(currentEdge);
-        if (context == null) {
-            return false;
-        }
+        // EdgeContext context = cachedEdgesContexts.get(currentEdge);
+        // if (context == null) {
+        //     return false;
+        // }
 
-        Edge targetEdge = action.getClosestTargetEdge();
-        if (targetEdge == null || !targetEdge.equals(currentEdge)) {
-            return true;
-        }
-        Node targetNode = currentEdge.getOppositeNode(previousNode);
-        return context.registerOutgoingIntent(targetNode, agent);
+        // Edge targetEdge = action.getClosestTargetEdge();
+        // if (targetEdge == null || !targetEdge.equals(currentEdge)) {
+        //     return true;
+        // }
+        // Node targetNode = currentEdge.getOppositeNode(previousNode);
+        // return context.registerOutgoingIntent(targetNode, agent);
     }
 
     private NodeContext constructNodeContext(Node node) {

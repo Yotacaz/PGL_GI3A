@@ -8,10 +8,20 @@ import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.pathfinding.GraphPath;
 
+/**
+ * Represents an action where an agent follows a predefined path.
+ */
 public class FollowPathAction extends AbstractMoveAction {
+    /** The path that the agent will follow */
     private GraphPath path = null;
+    /** The index of the current edge in the path */
     private int currentEdgeIndex = 0;
 
+    /**
+     * Creates a new FollowPathAction for the specified agent and path.
+     * @param agent the agent that will perform this action
+     * @param path the path to follow
+     */
     public FollowPathAction(Agent agent, GraphPath path) {
         super(agent);
         this.path = Objects.requireNonNull(path, "Path cannot be null");
@@ -29,7 +39,7 @@ public class FollowPathAction extends AbstractMoveAction {
     public Node getClosestTargetNode() {
         int i = currentEdgeIndex + (getAgent().isOnEdge() ? 1:0);
         if (path == null || i >= path.getNodes().size()) {
-            return null; // No more no to follow
+            return null; // No more nodes to follow
         }
         return path.getNodeAt(i);
     }
@@ -56,14 +66,26 @@ public class FollowPathAction extends AbstractMoveAction {
         return consumedTime;
     }
 
+    /**
+     * Returns the index of the current edge in the path.
+     * @return the index of the current edge being followed
+     */
     public int getCurrentEdgeIndex() {
         return currentEdgeIndex;
     }
 
+    /**
+     * Returns the index of the next node in the path.
+     * @return the index of the next node to be reached
+     */
     public int getNextNodeIndex() {
         return currentEdgeIndex + 1; //there is always 1 more node than there is edges and the first node is the starting point 
     }
 
+    /**
+     * Returns the path that the agent is following.
+     * @return the {@code GraphPath} being followed by the agent
+     */
     public GraphPath getPath() {
         return path;
     }

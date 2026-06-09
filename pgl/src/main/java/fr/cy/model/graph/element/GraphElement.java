@@ -143,8 +143,9 @@ public abstract class GraphElement implements StressInducing, Serializable {
      * Ajoute un agent si la capacité le permet
      * 
      * @param a Agent
+     * @return true if the agent was added, false if the element is full and the agent cannot be added
      */
-    public void addAgent(Agent a) {
+    public boolean addAgent(Agent a) {
         if (!isFull()) {
             agents.add(a);
             // Mettre à jour les statistiques
@@ -155,7 +156,9 @@ public abstract class GraphElement implements StressInducing, Serializable {
             if (isFull()) {
                 incrementTimesFull();
             }
+            return true;
         }
+        return false;
     }
 
     public boolean isCongested() {
@@ -197,10 +200,11 @@ public abstract class GraphElement implements StressInducing, Serializable {
      * Update the total stress induced by this element alone (without neighbors),
      * which is a value between 0 and 1, and cache it.
      * 
+     * @param tickDuration the duration of the tick in seconds
      * @return the total stress induced by this element alone (without neighbors)
      *         after update
      */
-    public double updateStressGeneratedByThisElement() {
+    public double updateStressGeneratedByThisElement(double tickDuration) {
         // If we want differents calculation for node and edge, we could use protected
         // constants like CONGESTION_STRESS_FACTOR and AGENT_STRESS_FACTOR ...
         double stress = 0;
@@ -212,7 +216,7 @@ public abstract class GraphElement implements StressInducing, Serializable {
             stress += 0.2 * getFire().getIntensity();
         }
 
-        cachedTotalStressInducedByThisElement = Math.min(stress, 1.0);
+        cachedTotalStressInducedByThisElement = Math.min(stress, 1.0)*tickDuration/0.016;
         return cachedTotalStressInducedByThisElement;
     }
 
@@ -383,19 +387,19 @@ public abstract class GraphElement implements StressInducing, Serializable {
     /**
      * @return the damage caused by this element for a whole tick, based on its properties such as fire intensity
      */
-    public double getDamage() {
+    public double getDamageForAgent(Agent agent) {
         double duration = SimulationSettings.getInstance().getTickDuration();
-        return getDamage(duration);
+        return getDamageForAgent(agent,duration);
     }
 
     /**
      * @return the damage caused by this element, based on its properties such as fire intensity
      */
-    public double getDamage(double duration) { //FIXME: TEMPORATY 
+    public double getDamageForAgent(Agent agent,double duration) { //FIXME: TEMPORATY 
         double damage = (getCongestion() > 1 ? 1 : 0) * duration;
         if (isOnFire()) {
             assert getFire() != null;
-            return damage + getFire().getDamage(duration);
+            return damage + getFire().getDamageForAgent(duration);
         }
         return damage;
     }
