@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.io.Serializable;
 
 import java.io.*;
 
@@ -11,6 +12,7 @@ import fr.cy.model.agent.Agent;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 import fr.cy.util.IdManager;
+
 
 /**
  * Représente un graphe composé de nœuds et d'arêtes.
@@ -32,6 +34,22 @@ public class Graph implements Serializable {
     private final IdManager edgeIdManager;
 
     private boolean isFirstTick = true;
+
+    /**
+     * Crée un graphe avec un nombre de nœuds et d'arêtes spécifié, avec des positions aléatoires pour les nœuds
+     * et des connexions aléatoires pour les arêtes.
+     */
+    public Graph(int nodeCount, int edgeCount) {
+        this();
+
+        for (int i = 0; i < nodeCount; i++) {
+            addNode();
+        }
+
+        for (int i = 0; i < edgeCount; i++) {
+            addEdge();
+        }
+    }
 
     /**
      * Crée un graphe vide.
@@ -149,6 +167,22 @@ public class Graph implements Serializable {
     }
 
     /**
+     * Ajoute un nœud au graphe a une position aléatoire
+     * 
+     */
+    public void addNode() {
+        double x = Math.random() * 1000; // Exemple de position aléatoire
+        double y = Math.random() * 1000;
+        createNode(x, y);
+    }
+
+    public void addNodes(int count) {
+        for (int i = 0; i < count; i++) {
+            addNode();
+        }
+    }
+
+    /**
      * Ajoute une arête au graphe.
      *
      * @param edge l'arête à ajouter
@@ -169,11 +203,35 @@ public class Graph implements Serializable {
         if (!edge.isDirected()) {
             adjacencyList.get(edge.getEnd()).add(edge);
             edge.getEnd().addEdge(edge);
-        } else {
-            edge.getEnd().addEdge(edge);
         }
     }
 
+
+    /**
+     * Ajoute un noeud au hasard
+     *
+     */
+    public void addEdge() {
+        if (nodes.size() < 2) {
+            throw new GraphException("Il doit y avoir au moins 2 nœuds pour ajouter une arête.");
+        }
+
+        Node startNode = nodes.get((int) (Math.random() * nodes.size()));
+        Node endNode = nodes.get((int) (Math.random() * nodes.size()));
+
+        while (endNode == startNode) {
+            endNode = nodes.get((int) (Math.random() * nodes.size()));
+        }
+
+        createEdge(startNode, endNode);
+    }
+
+
+    public void addEdges(int count) {
+        for (int i = 0; i < count; i++) {
+            addEdge();
+        }
+    }
     /**
      * Supprime un nœud et toutes les arêtes qui y sont connectées.
      *
