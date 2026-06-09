@@ -1,5 +1,7 @@
 package fr.cy.view;
 
+import fr.cy.model.agent.Agent;
+import fr.cy.model.agent.behaviour.properties.EmotionalState;
 import fr.cy.model.fire.Fire;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.GraphElement;
@@ -19,8 +21,8 @@ public class DialogHelper {
     /**
      * Initializes a standard dialog with consistent styling and owner window.
      * * @param dialog The dialog instance to configure.
+     * * @param title The window title.
      * 
-     * @param title  The window title.
      * @param header The header text.
      * @param parent The parent node used to determine the owner window.
      * @return The configured {@link DialogPane}.
@@ -40,8 +42,7 @@ public class DialogHelper {
     /**
      * Applies standard action button styles to a dialog.
      * * @param pane The dialog pane containing the buttons.
-     * 
-     * @param okBtn The ButtonType representing the confirm action.
+     * * @param okBtn The ButtonType representing the confirm action.
      */
     private static void styleButtons(DialogPane pane, ButtonType okBtn) {
         ((Button) pane.lookupButton(okBtn)).getStyleClass().addAll("action-btn", "play-btn");
@@ -49,10 +50,70 @@ public class DialogHelper {
     }
 
     /**
+     * Opens a dialog to modify an existing Agent's properties.
+     *
+     * @param agent      The agent to modify.
+     * @param parentNode The parent node for window context.
+     * @return An Optional containing the {@link AgentParams} if accepted.
+     */
+    public static Optional<AgentParams> showAgentUpdateDialog(Agent agent, javafx.scene.Node parentNode) {
+        Dialog<AgentParams> dialog = new Dialog<>();
+        ButtonType applyBtnType = new ButtonType("Apply", ButtonBar.ButtonData.OK_DONE);
+        DialogPane pane = createBaseDialog(dialog, "Edit Agent", "Properties for Agent #" + agent.getId(),
+                parentNode);
+        pane.getButtonTypes().addAll(applyBtnType, ButtonType.CANCEL);
+        styleButtons(pane, applyBtnType);
+
+        // Define generic area size (min 0.1m², max 2m², current, step 0.01)
+        Spinner<Double> healthS = new Spinner<>(0, agent.getPhysicalProperties().getMaxHealth(), agent.getHealth(), 1);
+        healthS.setEditable(true);
+
+        // Define generic area size (min 0.1m², max 2m², current, step 0.01)
+        Spinner<Double> areaS = new Spinner<>(0.1, 2.0, agent.getSurfaceAreaTakenByAgent(), 0.01);
+        areaS.setEditable(true);
+
+        // Define max speed (min 0.1 m/s, max 10 m/s, current, step 0.1)
+        Spinner<Double> speedS = new Spinner<>(0.1, 10.0, agent.getMaxSpeed(), 0.1);
+        speedS.setEditable(true);
+
+        // Dropdown for Emotional State based on defined Enum
+        ComboBox<EmotionalState> stateCombo = new ComboBox<>();
+        stateCombo.getItems().addAll(EmotionalState.values());
+        stateCombo.setValue(agent.getEmotionalState());
+        stateCombo.setMaxWidth(Double.MAX_VALUE);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(15);
+        grid.setVgap(15);
+        grid.setPadding(new Insets(20));
+
+        int row = 0;
+        grid.add(new Label("Health:"), 0, row);
+        grid.add(healthS, 1, row++);
+
+        grid.add(new Label("Physical Area (m²):"), 0, row);
+        grid.add(areaS, 1, row++);
+
+        grid.add(new Label("Base Max Speed (m/s):"), 0, row);
+        grid.add(speedS, 1, row++);
+
+        pane.setContent(grid);
+
+        dialog.setResultConverter(btn -> {
+            if (btn == applyBtnType) {
+                return new AgentParams(areaS.getValue(), speedS.getValue(), healthS.getValue());
+            }
+            return null;
+        });
+
+        return dialog.showAndWait();
+    }
+
+    /**
      * Opens a dialog to configure and trigger a fire on a specific graph element.
      * * @param element The graph element to set on fire.
+     * * @param parentNode The parent node for window context.
      * 
-     * @param parentNode The parent node for window context.
      * @return An Optional containing the configured {@link Fire} if accepted.
      */
     public static Optional<Fire> showFireDialog(GraphElement element, javafx.scene.Node parentNode) {
@@ -87,8 +148,7 @@ public class DialogHelper {
     /**
      * Opens a dialog to input parameters for creating a new node.
      * * @param parentNode The parent node for window context.
-     * 
-     * @return An Optional containing the {@link NodeParams}.
+     * * @return An Optional containing the {@link NodeParams}.
      */
     public static Optional<NodeParams> showNodeCreationDialog(javafx.scene.Node parentNode) {
         ButtonType okBtn = new ButtonType("Create Node", ButtonBar.ButtonData.OK_DONE);
@@ -117,8 +177,8 @@ public class DialogHelper {
     /**
      * Opens a dialog to modify an existing node's properties.
      * * @param node The node to modify.
+     * * @param parentNode The parent node for window context.
      * 
-     * @param parentNode The parent node for window context.
      * @return An Optional containing the {@link NodeParams}.
      */
     public static Optional<NodeParams> showNodeUpdateDialog(Node node, javafx.scene.Node parentNode) {
@@ -149,8 +209,8 @@ public class DialogHelper {
     /**
      * Opens a dialog to create a new edge between two nodes.
      * * @param start The starting node.
+     * * @param end The ending node.
      * 
-     * @param end        The ending node.
      * @param parentNode The parent node for window context.
      * @return An Optional containing the {@link EdgeParams}.
      */
@@ -187,8 +247,8 @@ public class DialogHelper {
     /**
      * Opens a dialog to modify an existing edge's properties.
      * * @param edge The edge to modify.
+     * * @param parentNode The parent node for window context.
      * 
-     * @param parentNode The parent node for window context.
      * @return An Optional containing the {@link EdgeParams}.
      */
     public static Optional<EdgeParams> showEdgeUpdateDialog(Edge edge, javafx.scene.Node parentNode) {
@@ -231,8 +291,8 @@ public class DialogHelper {
     /**
      * Opens a dialog to request the number of agents to generate.
      * * @param parentNode The parent node for window context.
+     * * @param title The dialog title.
      * 
-     * @param title      The dialog title.
      * @param headerText The header text.
      * @return An Optional containing the integer count of agents.
      */
@@ -268,8 +328,7 @@ public class DialogHelper {
     /**
      * Opens a dialog to define the number of nodes for random graph generation.
      * * @param parentNode The parent node for window context.
-     * 
-     * @return An Optional containing the number of nodes to generate.
+     * * @return An Optional containing the number of nodes to generate.
      */
     public static Optional<Integer> showRandomGraphDialog(javafx.scene.Node parentNode) {
         Dialog<Integer> dialog = new Dialog<>();
@@ -282,7 +341,7 @@ public class DialogHelper {
         grid.setHgap(15);
         grid.setVgap(15);
         grid.setPadding(new Insets(20));
-        Spinner<Integer> countSpinner = new Spinner<>(5, 1000, 20, 5);
+        Spinner<Integer> countSpinner = new Spinner<>(2, 1000, 5, 5);
         countSpinner.setEditable(true);
 
         grid.add(new Label("Number of nodes:"), 0, 0);
@@ -313,6 +372,19 @@ public class DialogHelper {
         public NodeParams(double c, boolean e) {
             this.capacity = c;
             this.isExit = e;
+        }
+    }
+
+    /** Data Transfer Object for agent parameters. */
+    public static class AgentParams {
+        public final double surfaceArea;
+        public final double maxSpeed;
+        public final double health;
+
+        public AgentParams(double surfaceArea, double maxSpeed, double health) {
+            this.surfaceArea = surfaceArea;
+            this.maxSpeed = maxSpeed;
+            this.health = health;
         }
     }
 }

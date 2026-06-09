@@ -16,7 +16,7 @@ import java.util.function.Consumer;
  * {@link GraphCanvas}.
  * <p>
  * It handles mouse inputs for selection, dragging entities, panning/zooming,
- * and various creation modes (nodes, edges, agents).
+ * and various creation/manipulation modes (nodes, edges, agents, deletion).
  * </p>
  */
 public class CanvasInteractionController {
@@ -28,6 +28,7 @@ public class CanvasInteractionController {
     private final SimulationController simController;
     private Consumer<Object> onEntitySelected;
     private Consumer<Node> onAddAgentRequested;
+    private Consumer<GraphElement> onDeleteElementRequested;
 
     private double lastMouseX;
     private double lastMouseY;
@@ -39,13 +40,13 @@ public class CanvasInteractionController {
      * Defines the supported interaction modes for the canvas.
      */
     public enum InteractionMode {
-        SELECT_AND_DRAG, ADD_NODE, ADD_EDGE_START, ADD_AGENT
+        SELECT_AND_DRAG, ADD_NODE, ADD_EDGE_START, ADD_AGENT, DELETE
     }
 
     /**
      * Constructs the controller and initializes interaction listeners.
-     * * @param canvas The canvas to attach listeners to.
-     * 
+     *
+     * @param canvas        The canvas to attach listeners to.
      * @param simController The simulation controller instance.
      */
     public CanvasInteractionController(GraphCanvas canvas, SimulationController simController) {
@@ -56,14 +57,16 @@ public class CanvasInteractionController {
 
     /**
      * Switches the interaction mode and updates the cursor accordingly.
-     * * @param mode The new interaction mode.
+     *
+     * @param mode The new interaction mode.
      */
     public void setMode(InteractionMode mode) {
         this.currentMode = mode;
-        this.edgeStartNode = null;
+        this.edgeStartNode = null; // Clear creation state
 
         switch (mode) {
             case ADD_NODE, ADD_EDGE_START, ADD_AGENT -> canvas.setCursor(Cursor.CROSSHAIR);
+            case DELETE -> canvas.setCursor(Cursor.DEFAULT); // Cursor handled dynamically on move
             case SELECT_AND_DRAG -> canvas.setCursor(Cursor.DEFAULT);
         }
 
@@ -73,7 +76,8 @@ public class CanvasInteractionController {
 
     /**
      * Sets the callback for entity selection.
-     * * @param callback Consumer to receive the selected object.
+     *
+     * @param callback Consumer to receive the selected object.
      */
     public void setOnEntitySelected(Consumer<Object> callback) {
         this.onEntitySelected = callback;
@@ -81,10 +85,20 @@ public class CanvasInteractionController {
 
     /**
      * Sets the callback for agent addition requests.
-     * * @param callback Consumer to receive the target {@link Node}.
+     *
+     * @param callback Consumer to receive the target {@link Node}.
      */
     public void setOnAddAgentRequested(Consumer<Node> callback) {
         this.onAddAgentRequested = callback;
+    }
+
+    /**
+     * Sets the callback executed when an element is clicked in deletion mode.
+     *
+     * @param callback Consumer receiving the structural element to remove.
+     */
+    public void setOnDeleteElementRequested(Consumer<GraphElement> callback) {
+        this.onDeleteElementRequested = callback;
     }
 
     /**
@@ -112,39 +126,50 @@ public class CanvasInteractionController {
                 }
             }
 
+            // Panning is allowed in SELECT_AND_DRAG or DELETE modes
             if (currentMode == InteractionMode.SELECT_AND_DRAG) {
                 canvas.setCursor(draggedNode != null ? Cursor.CLOSED_HAND : Cursor.MOVE);
+            } else if (currentMode == InteractionMode.DELETE) {
+                canvas.setCursor(Cursor.MOVE);
             }
         });
 
         canvas.setOnMouseReleased(event -> {
             draggedNode = null;
-            if (currentMode == InteractionMode.SELECT_AND_DRAG)
+            if (currentMode == InteractionMode.SELECT_AND_DRAG || currentMode == InteractionMode.DELETE)
                 canvas.setCursor(Cursor.DEFAULT);
         });
 
         canvas.setOnMouseMoved(event -> {
+            double mx = (event.getX() - canvas.getPanX()) / canvas.getZoom();
+            double my = (event.getY() - canvas.getPanY()) / canvas.getZoom();
+
             if (currentMode == InteractionMode.SELECT_AND_DRAG) {
-                double mx = (event.getX() - canvas.getPanX()) / canvas.getZoom();
-                double my = (event.getY() - canvas.getPanY()) / canvas.getZoom();
                 canvas.setCursor((findClosestAgent(mx, my) != null || findClosestElement(mx, my) != null)
                         ? Cursor.HAND
                         : Cursor.DEFAULT);
+            } else if (currentMode == InteractionMode.DELETE) {
+                // Highlight structural elements removable in this mode
+                canvas.setCursor(Cursor.CROSSHAIR);
             } else {
                 canvas.setCursor(Cursor.CROSSHAIR);
             }
         });
 
         canvas.setOnMouseDragged(event -> {
-            if (draggedNode != null) {
+            // Drag node (only in default mode)
+            if (currentMode == InteractionMode.SELECT_AND_DRAG && draggedNode != null) {
                 draggedNode.setX((event.getX() - canvas.getPanX()) / canvas.getZoom());
                 draggedNode.setY((event.getY() - canvas.getPanY()) / canvas.getZoom());
                 notifySelection(draggedNode);
             } else {
-                canvas.setPanX(canvas.getPanX() + (event.getX() - lastMouseX));
-                canvas.setPanY(canvas.getPanY() + (event.getY() - lastMouseY));
-                lastMouseX = event.getX();
-                lastMouseY = event.getY();
+                // Pan canvas (allowed in SELECT_AND_DRAG or DELETE)
+                if (currentMode == InteractionMode.SELECT_AND_DRAG || currentMode == InteractionMode.DELETE) {
+                    canvas.setPanX(canvas.getPanX() + (event.getX() - lastMouseX));
+                    canvas.setPanY(canvas.getPanY() + (event.getY() - lastMouseY));
+                    lastMouseX = event.getX();
+                    lastMouseY = event.getY();
+                }
             }
         });
 
@@ -164,6 +189,8 @@ public class CanvasInteractionController {
      * {@code currentMode}.
      */
     private void handleCanvasClick(MouseEvent event) {
+        // Ignore clicks if a drag occurred (except selection mode where drag selection
+        // is complex)
         if (!event.isStillSincePress() && currentMode == InteractionMode.SELECT_AND_DRAG)
             return;
 
@@ -205,7 +232,16 @@ public class CanvasInteractionController {
                 if (onAddAgentRequested != null)
                     onAddAgentRequested.accept(clickedNode);
             }
+        } else if (currentMode == InteractionMode.DELETE) {
+            // Rapid deletion mode: immediately trigger deletion on clicked structural
+            // elements
+            GraphElement clicked = findClosestElement(mx, my);
+            if (clicked != null && onDeleteElementRequested != null) {
+                onDeleteElementRequested.accept(clicked);
+                // Selection logic is handled by MainController via wiring
+            }
         } else {
+            // Standard selection and interaction logic
             Agent clickedAgent = findClosestAgent(mx, my);
             GraphElement clickedElement = (clickedAgent == null) ? findClosestElement(mx, my) : null;
             Object selected = (clickedAgent != null) ? clickedAgent : clickedElement;
