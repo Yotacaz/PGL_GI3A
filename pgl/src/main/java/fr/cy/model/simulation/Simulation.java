@@ -30,6 +30,11 @@ public class Simulation implements Serializable {
         this(name, graph, SimulationSettings.getInstance());
     }
 
+    public Simulation(String name, int nodeCount, int edgeCount, int agentCount) {
+        this(name, new Graph(nodeCount, edgeCount), new SimulationSettings());
+        this.agentManager.generateRandomsAgents(agentCount);
+    }
+
     public Simulation(String name, Graph graph, SimulationSettings simulationSettings) {
         this.graph = graph;
         this.simulationSettings = simulationSettings;

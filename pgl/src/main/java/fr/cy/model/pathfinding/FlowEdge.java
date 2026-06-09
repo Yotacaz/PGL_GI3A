@@ -21,12 +21,11 @@ public class FlowEdge implements Serializable {
     /**
      * Constructeur d'une arête de flux.
      *
-     * @param from     nœud source
-     * @param to       nœud destination
+     *      * @param to       nœud destination
      * @param capacity capacité de l'arête
      * @param cost     coût unitaire du flux
      */
-    public FlowEdge(Node from, Node to, double capacity, double cost) {
+    public FlowEdge(Node from,  Node to, double capacity, double cost) {
         this.from = from;
         this.to = to;
         this.capacity = capacity;
@@ -52,33 +51,17 @@ public class FlowEdge implements Serializable {
         this.flow += amount;
     }
 
-    /**
-     * Retrait du flux de cette arête (pour l'arête inverse).
-     *
-     * @param amount montant du flux à retirer
-     */
-    public void removeFlow(double amount) {
-        this.flow -= amount;
-    }
+    
 
     // Getters
-    public Node getFrom() {
-        return from;
-    }
+    
 
     public Node getTo() {
         return to;
     }
 
-    public double getCapacity() {
-        return capacity;
-    }
-
     public double getCost() {
         return cost;
-    }
-
-    public double getFlow() {
-        return flow;
+    
     }
 }

@@ -10,7 +10,7 @@ import javafx.animation.AnimationTimer;
  */
 public class SimulationController {
 
-    private final Simulation simulation;
+    private Simulation simulation;
     private final GraphRenderer renderer;
     private final GraphCanvas canvas;
     private AnimationTimer timer;
@@ -119,5 +119,17 @@ public class SimulationController {
     // Fournit l'instance de la simu (pour y chercher un élément par ex)
     public Simulation getSimulation() {
         return simulation;
+    }
+
+    public void loadSimulation(Simulation newSimulation) {
+        this.simulation = newSimulation;
+        this.simulation.getSimulationSettings().setTickDuration(0.016); // 60fps
+        this.isRunning = false;
+        this.simulation.stop();
+        renderer.render(simulation, canvas);
+        
+        if (onRender != null) {
+            onRender.run();
+        }
     }
 }
