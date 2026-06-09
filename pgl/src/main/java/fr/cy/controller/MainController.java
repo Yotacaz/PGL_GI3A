@@ -33,7 +33,7 @@ public class MainController {
         this.root = new BorderPane();
         this.root.getStyleClass().add("main-pane");
 
-        // 1. Initialisation du Canvas central
+        // 1. Initialise the Canvas
         Pane canvasContainer = new Pane();
         canvasContainer.getStyleClass().add("canvas-container");
         this.graphCanvas = new GraphCanvas();
@@ -42,28 +42,28 @@ public class MainController {
         canvasContainer.getChildren().add(graphCanvas);
         root.setCenter(canvasContainer);
 
-        // 2. Initialisation du Moteur de Simulation
+        // 2. Initialise the Simulation Controller
         this.simController = new SimulationController(simulation, graphCanvas);
         this.simController.setOnRender(this::refreshStatsPanel);
 
-        // 3. Initialisation des panneaux latéraux
+        // 3. Initialisation of the side panels
         this.statsPanel = new SimulationStatsPanel();
         root.setLeft(statsPanel);
 
         this.detailsPanel = new DetailsSidePanel();
 
         // ==========================================================
-        // CÂBLAGE DES ACTIONS DU PANNEAU LATÉRAL (MVC)
+        // WIRING OF THE SIDE PANEL ACTIONS (MVC)
         // ==========================================================
 
-        // Action 1 : Le Feu
+        // Action 1 : The fire
         this.detailsPanel.setOnToggleFireRequested(element -> {
             if (element.isOnFire()) {
                 element.removeFire();
                 AgentSettings settings = simController.getSimulation().getAgentManager().getAgentSettings();
                 detailsPanel.update(element, settings);
             } else {
-                // ---> ON AJOUTE 'detailsPanel' ICI COMME PARENT <---
+                // ---> WA ADD 'detailsPanel' AS FOR THE PARENT <---
                 fr.cy.view.DialogHelper.showFireDialog(element, detailsPanel).ifPresent(newFire -> {
 
                     element.setFire(newFire);
@@ -77,43 +77,42 @@ public class MainController {
             }
         });
 
-        // Action 2 : La Suppression
+        // Action 2 : Deletion
         this.detailsPanel.setOnDeleteRequested(element -> {
             Graph graph = simController.getSimulation().getGraph();
 
-            // On supprime du graphe
+            // Delete from the Graph
             if (element instanceof Node node) {
                 graph.removeNode(node);
             } else if (element instanceof Edge edge) {
                 graph.removeEdge(edge);
             }
 
-            // On désélectionne proprement
+            // We deselect cleanly
             this.currentSelectedEntity = null;
-            // Si tu as une méthode clearSelection() dans interactionController ou
-            // graphCanvas, appelle-la.
+            //If you have a method clearSelection() in interactionController or graphCanvas, call it.
             // ex: interactionController.clearSelection();
-            // ou : graphCanvas.setSelectedNode(null); graphCanvas.setSelectedEdge(null);
+            // or : graphCanvas.setSelectedNode(null); graphCanvas.setSelectedEdge(null);
         });
 
         // ==========================================================
 
-        root.setRight(detailsPanel); // Il est rattaché mais commence "caché" (largeur 0)
+        root.setRight(detailsPanel); // Linked but start hidden
 
-        // 4. Initialisation de la Toolbar
+        // 4. Initialise Toolbar
         this.toolBar = new SimulationToolBar(simController);
         root.setBottom(toolBar);
 
         this.editingToolBar = new GraphEditingToolBar();
         root.setTop(editingToolBar);
 
-        // 5. Initialisation du contrôleur d'interactions (Souris/Caméra)
+        // 5. Initialise Interaction controleur (mouse + camera)
         this.interactionController = new CanvasInteractionController(graphCanvas, simController);
 
         this.editingToolBar.setOnModeChange(mode -> this.interactionController.setMode(mode));
         this.editingToolBar.setOnGenerateRandom(this::generateRandomMass);
 
-        // Ajout des connexions pour les agents
+        // Add Agents on Node action (from the interaction controller, which detects the click on a node, to the details panel which shows the update)
         this.interactionController.setOnAddAgentRequested(this::promptAndAddAgentsToNode);
         this.editingToolBar.setOnGenerateRandomAgents(this::generateRandomAgents);
 
@@ -123,12 +122,12 @@ public class MainController {
             graphCanvas.setSelectedEntity(entity);
 
             if (entity == null) {
-                // Si on clique dans le vide, on range le panneau !
+                // if you click on the empty space, we hide the details panel
                 this.detailsPanel.hidePanel();
             } else {
                 AgentSettings settings = simController.getSimulation().getAgentManager().getAgentSettings();
                 this.detailsPanel.update(entity, settings);
-                // Et on le fait apparaitre en glissant
+                // And we show it if it was hidden
                 this.detailsPanel.showPanel();
             }
         });
@@ -146,13 +145,13 @@ public class MainController {
 
             java.util.List<Node> generatedNodes = new java.util.ArrayList<>();
 
-            // 1. Création des Nœuds via ton Factory (createNode gère l'ID et le addNode !)
+            // 1. Creation of Nodes via your Factory (createNode manages the ID and the addNode!)
             for (int i = 0; i < count; i++) {
                 Node n = graph.createNode(rand.nextDouble() * areaWidth, rand.nextDouble() * areaHeight, 50.0);
                 generatedNodes.add(n);
             }
 
-            // 2. Création des Arêtes (Relier chaque nœud à ses 2 voisins les plus proches)
+            // 2. Creation of Edges (Link each node to its 2 nearest neighbors)
             for (Node n1 : generatedNodes) {
                 generatedNodes.stream()
                         .filter(n2 -> n1 != n2)
@@ -178,7 +177,7 @@ public class MainController {
                 .showAgentCountDialog(graphCanvas, "Générer Foule", "Ajout d'agents sur le Nœud #" + targetNode.getId())
                 .ifPresent(count -> {
                     simController.getSimulation().getAgentManager().generateAgentsOnNode("Agent_", targetNode, count);
-                    // Si le panneau latéral affiche ce nœud, on le met à jour
+                    // if the side panel is currently showing the details of this node, we update it to reflect the new agents
                     fr.cy.model.agent.AgentSettings settings = simController.getSimulation().getAgentManager()
                             .getAgentSettings();
                     detailsPanel.update(targetNode, settings);
@@ -192,12 +191,12 @@ public class MainController {
                     java.util.List<fr.cy.model.graph.element.Node> allNodes = simController.getSimulation().getGraph()
                             .getNodes();
                     if (allNodes.isEmpty())
-                        return; // Sécurité si le graphe est vide
+                        return; // Safety if we click an empty graph
 
                     java.util.Random rand = new java.util.Random();
                     fr.cy.model.agent.AgentManager agentManager = simController.getSimulation().getAgentManager();
 
-                    // Répartition aléatoire : on choisit un nœud au hasard pour chaque agent
+                    // Random spread: for each agent, we pick a random node
                     for (int i = 0; i < count; i++) {
                         fr.cy.model.graph.element.Node randomNode = allNodes.get(rand.nextInt(allNodes.size()));
                         agentManager.generateAgentsOnNode("Rnd_", randomNode, 1);
@@ -225,7 +224,7 @@ public class MainController {
                 graph.getNodes().size(), graph.getEdges().size(), graph.getExits().size(),
                 avgCong);
 
-        // Suivi en temps réel de l'élément sélectionné
+        // Real-time tracking of the selected element
         if (currentSelectedEntity != null && simController.isRunning()) {
             AgentSettings settings = simController.getSimulation().getAgentManager().getAgentSettings();
             detailsPanel.update(currentSelectedEntity, settings);
