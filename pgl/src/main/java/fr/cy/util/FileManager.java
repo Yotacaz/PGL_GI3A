@@ -12,6 +12,9 @@ import java.util.List;
 
 import fr.cy.model.simulation.Simulation;
 
+/**
+ * Class responsible for saving and loading simulations to and from files.
+ */
 public class FileManager implements Serializable {
     private static final long serialVersionUID = 1L;
     private static FileManager instance;
@@ -28,6 +31,11 @@ public class FileManager implements Serializable {
         return instance;
     }
 
+    /**
+     * Saves a simulation to a file.
+     *
+     * @param simulation the simulation to save
+     */
     public static void saveSimulation(Simulation simulation) {
         File folder = new File(SIMULATION_FOLDER);
         if (!folder.exists()) {
@@ -47,6 +55,12 @@ public class FileManager implements Serializable {
         }
     }
 
+    /**
+     * Loads a simulation from a file.
+     *
+     * @param name the name of the simulation file (without extension)
+     * @return the loaded simulation or null if not found
+     */
     public static Simulation loadSimulation(String name) {
         File file = new File(SIMULATION_FOLDER, name + ".bin");
         if (!file.exists()) {
@@ -65,6 +79,10 @@ public class FileManager implements Serializable {
         return null;
     }
 
+    /**
+     * Lists all available simulations in the simulations folder.
+     * @return list of simulation names (without file extension)
+     */
     public static List<String> getAvailableSimulations() {
         List<String> simulationNames = new ArrayList<>();
         File folder = new File(SIMULATION_FOLDER);
