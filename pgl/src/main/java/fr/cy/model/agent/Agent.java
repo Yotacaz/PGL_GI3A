@@ -10,6 +10,7 @@ import java.util.function.BiFunction;
 import java.util.function.ToDoubleFunction;
 
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
+import fr.cy.model.agent.behaviour.agentActions.FollowSingleEdgeAction;
 import fr.cy.model.agent.behaviour.decisions.AgentNodeDecisionScore;
 import fr.cy.model.agent.behaviour.decisions.AgentPossibleEdgeDecision;
 import fr.cy.model.agent.behaviour.decisions.AgentPossibleNodeDecision;
@@ -164,8 +165,8 @@ public class Agent implements StressInducing, Serializable {
                 repeatLastDecisionTendency, crowdingTolerance);
         this.physicalProperties = new AgentPhysicalProperties(maxSpeed, health, health, surfaceAreaTakenByAgent);
         if (startingNode != null) {
-            if(!putOnNode(startingNode)){
-                forcePutOnNode(startingNode);
+            if (!putOnNode(startingNode)) {
+                tpToNode(startingNode);
             }
         } else {
             this.isOnNode = false; // Agent starts unplaced, not on a node
@@ -641,7 +642,7 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Places the agent on a node.
-     *
+     * Should be used when agent is on neighbouring edges or at initialization
      * @param currentNode the node to place the agent on
      * @return true if the agent was successfully placed on the node, false if the node is at capacity and cannot accept more agents
      */
@@ -659,25 +660,46 @@ public class Agent implements StressInducing, Serializable {
         return true;
     }
 
-    public boolean forcePutOnNode(Node node) {
-        Objects.requireNonNull(node, "node cannot be null when force putting agent on node, call removeFromGraph() instead");
+    /**
+     * Forces the agent to be placed on a node, regardless of capacity.
+     *  And resets the agent's current action and edge progress. 
+     *
+     * @param node the node to place the agent on
+     * @return true if the agent was successfully placed on the node, false otherwise
+     */
+    public boolean tpToNode(Node node) {
+        Objects.requireNonNull(node,
+                "node cannot be null when force putting agent on node, call removeFromGraph() instead");
         if (!node.forceAddAgent(this)) {
             return false;
         }
         removeFromGraphElemButKeepReferences();
         this.previousOrCurrentNode = node;
         this.currentEdgeProgress = -1.0;
+        this.currentAction = null;
         setIsOnNode(true);
         return true;
     }
 
-    public boolean forcePutOnEdge(Edge edge) {
-        Objects.requireNonNull(edge, "edge cannot be null when force putting agent on edge, call removeFromGraph() instead");
+    /**
+     * Places by force the agent on an edge, regardless of capacity. 
+     * The agent will start following the edge from the defined start node to the end node at the defined progress. 
+     * This method should be use when wanting to teleport an agent on an edge that is not necessary adjacent to its current position
+     * @param edge the edge to place the agent on
+     * @param progressFromEdgeStart the progress from the start of the edge to place the agent at, between 0 and 1
+     * @return true if the agent was successfully placed on the edge
+     */
+    public boolean tpToEdge(Edge edge, double progressFromEdgeStart) {
+        Objects.requireNonNull(edge,
+                "edge cannot be null when force putting agent on edge, call removeFromGraph() instead");
         if (!edge.forceAddAgent(this)) {
             return false;
         }
         removeFromGraphElemButKeepReferences();
         this.currentOrPreviousEdge = edge;
+        this.currentAction = new FollowSingleEdgeAction(this, edge, edge.getEnd());
+        this.previousOrCurrentNode = edge.getStart();
+        this.currentEdgeProgress = progressFromEdgeStart;
         //do not reset current edge progress
         setIsOnNode(false);
         return true;
@@ -700,8 +722,8 @@ public class Agent implements StressInducing, Serializable {
     }
 
     /**
-     * Places the agent on an edge.
-     *
+     * Places the agent on an edge. It does not reset the current action
+     * Should be used when the agent is on an neighbouring node
      * @param edge the edge to place the agent on
      */
     public boolean putOnEdge(Edge edge) {
@@ -711,7 +733,7 @@ public class Agent implements StressInducing, Serializable {
         }
         removeFromGraphElemButKeepReferences();
         this.currentOrPreviousEdge = edge;
-        // do not reset current edge progress
+        currentEdgeProgress = 0.0;
         setIsOnNode(false);
         return true;
     }

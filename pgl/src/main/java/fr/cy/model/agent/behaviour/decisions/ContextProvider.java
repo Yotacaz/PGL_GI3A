@@ -13,7 +13,6 @@ import fr.cy.model.agent.exceptions.AgentStateException;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.graph.element.Edge;
-import fr.cy.model.graph.element.GraphElement;
 import fr.cy.model.pathfinding.PathFinder;
 
 /**
