@@ -110,7 +110,7 @@ public abstract class GraphElement implements StressInducing, Serializable {
 
     /**
      * Adds an agent if capacity permits.
-     * * @param a The agent to add.
+     * @param a The agent to add.
      * 
      * @return True if successful, false if the element is at full capacity.
      */
@@ -130,6 +130,19 @@ public abstract class GraphElement implements StressInducing, Serializable {
     public boolean isCongested() {
         return getCongestion() > 0.7;
     }
+
+    //FIXME : proper integration of this method for forced congestion + code duplication with addAgent 
+    public boolean forceAddAgent(Agent a) { //TODO
+        if (isFull())
+            setForcedCongestion(true);
+        agents.add(a);  
+        incrementTotalAgentsCount();
+        recordCongestionMeasure();  
+        if (isFull())
+            incrementTimesFull();
+        return true;
+    }
+
 
     /**
      * Calculates an attractiveness multiplier for an agent based on local

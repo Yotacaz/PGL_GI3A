@@ -27,14 +27,15 @@ abstract class AbstractGraphElementContext<T extends GraphElement> implements Se
         return Collections.unmodifiableList(accessibleElements);
     }
 
-    /** @return the congestion statistics for the accessible graph elements, used to inform decision-making */
+    /** @return the congestion statistics for the accessible graph elements, used to inform decision-making can be null if there are no accessible elements 
+    */
     public CongestionStats<T> getCongestionStatsForAccessibleElements() {
         return congestionStats;
     }
 
     /** @return the list of accessible graph elements sorted by congestion (least congested first) */
     public List<T> getSortedAccessibleElementsByCongestion() {
-        return Collections.unmodifiableList(congestionStats.getSortedByCongestion());
+        return congestionStats == null ? Collections.emptyList() : Collections.unmodifiableList(congestionStats.getSortedByCongestion());
     }
 
     /**

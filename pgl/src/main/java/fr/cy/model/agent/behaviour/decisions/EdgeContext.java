@@ -17,6 +17,9 @@ public class EdgeContext extends AbstractGraphElementContext<Node> {
     /** The edge from which the decision is made. */
     private final Edge sourceEdge;
 
+    /** @param sourceEdge the edge from which the decision is made
+     * @param accessibleNodes the list of nodes that can be accessed from the edge
+     */
     EdgeContext(
             Edge sourceEdge,
             List<Node> accessibleNodes) {
@@ -24,14 +27,17 @@ public class EdgeContext extends AbstractGraphElementContext<Node> {
         this.sourceEdge = Objects.requireNonNull(sourceEdge, "sourceEdge");
     }
 
+    /** @return the list of accessible nodes */
     public List<Node> getAccessibleNodes() {
         return getAccessibleElements();
     }
 
+    /** @return the congestion statistics for the accessible outgoing nodes, can be null if there are no accessible nodes */
     public CongestionStats<Node> getCongestionStatsForOutgoingNodes() {
         return getCongestionStatsForAccessibleElements();
     }
 
+    /** @return the list of accessible nodes sorted by congestion (least congested first) */
     public List<Node> getSortedAccessiblesNodesByCongestion() {
         return getSortedAccessibleElementsByCongestion();
     }

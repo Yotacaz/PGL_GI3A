@@ -6,6 +6,7 @@ import java.util.Random;
 import java.util.function.ToDoubleFunction;
 
 import fr.cy.model.agent.exceptions.AgentBehaviourException;
+import fr.cy.model.graph.element.GraphElement;
 
 /**
  * Utility class for computing and selecting decisions based on scores.
@@ -39,7 +40,7 @@ final class DecisionScoreUtils {
      * @return the selected element
      * @throws AgentBehaviourException if no elements are available or scores are inconsistent
      */
-    static <T> T selectElementBasedOnScores(Map<T, Double> elementScores, double totalScore) {
+    static <T extends GraphElement> T selectElementBasedOnScores(Map<T, Double> elementScores, double totalScore) {
         if (elementScores.isEmpty()) {
             throw new AgentBehaviourException("No graph element to choose from.");
         }
