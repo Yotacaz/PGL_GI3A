@@ -16,6 +16,7 @@ import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.agent.behaviour.decisions.ContextProvider;
 import fr.cy.model.simulation.SimulationSettings;
+import fr.cy.model.agent.behaviour.decisions.ContextProvider;
 
 /**
  * Manager responsible for higher-level operations on {@link Agent} instances.
@@ -40,6 +41,7 @@ public class AgentManager implements Serializable {
     private ContextProvider decisionContextProvider;
     private AgentGenerator agentGenerator;
     private final SimulationSettings simulationSettings;
+
     // private Map<Agent, AgentAction> agentActionsPreviousTick = new HashMap<>();
 
     /** For storing initial snapshots of agents (for reset functionality) */
@@ -52,13 +54,13 @@ public class AgentManager implements Serializable {
      * @param agentGenerator
      * @param simulationSettings
      */
-    public AgentManager(int count, NodeDecisionContextProvider decisionContextProvider,
+    public AgentManager(int count, ContextProvider decisionContextProvider,
             AgentGenerator agentGenerator, SimulationSettings simulationSettings) {
         this(new ArrayList<>(), decisionContextProvider, agentGenerator, simulationSettings);
         generateRandomsAgents(count);
     
     }
-    public AgentManager(List<Agent> agents, NodeDecisionContextProvider decisionContextProvider,
+    public AgentManager(List<Agent> agents,ContextProvider decisionContextProvider,
             AgentGenerator agentGenerator, SimulationSettings simulationSettings) {
         this.agentsToEvacuate = agents;
         this.decisionContextProvider = decisionContextProvider;
