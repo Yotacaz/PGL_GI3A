@@ -240,13 +240,6 @@ public class Graph implements Serializable {
         // 1. Handle agents on connected edges before removing the edge
         List<Edge> connectedEdges = new ArrayList<>(nodeToRemove.getEdges());
         for (Edge edge : connectedEdges) {
-            // For each agent on this edge, move them back to the edge's start node
-            for (Agent agent : new ArrayList<>(edge.getAgents())) {
-                Node startNode = edge.getStart();
-                // Uses putOnNode: this updates the agent's position
-                // AND updates the target node's agent list
-                agent.putOnNode(startNode);
-            }
             removeEdge(edge);
         }
 
@@ -266,7 +259,6 @@ public class Graph implements Serializable {
         // 3. Final removal
         nodes.remove(nodeToRemove);
     }
-
     /**
      * Removes an edge from the graph.
      *
@@ -285,7 +277,32 @@ public class Graph implements Serializable {
         edge.getStart().removeEdge(edge);
         edge.getEnd().removeEdge(edge);
 
+        for (Agent agent : new ArrayList<>(edge.getAgents())) {
+            Node startNode = edge.getStart();
+            agent.putOnNode(startNode);
+        }
+
         edgeIdManager.releaseId(edge.getId());
+    }
+
+    /**
+     * Switches the direction of a directed edge. If the edge is undirected, this method has no effect.
+     * @param edge
+     */
+    public void switchEdgeDirection(Edge edge) {
+        if (edge.isDirected()) {
+            
+            edge.getStart().removeEdge(edge);
+            adjacencyList.get(edge.getStart()).remove(edge);
+
+            edge.switchDirection();
+
+            edge.getEnd().addEdge(edge);
+            adjacencyList.get(edge.getEnd()).add(edge);
+            
+
+
+        }
     }
 
     /**

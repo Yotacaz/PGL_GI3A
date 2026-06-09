@@ -129,6 +129,13 @@ public class Node extends GraphElement {
         isExit = exit;
     }
 
+    /**
+     * Toggles the exit status of the node.
+     */
+    public void switchExit() {
+        isExit = !isExit;
+    }
+
     @Override
     public List<GraphElement> getNeighbors() {
         return new ArrayList<>(connectedEdges);
