@@ -360,6 +360,21 @@ public class Edge extends GraphElement {
     }
 
     @Override
+    public double getDamageForAgent( Agent agent, double tickDuration) {
+        double burnedDistance = getBurnedDistance(); 
+        double edgeProgress = agent.getCurrentEdgeProgress();
+        Node toNode = Objects.requireNonNull(agent.getCurrentNodeOrNextNodeIfOnEdge(), "Destination node cannot be null when on edge");
+        Node oppositeNode = Objects.requireNonNull(getOppositeNode(toNode), "Opposite node cannot be null, should be a node of this edge");
+        boolean burningFromToNode = (toNode.equals(start) && burningFromStart) || (toNode.equals(end) && burningFromEnd);
+        boolean burningFromOppositeNode = (oppositeNode.equals(start) && burningFromStart) || (oppositeNode.equals(end) && burningFromEnd);
+        double distanceToOppositeNode = edgeProgress * length;
+        double distanceToToNode = (1 - edgeProgress) * length;
+        // double effectiveBurnedDistance = burnedDistance;
+        //TODO: account the actual position of the agent and the burned distance from node to evaluate damage
+        return super.getDamageForAgent(agent, tickDuration); 
+    }
+
+    @Override
     public void removeFire() {
         super.removeFire();
         this.burningFromStart = false;

@@ -17,7 +17,6 @@ public class EdgeContext extends AbstractGraphElementContext<Node> {
     /** The edge from which the decision is made. */
     private final Edge sourceEdge;
 
-
     EdgeContext(
             Edge sourceEdge,
             List<Node> accessibleNodes) {
@@ -40,20 +39,26 @@ public class EdgeContext extends AbstractGraphElementContext<Node> {
     /**
      * Registers that {@code agent} intends to enter {@code node}.
      */
+    @Override
     boolean registerOutgoingIntent(Node node, Agent agent) {
         Objects.requireNonNull(node);
         Objects.requireNonNull(agent);
 
-        if (node.equals(sourceEdge.getStart())){
+        if (node.equals(sourceEdge.getStart())) {
             //TODO check flux
-        }else if ( node.equals(sourceEdge.getEnd())){
-        }else{
-            throw new InvalidParameterException("node"+node +"is not connected to the edge of this context");
+        } else if (node.equals(sourceEdge.getEnd())) {
+        } else {
+            throw new InvalidParameterException("node" + node + "is not connected to the edge of this context");
         }
 
         return true;
     }
 
+    /**
+     * Returns the edge from which the decision is made.
+     *
+     * @return the source edge
+     */
     public Edge getSourceEdge() {
         return sourceEdge;
     }

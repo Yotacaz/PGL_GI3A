@@ -88,6 +88,13 @@ public class AgentGenerator implements Serializable {
 		return agent;
 	}
 
+	/**
+	 * Internal method to create an agent with random attributes. The agent does not have an initial action.
+	 *
+	 * @param baseName base name to use for the agent (a unique id is appended)
+	 * @param startingNode node where the agent should start, or {@code null} to
+	 *                     leave it unplaced
+	 */
 	private Agent createRandomAgent(String baseName, Node startingNode) {
 		String name = String.format(Locale.ROOT, "%s-%d", baseName, RNG.nextInt(1_000_000));
 		double maxSpeed = agentSettings.generateRandomSpeed(RNG);

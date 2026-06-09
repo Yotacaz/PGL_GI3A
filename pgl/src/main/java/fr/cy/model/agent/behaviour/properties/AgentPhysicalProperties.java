@@ -71,26 +71,54 @@ public class AgentPhysicalProperties implements Serializable {
         return health;
     }
 
+    /**
+     * Gets the maximum health level of the agent.
+     * 
+     * @return the maximum health level
+     */
     public double getMaxHealth() {
         return maxHealth;
     }
 
+    /**
+     * Decreases the health of the agent by the specified amount.
+     * 
+     * @param amount the amount to decrease health by
+     */
     public void decreaseHealth(double amount) {
         setHealth(Math.max(0, getHealth() - amount));
     }
 
+    /**
+     * Restores health to the agent by the specified amount.
+     * 
+     * @param amount the amount to restore health by
+     */
     public void restoreHealth(double amount) {
         setHealth(Math.min(maxHealth, getHealth() + amount));
     }
 
+    /**
+     * "Kills" the agent by setting its health to 0.
+     */
     public void kill() {
         setHealth(0);
     }
 
+    /**
+     * Gets the current health level of the agent as a percentage of its maximum health.
+     * 
+     * @return the health percentage, between 0.0 and 1.0
+     */
     public double getHealthPercentage() {
         return (double) health / maxHealth;
     }
 
+    /**
+     * Checks if the agent is alive (health > 0).
+     * 
+     * @return true if the agent is alive, false if it is dead
+     */
     public boolean isAlive() {
         return health > 0;
     }

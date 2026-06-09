@@ -98,6 +98,7 @@ public class CongestionStats<T extends GraphElement> implements Serializable {
         return mostCongestedElement;
     }
 
+    /** @return the list of accessible graph elements sorted by congestion (least congested first) */
     public List<T> getSortedByCongestion() {
         return sortedByCongestion;
     }
