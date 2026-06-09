@@ -99,9 +99,17 @@ public class Edge extends GraphElement {
 
     /** Swaps the start and end nodes. */
     public void switchDirection() {
+        start.removeEdge(this);
+        end.removeEdge(this);   
+
         Node temp = start;
         start = end;
         end = temp;
+
+        start.addEdge(this);
+        end.addEdge(this);
+
+        
     }
 
     /** @param directed True to make the edge directed. */

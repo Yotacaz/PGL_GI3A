@@ -254,6 +254,8 @@ public class Graph implements Serializable {
         edge.getStart().removeEdge(edge);
         edge.getEnd().removeEdge(edge);
 
+
+        // Handle agents on the removed edge
         for (Agent agent : new ArrayList<>(edge.getAgents())) {
             agent.putOnNode(edge.getStart());
         }

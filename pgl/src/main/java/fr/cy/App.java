@@ -3,6 +3,7 @@ package fr.cy;
 import fr.cy.controller.MainController;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.simulation.Simulation;
+import fr.cy.util.ScenarioBuilder;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
@@ -19,18 +20,22 @@ public class App extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+    	
+    	// 1. Adding the Icon
 
         Image icon = new Image(getClass().getResourceAsStream("/icons/icon_5.png"));
         primaryStage.getIcons().add(icon);
+        
+        // Setting up the simulation
 
-        Simulation simulation = new Simulation("Sandbox", new Graph());
+        Simulation simulation = ScenarioBuilder.setupSimplePipelineTest();
 
         MainController mainController = new MainController(simulation);
 
-        // 3. Création de la scène principale (1200x800 par défaut)
+        // 3. Create the main scene (1200 * 800 by default) 
         Scene scene = new Scene(mainController.getRoot(), 1200, 800);
 
-        // 4. Chargement du fichier CSS
+        // 4. Charging the CSS file
         try {
             String cssPath = Objects.requireNonNull(getClass().getResource("/fr/cy/style.css")).toExternalForm();
             scene.getStylesheets().add(cssPath);

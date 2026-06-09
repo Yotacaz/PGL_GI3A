@@ -64,34 +64,34 @@ public class ScenarioBuilder {
     public static Simulation setupSimplePipelineTest() {
         Graph graph = new Graph();
 
-        // --- 1. CRÉATION DES NŒUDS ---
-        // Nœud de départ (très grande capacité pour faire spawner tout le monde)
+        // --- 1. CREATE NODES ---
+        // Starting node (very large capacity to spawn everyone comfortably)
         Node startNode = graph.createNode(100, 300, 100.0);
 
-        // La "Salle d'attente" (le nœud central où on veut voir la congestion)
-        // Capacité de 20 : il peut stocker 20 agents maximum en même temps
+        // The waiting room node (the central node where we want to see congestion)
+        // Capacity of 20: it can hold a maximum of 20 agents at the same time
         Node waitingRoom = graph.createNode(400, 300, 20.0);
 
-        // Le nœud de sortie (qui détruit les agents)
+        // The exit Node
         Node exitNode = graph.createNode(700, 300, 50.0);
         exitNode.setExit(true);
 
-        // --- 2. CRÉATION DES ARÊTES ---
-        // L'autoroute d'entrée : très large, débit énorme.
+        // --- 2. CREATE EDGES ---
+        // The entrance highway : very wide, enormous flow.
         Edge entranceEdge = graph.createEdge(startNode, waitingRoom);
         entranceEdge.setWidth(5.0);
 
-        // Le goulot d'étranglement absolu :
-        // Largeur de 0.4 = seulement 1 agent passera par tick maximum.
+        // The absolute bottleneck :
+        // Width of 0.4 = only 1 agent can pass per tick maximum.
         Edge exitEdge = graph.createEdge(waitingRoom, exitNode);
         exitEdge.setWidth(0.4);
 
-        // --- 3. GÉNÉRATION DES AGENTS ET DE LA SIMULATION ---
+        // --- 3. GENERATE AGENTS AND SIMULATION ---
         Simulation simulation = new Simulation("Test Ligne Droite", graph);
         AgentManager am = simulation.getAgentManager();
 
         if (am != null) {
-            // On fait spawner 50 agents sur le nœud de départ
+            // Spawn 50 agents on the starting node. There are 50 agents, but the exit edge can only
             am.generateAgentsOnNode("Agent_", startNode, 50);
         }
 
@@ -101,33 +101,32 @@ public class ScenarioBuilder {
     public static Simulation setupMinimalistTest() {
         Graph graph = new Graph();
 
-        // --- 1. LES 2 NŒUDS ---
-        // Nœud de départ : Très grand (Capacité 100), pour faire spawner tout le monde
-        // confortablement
+        // --- 1. The 2 Nodes ---
+        // Starting node : Very large (Capacity 100), to spawn everyone comfortably
         Node startNode = graph.createNode(150, 300, 100.0);
 
-        // Nœud de sortie : Le goulot d'étranglement ! (Capacité 2)
-        // Seulement 2 agents peuvent se tenir sur la sortie en même temps.
+        // Exit node : The bottleneck ! (Capacity 2)
+        // Only 2 agents can be on the exit at the same time.
         Node exitNode = graph.createNode(650, 300, 2.0);
         exitNode.setExit(true);
 
-        // --- 2. L'UNIQUE ARÊTE ---
-        // On relie le départ à la sortie.
+        // --- 2. The Unique Edge ---
+        // We connect the start to the exit.
         Edge corridor = graph.createEdge(startNode, exitNode);
 
-        // On lui donne une largeur de 2.0.
-        // Si ta longueur par défaut est grande (ex: 100), sa capacité sera de 200.
-        // Pour voir la congestion exploser vite, on peut forcer une petite longueur :
-        corridor.setLength(10.0); // Capacité de l'arête = 2.0 * 10.0 = 20 agents max.
+        // We give it a width of 2.0.
+        // If your default length is large (e.g., 100), its capacity will be 200.
+        // To see the congestion explode quickly, we can force a small length:
+        corridor.setLength(10.0); // Edge capacity = 2.0 * 10.0 = 20 agents max.
         corridor.setWidth(2.0);
 
-        // --- 3. GÉNÉRATION ---
+        // --- 3. GENERATE AGENTS ---
         Simulation simulation = new Simulation("Test Minimaliste 1 Arête", graph);
         AgentManager am = simulation.getAgentManager();
 
         if (am != null) {
-            // On génère 50 agents sur le nœud de départ
-            // Il y a 50 agents, mais l'arête ne peut en contenir que 20 !
+            // Spawn 50 agents on the starting node
+            // There are 50 agents, but the edge can only contain 20 !
             am.generateAgentsOnNode("Agent_", startNode, 50);
         }
 
@@ -137,13 +136,12 @@ public class ScenarioBuilder {
     public static Simulation setupBypassTest() {
         Graph graph = new Graph();
 
-        // RAPPEL DE L'ÉCHELLE : 1 unité = 10 pixels.
-        // Les agents (0.5) feront 10 pixels de diamètre à l'écran.
+        // REMINDER FOR THE SCALE: 1 unit = 10 pixels.
+        // Agents (0.5) will be 10 pixels in diameter on the screen.
 
-        // --- 1. CRÉATION DES NŒUDS ---
-        // Nœud de départ : Capacité 150 (Diamètre visuel généré : ~138 px)
-        // Il est assez grand pour contenir confortablement les 60 agents sans qu'ils ne
-        // se chevauchent trop.
+        // --- 1. CREATE NODES ---
+        // Node de départ : Capacité 150 (Diamètre visuel généré : ~138 px)
+        // It is large enough to comfortably hold the 60 agents without too much overlap.
         Node startNode = graph.createNode(100, 300);
         startNode.setCapacity(150.0);
 
