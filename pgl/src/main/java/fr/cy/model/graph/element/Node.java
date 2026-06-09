@@ -109,7 +109,7 @@ public class Node extends GraphElement {
     }
 
     public void setCapacity(double capacity) {
-        this.capacity = capacity;
+        super.setCapacity(capacity);
     }
 
     /**

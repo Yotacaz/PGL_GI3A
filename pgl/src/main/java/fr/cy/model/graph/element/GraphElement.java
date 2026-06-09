@@ -31,6 +31,9 @@ public abstract class GraphElement implements StressInducing, Serializable {
 
     private transient List<Agent> agents;
     private double capacity;
+    private boolean isForcedCongested = false;
+    private int forcedCongestionTicks = 0;
+    private transient Fire initialFire; // Pour stocker l'état d'incendie initial pour le reset
 
     // STRESS :
     /**
@@ -189,6 +192,7 @@ public abstract class GraphElement implements StressInducing, Serializable {
         return scoreMult;
     }
 
+
     /**
      * Update the total stress induced by this element alone (without neighbors),
      * which is a value between 0 and 1, and cache it.
@@ -267,6 +271,10 @@ public abstract class GraphElement implements StressInducing, Serializable {
 
     public double getCapacity() {
         return capacity;
+    }
+
+    public void setCapacity(double capacity) {
+        this.capacity = Math.max(0.1, capacity);
     }
 
     /**
