@@ -94,8 +94,8 @@ public class Fire implements Serializable {
         return burningTime;
     }
 
-    public double getDamage(double duration) {
+    public double getDamageForAgent(double duration) {
         // Simple damage formula based on intensity and burn duration
-        return duration * intensity * smokeLevel * (1 + burningTime / 60.0); // +100% damage after 1 minute
+        return duration * intensity * smokeLevel * (1 + burningTime / 60.0); // +100% of damage after 1 minute
     }
 }

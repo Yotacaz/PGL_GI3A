@@ -135,17 +135,8 @@ public class NodeContext extends AbstractGraphElementContext<Edge> {
         return outgoingNearbyAgents;
     }
 
-    /**
-     * Registers an agent's intent to use an outgoing edge.
-     * 
-     * <p>This method checks if the edge has sufficient capacity for the agent
-     * and updates the space occupation data accordingly. If the edge is already
-     * at capacity, the registration fails.</p>
-     * 
-     * @param edge the edge the agent intends to use
-     * @param agent the agent attempting to register its intent
-     * @return true if the registration was successful, false if the edge is at capacity
-     */
+    
+    @Override
     boolean registerOutgoingIntent(Edge edge, Agent agent) {
         if (edge == null || agent == null) {
             return true;

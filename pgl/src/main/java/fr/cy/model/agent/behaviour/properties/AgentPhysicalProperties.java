@@ -5,9 +5,11 @@ import java.io.Serializable;
 /**
  * Represents the physical properties and attributes of an agent.
  * 
- * <p>This class encapsulates all the physical characteristics of an agent
+ * <p>
+ * This class encapsulates all the physical characteristics of an agent
  * that affect its movement and interaction with the environment, including
- * speed, health, and spatial requirements.</p>
+ * speed, health, and spatial requirements.
+ * </p>
  */
 public class AgentPhysicalProperties implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -41,12 +43,30 @@ public class AgentPhysicalProperties implements Serializable {
     }
 
     /**
+     * Sets the maximum speed of the agent.
+     * 
+     * @param maxSpeed
+     */
+    public void setMaxSpeed(double maxSpeed) {
+        this.maxSpeed = maxSpeed;
+    }
+
+    /**
      * Gets the surface area taken by the agent.
      * 
      * @return the surface area, used to calculate crowding effects
      */
     public double getSurfaceAreaTakenByAgent() {
         return surfaceAreaTakenByAgent;
+    }
+
+    /**
+     * Sets the surface area taken by the agent.
+     * 
+     * @param surfaceAreaTakenByAgent
+     */
+    public void setSurfaceAreaTakenByAgent(double surfaceAreaTakenByAgent) {
+        this.surfaceAreaTakenByAgent = surfaceAreaTakenByAgent;
     }
 
     /**
@@ -71,26 +91,55 @@ public class AgentPhysicalProperties implements Serializable {
         return health;
     }
 
+    /**
+     * Gets the maximum health level of the agent.
+     * 
+     * @return the maximum health level
+     */
     public double getMaxHealth() {
         return maxHealth;
     }
 
+    /**
+     * Decreases the health of the agent by the specified amount.
+     * 
+     * @param amount the amount to decrease health by
+     */
     public void decreaseHealth(double amount) {
         setHealth(Math.max(0, getHealth() - amount));
     }
 
+    /**
+     * Restores health to the agent by the specified amount.
+     * 
+     * @param amount the amount to restore health by
+     */
     public void restoreHealth(double amount) {
         setHealth(Math.min(maxHealth, getHealth() + amount));
     }
 
+    /**
+     * "Kills" the agent by setting its health to 0.
+     */
     public void kill() {
         setHealth(0);
     }
 
+    /**
+     * Gets the current health level of the agent as a percentage of its maximum
+     * health.
+     * 
+     * @return the health percentage, between 0.0 and 1.0
+     */
     public double getHealthPercentage() {
         return (double) health / maxHealth;
     }
 
+    /**
+     * Checks if the agent is alive (health > 0).
+     * 
+     * @return true if the agent is alive, false if it is dead
+     */
     public boolean isAlive() {
         return health > 0;
     }

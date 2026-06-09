@@ -8,42 +8,72 @@ import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.ToolBar;
 
+/**
+ * The {@code GraphEditingToolBar} class provides a toolbar for manipulating the
+ * graph and simulation entities.
+ * <p>
+ * It allows users to toggle between different interaction modes
+ * (selecting, adding nodes/edges/agents, rapid deletion) and triggers
+ * generation processes.
+ * </p>
+ */
 public class GraphEditingToolBar extends ToolBar {
 
+    /** Callback invoked when the user changes the interaction mode. */
     private Consumer<CanvasInteractionController.InteractionMode> onModeChange;
+
+    /** Callback invoked when the user requests random graph generation. */
     private Runnable onGenerateRandom;
 
+    /** Callback invoked when the user requests random agent population. */
     private Runnable onGenerateRandomAgents;
 
+    /**
+     * Sets the listener for random agent generation.
+     *
+     * @param listener The runnable to execute when generating agents.
+     */
     public void setOnGenerateRandomAgents(Runnable listener) {
         this.onGenerateRandomAgents = listener;
     }
 
+    /**
+     * Constructs the {@code GraphEditingToolBar} and initializes the UI components.
+     */
     public GraphEditingToolBar() {
         this.getStyleClass().add("custom-toolbar");
         initToolBar();
     }
 
+    /**
+     * Initializes the toolbar UI, groups the toggle buttons, and sets up
+     * the event handlers for interaction modes and generation triggers.
+     */
     private void initToolBar() {
         ToggleButton selectBtn = new ToggleButton("🖱️ Sélection");
         ToggleButton addNodeBtn = new ToggleButton("🔵 + Nœud");
         ToggleButton addEdgeBtn = new ToggleButton("➖ + Arête");
+        ToggleButton addAgentBtn = new ToggleButton("🚶 + Agents");
+        ToggleButton deleteBtn = new ToggleButton("🗑️ Suppression"); // New deletion mode toggle button
 
+        // Apply visual style profile configurations
         selectBtn.getStyleClass().add("action-btn");
         addNodeBtn.getStyleClass().add("action-btn");
         addEdgeBtn.getStyleClass().add("action-btn");
+        addAgentBtn.getStyleClass().add("action-btn");
+        deleteBtn.getStyleClass().add("action-btn");
 
+        // Regulate buttons inside a single mutually exclusive group context
         ToggleGroup modeGroup = new ToggleGroup();
         selectBtn.setToggleGroup(modeGroup);
         addNodeBtn.setToggleGroup(modeGroup);
         addEdgeBtn.setToggleGroup(modeGroup);
+        addAgentBtn.setToggleGroup(modeGroup);
+        deleteBtn.setToggleGroup(modeGroup);
 
         selectBtn.setSelected(true);
 
-        ToggleButton addAgentBtn = new ToggleButton("🚶+ Agents");
-        addAgentBtn.getStyleClass().add("action-btn");
-        addAgentBtn.setToggleGroup(modeGroup);
-
+        // Define state flow triggers on selection changes
         modeGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal == null) {
                 oldVal.setSelected(true);
@@ -58,13 +88,14 @@ public class GraphEditingToolBar extends ToolBar {
                     onModeChange.accept(CanvasInteractionController.InteractionMode.ADD_EDGE_START);
                 } else if (newVal == addAgentBtn) {
                     onModeChange.accept(CanvasInteractionController.InteractionMode.ADD_AGENT);
+                } else if (newVal == deleteBtn) {
+                    onModeChange.accept(CanvasInteractionController.InteractionMode.DELETE);
                 }
             }
         });
 
         Button randomGenBtn = new Button("🎲 Génération Aléatoire");
         randomGenBtn.getStyleClass().addAll("action-btn");
-
         randomGenBtn.setOnAction(event -> {
             if (onGenerateRandom != null) {
                 onGenerateRandom.run();
@@ -78,16 +109,28 @@ public class GraphEditingToolBar extends ToolBar {
                 onGenerateRandomAgents.run();
         });
 
+        // Pack structural items sequentially onto the layout timeline
         this.getItems().addAll(
-                selectBtn, addNodeBtn, addEdgeBtn, addAgentBtn,
+                selectBtn, deleteBtn, addNodeBtn, addEdgeBtn, addAgentBtn,
                 new Separator(),
                 randomGenBtn, randomAgentsBtn);
     }
 
+    /**
+     * Sets the listener for interaction mode changes.
+     *
+     * @param listener A consumer function that receives the new
+     *                 {@link CanvasInteractionController.InteractionMode}.
+     */
     public void setOnModeChange(Consumer<CanvasInteractionController.InteractionMode> listener) {
         this.onModeChange = listener;
     }
 
+    /**
+     * Sets the listener for random graph generation.
+     *
+     * @param listener The runnable to execute when generating a random graph.
+     */
     public void setOnGenerateRandom(Runnable listener) {
         this.onGenerateRandom = listener;
     }
