@@ -109,9 +109,17 @@ public class Edge extends GraphElement {
     }
 
     public void switchDirection() {
+        start.removeEdge(this);
+        end.removeEdge(this);   
+
         Node temp = start;
         start = end;
         end = temp;
+
+        start.addEdge(this);
+        end.addEdge(this);
+
+        
     }
 
     /**
