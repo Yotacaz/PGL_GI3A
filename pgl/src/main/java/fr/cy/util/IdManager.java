@@ -4,23 +4,28 @@ import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
-import java.io.Serializable;
-
 /**
- * Gère la génération et la réutilisation d'identifiants entiers.
+ * Manages the generation and recycling of integer identifiers.
  * <p>
- * Les identifiants libérés via {@link #releaseId(int)} sont réattribués en
- * priorité
- * avant de créer de nouveaux identifiants.
+ * This class optimizes ID usage by prioritizing the reuse of identifiers
+ * previously released via {@link #releaseId(int)} before generating new
+ * incremental identifiers.
+ * </p>
  */
 public class IdManager implements Serializable {
+
+    /** Serialization identifier. */
     private static final long serialVersionUID = 1L;
+
+    /** The next available incremental ID if the free queue is empty. */
     private int nextId;
 
-    private Queue<Integer> freeIds;
+    /** A queue storing IDs that have been released and are available for reuse. */
+    private final Queue<Integer> freeIds;
 
     /**
-     * Crée un gestionnaire d'identifiants initialisé à 0.
+     * Constructs a new {@code IdManager} initialized to start generating IDs from
+     * 0.
      */
     public IdManager() {
         this.nextId = 0;
@@ -28,15 +33,16 @@ public class IdManager implements Serializable {
     }
 
     /**
-     * Génère un identifiant disponible.
+     * Generates an available identifier.
      * <p>
-     * Si un identifiant a été libéré, il est réutilisé. Sinon, un nouvel
-     * identifiant incrémental est créé.
+     * If there are identifiers in the {@code freeIds} queue, the method
+     * retrieves and returns the head of that queue. Otherwise, it returns
+     * the current {@code nextId} and increments it.
+     * </p>
      *
-     * @return un identifiant disponible
+     * @return An available unique integer identifier.
      */
     public int generateId() {
-
         if (!freeIds.isEmpty()) {
             return freeIds.poll();
         }
@@ -44,9 +50,9 @@ public class IdManager implements Serializable {
     }
 
     /**
-     * Libère un identifiant pour permettre sa réutilisation ultérieure.
+     * Releases an identifier, making it available for future reuse.
      *
-     * @param id identifiant à remettre dans la file des identifiants libres
+     * @param id The identifier to be returned to the pool of free IDs.
      */
     public void releaseId(int id) {
         freeIds.add(id);

@@ -1,16 +1,16 @@
 package fr.cy.model.fire;
 
 import java.io.Serializable;
-import java.util.HashSet;
 import java.util.Random;
-import java.util.Set;
-
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.GraphElement;
 import fr.cy.model.graph.element.Node;
 
-/** TODO: MAGIC VALUES: REWORK */
+/**
+ * The {@code FireService} manages the fire life-cycle and propagation
+ * logic throughout the simulation graph.
+ */
 public class FireService implements Serializable {
     private static final long serialVersionUID = 1L;
     private final Random random;
@@ -19,10 +19,23 @@ public class FireService implements Serializable {
         this.random = new Random();
     }
 
+    /**
+     * Checks if a graph element is currently affected by fire.
+     * 
+     * @param element The graph element to check.
+     * @return True if the element is on fire.
+     */
     public boolean isOnFire(GraphElement element) {
         return element.isOnFire();
     }
 
+    /**
+     * Updates the state of all fires in the graph, handling intensity
+     * updates and propagation from nodes to edges and vice-versa.
+     * * @param graph The simulation graph.
+     * 
+     * @param tickDuration The duration of the current simulation tick.
+     */
     public void updateFires(Graph graph, double tickDuration) {
 
         // UPDATE NODES
@@ -30,28 +43,20 @@ public class FireService implements Serializable {
             if (!node.isOnFire())
                 continue;
 
-            // 1. Update the local fire intensity even if it does not spread
             node.getFire().update(tickDuration);
 
-            // 2. Short-circuit: if the fire has no spread strength, stop here
-            // for this node
-            if (node.getFire().getSpreadRate() <= 0.0) {
+            if (node.getFire().getSpreadRate() <= 0.0)
                 continue;
-            }
 
             for (Edge edge : node.getEdges()) {
-                // Weight the probability according to tickDuration (60 FPS smoothing)
                 double probability = computeSpreadProbability(edge) * tickDuration;
 
-                // If the edge is completely intact
                 if (!edge.isOnFire()) {
                     if (random.nextDouble() < probability) {
                         double dynamicSpreadRate = computeSpreadRate(edge, node.getFire().getSpreadRate());
                         edge.igniteFrom(node, new Fire(1.0, 1.0, dynamicSpreadRate));
                     }
-                }
-                // If the edge is already burning but not fully consumed
-                else if (!edge.isFullyBurned()) {
+                } else if (!edge.isFullyBurned()) {
                     boolean alreadyBurningFromHere = (node.equals(edge.getStart()) && edge.isBurningFromStart()) ||
                             (node.equals(edge.getEnd()) && edge.isBurningFromEnd());
 
@@ -67,19 +72,15 @@ public class FireService implements Serializable {
             if (!edge.isOnFire())
                 continue;
 
-            // 1. Fire advances along the corridor
             edge.getFire().update(tickDuration);
-
             double distance = edge.getBurnedDistance();
 
-            // 2. Flame front coming from Start reaches End
             if (edge.isBurningFromStart() && distance >= edge.getLength()) {
                 if (!edge.getEnd().isOnFire()) {
                     edge.getEnd().setFire(new Fire(1.0, 1.0, edge.getFire().getSpreadRate()));
                 }
             }
 
-            // 3. Flame front coming from End reaches Start
             if (edge.isBurningFromEnd() && distance >= edge.getLength()) {
                 if (!edge.getStart().isOnFire()) {
                     edge.getStart().setFire(new Fire(1.0, 1.0, edge.getFire().getSpreadRate()));
@@ -88,39 +89,39 @@ public class FireService implements Serializable {
         }
     }
 
+    /**
+     * Calculates the probability of fire spreading to an edge based on geometry.
+     */
     private double computeSpreadProbability(Edge edge) {
-        double probability = 0.2;
+        double probability = FireConfig.BASE_SPREAD_PROBABILITY;
 
-        /** Narrow corridors */
-        if (edge.getWidth() < 2) {
-            probability += 0.2;
+        if (edge.getWidth() < FireConfig.NARROW_CORRIDOR_WIDTH_THRESHOLD) {
+            probability += FireConfig.NARROW_CORRIDOR_PROB_BOOST;
         }
 
-        /** Long corridors */
-        if (edge.getLength() > 20) {
-            probability -= 0.1;
+        if (edge.getLength() > FireConfig.LONG_CORRIDOR_LENGTH_THRESHOLD) {
+            probability -= FireConfig.LONG_CORRIDOR_PROB_PENALTY;
         }
 
         return Math.max(0, Math.min(1, probability));
     }
 
+    /**
+     * Calculates the spread rate of fire across an edge, applying environmental
+     * modifiers.
+     */
     private double computeSpreadRate(Edge edge, double baseSpreadRate) {
-        if (baseSpreadRate <= 0.0) {
+        if (baseSpreadRate <= 0.0)
             return 0.0;
-        }
 
         double rate = baseSpreadRate;
 
-        // Chimney effect: flames speed up in narrow areas
-        if (edge.getWidth() < 2.0) {
-            rate += 0.3;
-        }
-        // Dispersion: flames advance more slowly in wide areas
-        else if (edge.getWidth() > 5.0) {
-            rate -= 0.1;
+        if (edge.getWidth() < FireConfig.NARROW_CORRIDOR_WIDTH_THRESHOLD) {
+            rate += FireConfig.SPREAD_RATE_BOOST;
+        } else if (edge.getWidth() > FireConfig.WIDE_CORRIDOR_WIDTH_THRESHOLD) {
+            rate -= FireConfig.SPREAD_RATE_PENALTY;
         }
 
-        // Only apply a floor (0.01) if the fire was supposed to advance
-        return Math.max(0.01, rate);
+        return Math.max(FireConfig.MIN_SPREAD_RATE, rate);
     }
 }
