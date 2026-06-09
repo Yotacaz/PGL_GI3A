@@ -3,6 +3,7 @@ package fr.cy;
 import fr.cy.controller.MainController;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.simulation.Simulation;
+import fr.cy.util.ScenarioBuilder;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
@@ -27,7 +28,7 @@ public class App extends Application {
         
         // Setting up the simulation
 
-        Simulation simulation = new Simulation("Sandbox", new Graph());
+        Simulation simulation = ScenarioBuilder.setupSimplePipelineTest();
 
         MainController mainController = new MainController(simulation);
 
