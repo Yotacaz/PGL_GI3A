@@ -234,7 +234,7 @@ public class GraphRenderer {
         }
 
         if (node.isExit() || node.isOnFire()) {
-            double glowRadius = node.isOnFire() ? 15 * node.getFire().getIntensity() : 10;
+            double glowRadius = node.isOnFire() ? 30 : 10;
             Color glowColor = node.isExit() ? EXIT_NODE_COLOR : FIRE_COLOR;
             for (int i = 1; i <= 3; i++) {
                 gc.setFill(glowColor.deriveColor(0, 1, 1, 0.2 / i));
