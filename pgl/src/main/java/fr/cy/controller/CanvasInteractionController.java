@@ -13,8 +13,8 @@ import java.util.function.Consumer;
 
 public class CanvasInteractionController {
 
-    // Marge d'erreur en unités pour faciliter le clic (ex: 15 unités autour de
-    // l'objet)
+    // Error margin in units to facilitate clicking (e.g., 15 units around the element)
+    
     private static final double CLICK_TOLERANCE = 15.0;
 
     private final GraphCanvas canvas;
@@ -43,12 +43,12 @@ public class CanvasInteractionController {
 
         switch (mode) {
             case ADD_NODE:
-                // Un viseur précis pour poser un nœud
+                // A precise crosshair cursor for placing a node
                 canvas.setCursor(Cursor.CROSSHAIR);
                 break;
 
             case ADD_EDGE_START:
-                // Un viseur différent (ou le même) pour tracer une ligne
+                // A different crosshair or maybe a custom cursor indicating "select start node"
                 canvas.setCursor(Cursor.CROSSHAIR);
                 break;
             case ADD_AGENT:
@@ -57,7 +57,7 @@ public class CanvasInteractionController {
 
             case SELECT_AND_DRAG:
             default:
-                // La flèche classique
+                // Classic arrow cursor for selection and dragging
                 canvas.setCursor(Cursor.DEFAULT);
                 break;
         }
@@ -105,9 +105,9 @@ public class CanvasInteractionController {
 
             if (currentMode == InteractionMode.SELECT_AND_DRAG) {
                 if (draggedNode != null) {
-                    canvas.setCursor(Cursor.CLOSED_HAND); // Main qui attrape le nœud
+                    canvas.setCursor(Cursor.CLOSED_HAND); // Main that catch the node
                 } else {
-                    canvas.setCursor(Cursor.MOVE); // Flèches directionnelles pour déplacer la caméra
+                    canvas.setCursor(Cursor.MOVE); // Directional arrows for panning the view
                 }
             }
         });
@@ -121,19 +121,19 @@ public class CanvasInteractionController {
 
         canvas.setOnMouseMoved(event -> {
             if (currentMode == InteractionMode.SELECT_AND_DRAG) {
-                // On calcule la position de la souris dans le graphe
+                // Commpute the mouse position in graph coordinates
                 double mx = (event.getX() - canvas.getPanX()) / canvas.getZoom();
                 double my = (event.getY() - canvas.getPanY()) / canvas.getZoom();
 
-                // Si la souris passe au-dessus d'un agent, d'un noeud ou d'une arête
+                // if the mouse is hovering over an agent, node or edge, change the cursor to indicate interactivity
                 if (findClosestAgent(mx, my) != null || findClosestElement(mx, my) != null) {
                     canvas.setCursor(Cursor.HAND); // Main ouverte (Prêt à cliquer)
                 } else {
                     canvas.setCursor(Cursor.DEFAULT); // Flèche normale dans le vide
                 }
             } else {
-                // Si on est en mode "Création" (Boutons bleu ou gris appuyés)
-                canvas.setCursor(Cursor.CROSSHAIR); // Viseur de précision
+                // If we are in "Creation" mode (Blue or gray buttons pressed), show the crosshair cursor to indicate precision placement
+                canvas.setCursor(Cursor.CROSSHAIR); // Precision crosshair for adding nodes/edges/agents
             }
         });
 
@@ -183,11 +183,11 @@ public class CanvasInteractionController {
             double mx = (event.getX() - canvas.getPanX()) / canvas.getZoom();
             double my = (event.getY() - canvas.getPanY()) / canvas.getZoom();
 
-            // On récupère le graphe depuis le contrôleur
+            // Getting the graph from the simulation to find nodes and edges
             fr.cy.model.graph.Graph graph = simController.getSimulation().getGraph();
 
             // =========================================================
-            // MODE 1 : AJOUTER UN NŒUD
+            // MODE 1 : ADD NODE
             // =========================================================
             if (currentMode == InteractionMode.ADD_NODE) {
                 try {
@@ -207,39 +207,39 @@ public class CanvasInteractionController {
             }
 
             // =========================================================
-            // MODE 2 : AJOUTER UNE ARÊTE
+            // MODE 2 : ADD EDGE
             // =========================================================
             if (currentMode == InteractionMode.ADD_EDGE_START) {
                 GraphElement clickedElement = findClosestElement(mx, my);
 
                 if (clickedElement instanceof Node clickedNode) {
                     if (edgeStartNode == null) {
-                        // Premier clic
+                        // First click
                         edgeStartNode = clickedNode;
                         canvas.setSelectedEntity(edgeStartNode);
                     } else if (edgeStartNode != clickedNode) {
 
-                        // 1. Calcul de la distance
+                        // 1. Compute distance
                         double pixelDistance = Math.hypot(edgeStartNode.getX() - clickedNode.getX(),
                                 edgeStartNode.getY() - clickedNode.getY());
                         double logicalLength = pixelDistance / 10.0; // Ton échelle de distance
 
-                        // 2. On mémorise les nœuds dans des variables temporaires avant d'ouvrir la
-                        // fenêtre
+                        
+                        // 2. Memorize the nodes in temporary variables before opening the dialog (to avoid bugs if we cancel and to have access to them in the lambda)
                         Node startNode = edgeStartNode;
                         Node endNode = clickedNode;
 
-                        // 3. ON RÉINITIALISE L'OUTIL IMMÉDIATEMENT (pour éviter les bugs si on annule)
+                        // 3. RESET THE TOOL IMMEDIATELY (to avoid bugs if we cancel)
                         edgeStartNode = null;
                         canvas.setSelectedEntity(null);
 
                         DialogHelper.showEdgeCreationDialog(startNode, endNode, canvas)
                                 .ifPresent(params -> {
-                                    // 5. On crée l'arête avec les vrais paramètres choisis par l'utilisateur
+                                    // 5. Create the edge with the actual parameters chosen by the user
                                     Edge newEdge = graph.createEdge(startNode, endNode, logicalLength, params.width,
                                             params.directed);
 
-                                    // On sélectionne la nouvelle arête pour afficher ses infos à droite
+                                    // Select the new edge to show its properties in the right panel
                                     canvas.setSelectedEntity(newEdge);
                                     notifySelection(newEdge);
                                 });
@@ -249,18 +249,18 @@ public class CanvasInteractionController {
             }
 
             // =========================================================
-            // MODE 3 : AJOUTER DES AGENTS SUR UN NŒUD
+            // MODE 3 : ADD AGENTS TO A NODE
             // =========================================================
             if (currentMode == InteractionMode.ADD_AGENT) {
                 GraphElement clickedElement = findClosestElement(mx, my);
                 if (clickedElement instanceof Node clickedNode) {
 
-                    // --- LA CORRECTION EST ICI ---
-                    // 1. On sélectionne visuellement le nœud pour ouvrir le panneau de droite
+                    // --- Correction is here ---
+                    // 1. Select visually the node on which we want to add agents and show its properties in the right panel (to avoid confusion about which node we are adding agents to, especially if we cancel the action)
                     canvas.setSelectedEntity(clickedNode);
                     notifySelection(clickedNode);
 
-                    // 2. On ouvre la fenêtre pour demander combien d'agents
+                    // 2. Open the dialog to choose how many agents we want to add
                     if (onAddAgentRequested != null) {
                         onAddAgentRequested.accept(clickedNode);
                     }
@@ -269,21 +269,21 @@ public class CanvasInteractionController {
             }
 
             // =========================================================
-            // MODE NORMAL (SÉLECTION ET INFOS) - TON CODE ORIGINAL
+            // NORMAL MODE : SELECT AND MODIFY (Double-Click)
             // =========================================================
             if (currentMode == InteractionMode.SELECT_AND_DRAG || currentMode == null) {
-                // 1. On cherche l'élément cliqué
+                // 1. Search for the cliked element
                 Object selectedEntity = null;
                 Agent clickedAgent = findClosestAgent(mx, my);
                 GraphElement clickedElement = (clickedAgent == null) ? findClosestElement(mx, my) : null;
 
                 selectedEntity = (clickedAgent != null) ? clickedAgent : clickedElement;
 
-                // 2. Gestion du Double-Clic (Modification)
+                // 2. Double-click case
                 if (event.getClickCount() == 2 && selectedEntity != null) {
                     handleModification(selectedEntity);
                 }
-                // 3. Gestion du Clic Simple (Sélection)
+                // 3. Simple Click Handling (Selection)
                 else {
                     canvas.setSelectedEntity(selectedEntity);
                     notifySelection(selectedEntity);
@@ -343,17 +343,23 @@ public class CanvasInteractionController {
         return closest;
     }
 
+
     /**
-     * Calcule la distance la plus courte entre un point (px, py) et un segment de
-     * droite (x1,y1) -> (x2,y2).
+     * Calculate the shortest distance from a point (px, py) to a line segment defined by endpoints (x1, y1) and (x2, y2).
+     * @param px 
+     * @param py
+     * @param x1
+     * @param y1
+     * @param x2
+     * @param y2 
+     * @return the shortest distance from the point to the line segment
      */
     private double distancePointToSegment(double px, double py, double x1, double y1, double x2, double y2) {
         double l2 = Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2);
         if (l2 == 0)
             return Math.hypot(px - x1, py - y1); // Le segment est un point
 
-        // Calcul de la projection du point sur la ligne (clamped entre 0 et 1 pour
-        // rester sur le segment)
+        //Compute the projection of point p onto the line defined by points (x1, y1) and (x2, y2)
         double t = Math.max(0, Math.min(1, ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / l2));
 
         double projX = x1 + t * (x2 - x1);
@@ -370,7 +376,7 @@ public class CanvasInteractionController {
                     node.setExit(params.isExit);
                 });
             } else if (entity instanceof Edge edge) {
-                // On passe le parentNode (ex: le canvas lui-même) pour centrer la fenêtre
+                // Pass the parentNode (e.g., the canvas itself) to center the dialog
                 fr.cy.view.DialogHelper.showEdgeUpdateDialog(edge, canvas).ifPresent(params -> {
                     edge.setWidth(params.width);
                     edge.setLength(params.length);
@@ -383,13 +389,13 @@ public class CanvasInteractionController {
     private GraphElement findClosestElement(double mx, double my) {
         fr.cy.model.graph.Graph graph = simController.getSimulation().getGraph();
 
-        // 1. Chercher le Nœud le plus proche
+        // 1. Search for the closest Node
         fr.cy.model.graph.element.Node closestNode = null;
         double minNodeDist = Double.MAX_VALUE;
 
         for (fr.cy.model.graph.element.Node node : graph.getNodes()) {
             double dist = Math.hypot(node.getX() - mx, node.getY() - my);
-            // On considère que le nœud a un rayon visuel (ex: 10) + notre tolérance
+            // We suppose that the node has a visual radius (e.g., 10) + our tolerance to make clicking easier
             double hitRadius = 10.0 + CLICK_TOLERANCE;
 
             if (dist <= hitRadius && dist < minNodeDist) {
@@ -398,17 +404,17 @@ public class CanvasInteractionController {
             }
         }
 
-        // Si on a touché un nœud, on s'arrête là (Priorité aux nœuds !)
+        // if we hit a node, we stop here (Nodes have priority over edges!)
         if (closestNode != null) {
             return closestNode;
         }
 
-        // 2. Si aucun nœud touché, on cherche les Arêtes
+        // 2. If no node is hit, we look for Edges
         fr.cy.model.graph.element.Edge closestEdge = null;
         double minEdgeDist = Double.MAX_VALUE;
 
         for (fr.cy.model.graph.element.Edge edge : graph.getEdges()) {
-            // Utilisation d'une formule mathématique pour calculer la distance à un segment
+            // Mathématic formula to calculate distance from point to segment
             double dist = distancePointToSegment(mx, my,
                     edge.getStart().getX(), edge.getStart().getY(),
                     edge.getEnd().getX(), edge.getEnd().getY());
