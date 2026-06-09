@@ -277,9 +277,12 @@ public class Graph implements Serializable {
         edge.getStart().removeEdge(edge);
         edge.getEnd().removeEdge(edge);
 
+
+        // Handle agents on the removed edge
         for (Agent agent : new ArrayList<>(edge.getAgents())) {
-            Node startNode = edge.getStart();
-            agent.putOnNode(startNode);
+            Node target = edge.getStart();
+            agent.putOnNode(target);
+            target.setForcedCongestion(true);
         }
 
         edgeIdManager.releaseId(edge.getId());
@@ -292,12 +295,11 @@ public class Graph implements Serializable {
     public void switchEdgeDirection(Edge edge) {
         if (edge.isDirected()) {
             
-            edge.getStart().removeEdge(edge);
+           
             adjacencyList.get(edge.getStart()).remove(edge);
 
             edge.switchDirection();
 
-            edge.getEnd().addEdge(edge);
             adjacencyList.get(edge.getEnd()).add(edge);
             
 

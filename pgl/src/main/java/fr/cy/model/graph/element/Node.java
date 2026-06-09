@@ -27,6 +27,7 @@ public class Node extends GraphElement {
     /** List of edges connected to this node */
     private final List<Edge> connectedEdges;
     /** List of outgoing edges */
+     
     private final List<Edge> outgoingEdges;
 
     /**
