@@ -3,6 +3,7 @@ package fr.cy.view;
 import fr.cy.controller.SimulationController;
 import fr.cy.util.FileManager;
 import fr.cy.model.simulation.Simulation;
+import fr.cy.model.simulation.SimulationSettings;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
@@ -24,8 +25,10 @@ import javafx.geometry.Pos;
 import javafx.geometry.Insets;
 import javafx.stage.Popup;
 import javafx.util.Duration;
+import javafx.scene.control.Spinner;
 import java.util.List;
 import java.util.Optional;
+
 
 public class SimulationToolBar extends ToolBar {
 
@@ -253,7 +256,7 @@ public class SimulationToolBar extends ToolBar {
         Optional<SimulationParams> result = dialog.showAndWait();
         result.ifPresent(params -> {
             try {
-                Simulation newSim = new Simulation(params.name, params.nodes, params.edges, params.agents);
+                Simulation newSim = new Simulation(params.name, params.nodes, params.edges, params.agents, SimulationSettings.getInstance());
                 simController.loadSimulation(newSim);
                 showAlert("Succès", "Simulation créée", "La simulation " + params.name + " a été créée avec succès.");
             } catch (Exception ex) {
