@@ -8,8 +8,10 @@ import java.io.Serializable;
 import java.io.*;
 
 import fr.cy.model.agent.Agent;
+import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 import fr.cy.model.fire.Fire;
+import fr.cy.model.simulation.SimulationSettings;
 import fr.cy.model.stress.StressInducing;
 
 /**
@@ -86,17 +88,15 @@ public abstract class GraphElement implements StressInducing, Serializable {
 
     @Override
     public boolean equals(Object o) {
-
         if (this == o) {
             return true;
         }
 
-        if (!(o instanceof GraphElement)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
 
         GraphElement element = (GraphElement) o;
-
         return getId() == element.getId();
     }
 
@@ -130,6 +130,7 @@ public abstract class GraphElement implements StressInducing, Serializable {
         this.fire = null;
     }
 
+    /**@return the list of all agents on the element */
     public List<Agent> getAgents() {
         return agents;
     }
@@ -158,20 +159,25 @@ public abstract class GraphElement implements StressInducing, Serializable {
     }
 
     /**
-     * Evaluate a score multiplier for an agent on this element, based on its properties and the agent's properties.
-     * @param agentState the properties of the agent for which we want to evaluate the score multiplier
-     * @return a score multiplier for an agent on this element, based on its properties and the agent's properties, 
-     * where a value < 1 means that the element is less attractive, and > 1 means that it is more attractive
+     * Evaluate a score multiplier for an agent on this element, based on its
+     * properties and the agent's properties.
+     * 
+     * @param agentState the properties of the agent for which we want to evaluate
+     *                   the score multiplier
+     * @return a score multiplier for an agent on this element, based on its
+     *         properties and the agent's properties,
+     *         where a value < 1 means that the element is less attractive, and > 1
+     *         means that it is more attractive
      */
     public double getScoreMultiplierForAgent(AgentDecisionalProperties agentState) {
-        //penalize graph elements on fire
+        // penalize graph elements on fire
         double scoreMult = 1.0;
         if (isOnFire()) {
             Fire fire = getFire();
             assert fire != null;
             scoreMult *= 0.1 / (1.0 + fire.getIntensity() + fire.getSmokeLevel() + fire.getSpreadRate());
         }
-        //penalize very congested graph elements
+        // penalize very congested graph elements
         double congestion = getCongestion();
         if (isCongested()) {
             scoreMult *= 0.4 * (1.0 + congestion - agentState.getCongestionTolerance());
@@ -370,9 +376,60 @@ public abstract class GraphElement implements StressInducing, Serializable {
         return congestionMeasureCount;
     }
 
+    /**
+     * @return the damage caused by this element for a whole tick, based on its properties such as fire intensity
+     */
+    public double getDamage() {
+        double duration = SimulationSettings.getInstance().getTickDuration();
+        return getDamage(duration);
+    }
+
+    /**
+     * @return the damage caused by this element, based on its properties such as fire intensity
+     */
+    public double getDamage(double duration) { //FIXME: TEMPORATY 
+        double damage = (getCongestion() > 1 ? 1 : 0) * duration;
+        if (isOnFire()) {
+            assert getFire() != null;
+            return damage + getFire().getDamage(duration);
+        }
+        return damage;
+    }
+
+    public double getMaxAgentSpeed() {
+        // We prevent mathematical congestion from exceeding 0.9 (90%) in the calculation
+        // so that the crowd can always trample very slowly.
+        double effectiveCongestion = Math.min(getCongestion(), 0.9);
+        double congestionFactor = 1.0 - effectiveCongestion;
+
+        double calculatedSpeed = AgentSettings.getInstance().getMAX_RUNNING_SPEED() * congestionFactor;
+
+        if (isOnFire()) {
+            return calculatedSpeed * 1.5;
+        }
+
+        // We guarantee a microscopic survival speed (0.1) instead of 0.0
+        return Math.max(calculatedSpeed, 0.1);
+    }
+
+    public void setInitialState() {
+        if (this.getFire() != null) {
+            this.initialFire = getFire();
+        } else {
+            this.initialFire = null;
+        }
+    }
+
     public void reset() {
         agents.clear();
-        removeFire();
+
+        if (this.initialFire != null) {
+            // On recrée une copie propre pour la nouvelle simulation
+            this.setFire(initialFire);
+        } else {
+            this.setFire(null);
+        }
+
         maxCongestion = 0;
         sumCongestion = 0;
         congestionMeasureCount = 0;
@@ -380,5 +437,29 @@ public abstract class GraphElement implements StressInducing, Serializable {
         totalAgentsCount = 0;
         cachedTotalStressInducedByThisElement = 0;
         cachedTotalStressInducedIncludingNeighbors = 0;
+    }
+
+    public void setForcedCongestion(boolean congested) {
+        this.isForcedCongested = congested;
+        if (congested) {
+            this.forcedCongestionTicks = 0; // Réinitialise le compteur
+        }
+    }
+
+    public boolean isForcedCongested() {
+        return isForcedCongested;
+    }
+
+    /**
+     * Appelé à chaque tick pour décrémenter le compteur de congestion forcée.
+     */
+    public void updateForcedCongestion() {
+        if (isForcedCongested) {
+            forcedCongestionTicks++;
+            if (forcedCongestionTicks >= 2) { // 2 cycles de simulation
+                isForcedCongested = false;
+                forcedCongestionTicks = 0;
+            }
+        }
     }
 }

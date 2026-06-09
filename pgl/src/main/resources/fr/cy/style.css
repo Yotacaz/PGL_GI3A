@@ -253,3 +253,109 @@
 .scroll-pane {
     -fx-border-color: transparent;
 }
+
+/* ======================================================= */
+/* --- DIALOGS & POPUPS (DARK THEME) --- */
+/* ======================================================= */
+
+.dialog-pane {
+    -fx-background-color: -fx-surface;
+    -fx-border-color: #2A2A35;
+    -fx-border-width: 1px;
+}
+
+/* En-tête de la fenêtre */
+.dialog-pane > *.header-panel {
+    -fx-background-color: -fx-surface-elevated;
+    -fx-padding: 15px;
+}
+
+.dialog-pane > *.header-panel *.label {
+    -fx-text-fill: -fx-accent-orange;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+/* Texte général dans la boîte */
+.dialog-pane .content .label {
+    -fx-text-fill: -fx-text-primary;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+/* Zone des boutons en bas */
+.dialog-pane > *.button-bar > *.container {
+    -fx-padding: 15px;
+}
+
+/* ======================================================= */
+/* --- CHAMPS DE SAISIE (SPINNERS) --- */
+/* ======================================================= */
+
+.spinner {
+    -fx-background-color: transparent;
+}
+
+.spinner .text-field {
+    -fx-background-color: #121212;
+    -fx-text-fill: #fafafa; /* Cyan fluo pour les valeurs */
+    -fx-font-weight: bold;
+    -fx-border-color: #30303D;
+    -fx-border-radius: 4px;
+    -fx-padding: 5 10 5 10px;
+}
+
+/* Boutons haut/bas du Spinner */
+.spinner .increment-arrow-button,
+.spinner .decrement-arrow-button {
+    -fx-background-color: -fx-surface-elevated;
+    -fx-cursor: hand;
+}
+
+.spinner .increment-arrow-button:hover,
+.spinner .decrement-arrow-button:hover {
+    -fx-background-color: -fx-accent-blue;
+}
+
+.spinner .increment-arrow-button .increment-arrow,
+.spinner .decrement-arrow-button .decrement-arrow {
+    -fx-background-color: #E0E0E0;
+}
+
+/* ======================================================= */
+/* --- ÉTAT ACTIF / ENFONCÉ DES OUTILS (TOGGLE BUTTON) --- */
+/* ======================================================= */
+
+.action-btn:selected {
+    -fx-background-color: -fx-accent-blue;
+    -fx-text-fill: white;
+    /* Un petit halo bleu autour pour bien montrer qu'il est actif */
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 122, 204, 0.5), 10, 0, 0, 0);
+    -fx-translate-y: 1px; /* Donne l'impression qu'il est enfoncé */
+}
+
+/* Changement de couleur au survol quand l'outil est DÉJÀ sélectionné */
+.action-btn:selected:hover {
+    -fx-background-color: -fx-accent-blue-hover;
+}
+
+/* ======================================================= */
+/* --- CHECKBOX (DARK THEME) --- */
+/* ======================================================= */
+.check-box {
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.check-box .box {
+    -fx-background-color: #121212;
+    -fx-border-color: #30303D;
+    -fx-border-radius: 4px;
+    -fx-padding: 2px;
+}
+
+.check-box:selected .mark {
+    -fx-background-color: -fx-accent-blue; /* La coche en bleu */
+}

@@ -1,8 +1,8 @@
 package fr.cy;
 
 import fr.cy.controller.MainController;
+import fr.cy.model.graph.Graph;
 import fr.cy.model.simulation.Simulation;
-import fr.cy.util.ScenarioBuilder;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -18,7 +18,7 @@ public class App extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        Simulation simulation = ScenarioBuilder.buildComplexScenario();
+        Simulation simulation = new Simulation("Sandbox", new Graph());
 
         MainController mainController = new MainController(simulation);
 
@@ -44,3 +44,4 @@ public class App extends Application {
         launch(args);
     }
 }
+

@@ -8,6 +8,13 @@ import java.util.Set;
 
 import fr.cy.model.agent.behaviour.properties.personalityTraits.AgentPersonalityTrait;
 
+/**
+ * Represents the decisional and behavioral properties of an agent.
+ * 
+ * <p>This class encapsulates all the psychological and behavioral characteristics
+ * that influence an agent's decision-making process, including stress levels,
+ * emotional states, tolerances, and decision-making factors.</p>
+ */
 public class AgentDecisionalProperties implements Serializable {
     private static final long serialVersionUID = 1L;
     private int id;
@@ -60,7 +67,7 @@ public class AgentDecisionalProperties implements Serializable {
      * @return the new state of the agent after the update
      */
     public EmotionalState updateEmotionnalState() {
-        Optional<EmotionalState> optState = EmotionalState.fromdouble(stressLevel, stressTolerance);
+        Optional<EmotionalState> optState = EmotionalState.fromdouble(stressLevel);
         if (optState.isEmpty()) {
             System.err.println("Warning: Agent " + id + " has an invalid stress level of " + stressLevel
                     + " with a tolerance of " + stressTolerance + ". Defaulting to PANICKING state.");
@@ -76,10 +83,20 @@ public class AgentDecisionalProperties implements Serializable {
         return state;
     }
 
+    /**
+     * Gets the agent's tolerance to stress.
+     * 
+     * @return the stress tolerance value (0.0 to 1.0)
+     */
     public double getStressTolerance() {
         return stressTolerance;
     }
 
+    /**
+     * Sets the current stress level of the agent and updates the maximum accumulated stress.
+     * 
+     * @param stressLevel the new stress level (0.0 to 1.0)
+     */
     public void setStressLevel(double stressLevel) {
         this.stressLevel = stressLevel;
         if (stressLevel > maxAccumulatedStress) {
@@ -87,6 +104,11 @@ public class AgentDecisionalProperties implements Serializable {
         }
     }
 
+    /**
+     * Gets the current stress level of the agent.
+     * 
+     * @return the current stress level (0.0 to 1.0)
+     */
     public double getStressLevel() {
         return stressLevel;
     }

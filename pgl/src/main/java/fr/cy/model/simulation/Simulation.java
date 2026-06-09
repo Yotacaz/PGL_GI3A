@@ -3,7 +3,7 @@ package fr.cy.model.simulation;
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentGenerator;
 import fr.cy.model.agent.AgentManager;
-import fr.cy.model.agent.behaviour.decisions.NodeDecisionContextProvider;
+import fr.cy.model.agent.behaviour.decisions.ContextProvider;
 import fr.cy.model.fire.FireService;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Node;
@@ -27,7 +27,7 @@ public class Simulation implements Serializable {
     private boolean running;
 
     public Simulation(String name, Graph graph) {
-        this(name, graph, new SimulationSettings());
+        this(name, graph, SimulationSettings.getInstance());
     }
 
     public Simulation(String name, int nodeCount, int edgeCount, int agentCount) {
@@ -43,7 +43,7 @@ public class Simulation implements Serializable {
         this.pathFinder = new PathFinder(graph);
         this.fireService = new FireService();
 
-        NodeDecisionContextProvider decisionContextProvider = new NodeDecisionContextProvider(graph, pathFinder);
+        ContextProvider decisionContextProvider = new ContextProvider(graph, pathFinder);
         AgentGenerator agentGenerator = new AgentGenerator(graph);
 
         this.agentManager = new AgentManager(decisionContextProvider, agentGenerator, simulationSettings);

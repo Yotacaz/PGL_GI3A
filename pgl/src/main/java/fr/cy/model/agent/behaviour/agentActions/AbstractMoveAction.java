@@ -4,38 +4,92 @@ import java.util.Objects;
 
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentSettings;
+import fr.cy.model.agent.exceptions.AgentStateException;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 
+/**
+ * Abstract base class for agent actions that involve movement along edges.
+ * 
+ * <p>This class provides common functionality for all movement actions, including
+ * progress tracking, edge traversal logic, and node transition handling. Concrete
+ * subclasses implement specific types of movement behavior.</p>
+ */
 public abstract class AbstractMoveAction extends AgentAction {
     private static final long serialVersionUID = 1L;
-    /** The progress of the agent along the current edge, between 0 and 1 */
-    private double edgeProgress = 0.0;
 
+    /**
+     * The progress of the agent along the current edge, between 0 and 1.
+     * A value of 0 indicates the agent is at the starting node, while 1 indicates
+     * the agent has reached the destination node.
+     */
+    protected double edgeProgress = 0.0;
+
+    /**
+     * Creates a new AbstractMoveAction for the specified agent.
+     * 
+     * @param agent the agent that will perform this movement action
+     */
     public AbstractMoveAction(Agent agent) {
         super(agent);
     }
 
+    /**
+     * Gets the current progress along the edge being traversed.
+     * 
+     * @return the edge progress (0.0 to 1.0)
+     */
     public double getEdgeProgress() {
         return edgeProgress;
     }
 
-    public void setEdgeProgress(double edgeProgress) {
-        if (edgeProgress < 0.0) {
+    /**
+     * Sets the progress along the current edge.
+     * 
+     * @param newEdgeProgress the new edge progress (must be >= 0.0, will be clamped to 1.0)
+     * @throws IllegalArgumentException if newEdgeProgress is negative
+     */
+    public void setEdgeProgress(double newEdgeProgress) {
+        if (newEdgeProgress < 0.0) {
             throw new IllegalArgumentException("Edge progress must be positive");
         }
-        this.edgeProgress = Math.min(edgeProgress, 1.0);
+        this.edgeProgress = Math.min(newEdgeProgress, 1.0);
+        agent.setCurrentEdgeProgress(edgeProgress); //keep in sync
     }
 
+    /**
+     * Checks if the edge traversal is complete.
+     * 
+     * @return true if the edge progress is close enough to 1.0 (accounting for floating-point precision),
+     *         false otherwise
+     */
     public boolean isEdgeCompleted() {
-        return edgeProgress >= 0.999999; // consider edge completed when progress is close enough to 1.0 to avoid
-                                         // floating-point issues
+        return getEdgeProgress() >= 0.999999; // consider edge completed when progress is close enough to 1.0 to avoid
+        // floating-point issues
     }
 
+    /**
+     * Handles the movement of the agent along the specified edge for the given available time.
+     * 
+     * <p>This method calculates the distance the agent can travel based on their effective speed
+     * and the available time, updates the edge progress, and handles the transition to the
+     * destination node if the edge is completed.</p>
+     * 
+     * @param agentSettings the agent settings containing speed factors and other parameters
+     * @param edge the edge along which the agent is moving
+     * @param availableTime the time available for this movement (in simulation time units)
+     * @return the time actually consumed by this movement
+     * @throws AgentStateException if the agent is in an invalid state for edge traversal
+     * @throws NullPointerException if the edge parameter is null
+     */
     protected double travelAlongEdge(AgentSettings agentSettings, Edge edge, double availableTime) {
         Agent agent = getAgent();
-
-        agent.putOnEdge(edge);
+        Objects.requireNonNull(edge, "invalid param");
+        if (!agent.isOnEdge()) {
+            agent.putOnEdge(edge);
+        } else if (!edge.equals(agent.getCurrentEdge())) {
+            throw new AgentStateException("agent is trying to travel on an edge while being in another one");
+        }
 
         if (availableTime <= 0.0) {
             return 0.0;
@@ -64,41 +118,26 @@ public abstract class AbstractMoveAction extends AgentAction {
         return timeConsumed;
     }
 
+    /**
+     * Transitions the agent to the next node if edge traversal is complete.
+     * 
+     * <p>This method checks if the edge has been fully traversed and, if so,
+     * moves the agent to the destination node and updates the visited node count.</p>
+     * 
+     * @throws AgentStateException if the agent is not on an edge when edge completion is detected
+     */
     private void goToNextNodeIfEdgeCompleted() {
         if (isEdgeCompleted()) {
-            Agent agent = getAgent();
             agent.incrementNodeVisited();
-            Edge currentEdge = agent.getCurrentEdge();
-            if (currentEdge == null) {
-                throw new IllegalStateException("Current edge cannot be null when edge is completed");
-            }
-            if (!agent.isOnNode()) {
-                Node nextNode = currentEdge.getOppositeNode(agent.getPreviousOrCurrentNode());
+            if (agent.isOnEdge()) {
+                // Node nextNode = currentEdge.getOppositeNode(agent.getPreviousOrCurrentNode());
+                Node nextNode = getClosestTargetNode();
                 agent.putOnNode(nextNode);
+                assert getProgress() > 0.99;
+            } else {
+                throw new AgentStateException("Current edge cannot be null when edge is completed");
             }
         }
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), edgeProgress);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (!super.equals(obj))
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        AbstractMoveAction other = (AbstractMoveAction) obj;
-        return Double.compare(edgeProgress, other.edgeProgress) == 0;
-    }
-
-    @Override
-    public String toString() {
-        return super.toString().replace("}", "") + ", edgeProgress=" + String.format("%.3f", edgeProgress) + '}';
     }
 
 }
