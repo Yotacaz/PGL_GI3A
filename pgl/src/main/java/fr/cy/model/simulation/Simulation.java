@@ -11,30 +11,62 @@ import fr.cy.model.pathfinding.PathFinder;
 
 import java.io.*;
 import java.util.stream.Collectors;
-
+/**
+ * Class representing a simulation of an evacuation scenario.
+ */
 public class Simulation implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    /**
+     * Name of the simulation, used for identification and display purposes.
+     */
     private final String name;
-
+    
+    // --- CORE COMPONENTS ---
     private final Graph graph;
     private final AgentManager agentManager;
     private final PathFinder pathFinder;
     private final FireService fireService;
     private final SimulationSettings simulationSettings;
 
+    /**
+     * Current tick of the simulation.
+     */
     private int currentTick;
+    /**
+     * Indicates whether the simulation is currently running.
+     */
     private boolean running;
 
+
+    /**
+     * Constructor for the Simulation class.
+     * @param name Name of the simulation
+     * @param graph Graph to use for the simulation
+     */
     public Simulation(String name, Graph graph) {
         this(name, graph, SimulationSettings.getInstance());
     }
 
+    /**
+     * Constructor for the Simulation class with random graph and agents.
+     * @param name Name of the simulation
+     * @param nodeCount Number of nodes in the graph
+     * @param edgeCount Number of edges in the graph
+     * @param agentCount Number of agents to generate
+     * @param simulationSettings Settings for the simulation
+     */
     public Simulation(String name, int nodeCount, int edgeCount, int agentCount, SimulationSettings simulationSettings) {
         this(name, new Graph(nodeCount, edgeCount), simulationSettings);
         this.agentManager.generateRandomsAgents(agentCount);
     }
 
+    /**
+     * Constructor for the Simulation class with custom graph and settings.
+     * @param name Name of the simulation
+     * @param graph Graph to use for the simulation
+     * @param simulationSettings Settings for the simulation
+     */
     public Simulation(String name, Graph graph, SimulationSettings simulationSettings) {
         this.graph = graph;
         this.simulationSettings = simulationSettings;
@@ -53,9 +85,8 @@ public class Simulation implements Serializable {
         this.running = false;
     }
 
-    public String getName() {
-        return name;
-    }
+
+    
 
     public void reset() {
         graph.reset();
@@ -92,6 +123,7 @@ public class Simulation implements Serializable {
         currentTick++;
     }
 
+    // GETTERS AND SETTERS
     public boolean isRunning() {
         return running;
     }
@@ -119,6 +151,13 @@ public class Simulation implements Serializable {
     public SimulationSettings getSimulationSettings() {
         return simulationSettings;
     }
+    
+    public String getName() {
+        return name;
+    }
+
+
+
 
     @Override
     public String toString() {
