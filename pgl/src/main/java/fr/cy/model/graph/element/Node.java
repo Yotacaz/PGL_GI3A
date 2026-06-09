@@ -2,68 +2,67 @@ package fr.cy.model.graph.element;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 
 /**
- * Class representing a node in the graph.
+ * Represents a node in the graph structure.
+ * <p>
+ * A node is located at a specific (x, y) coordinate in a 2D plane.
+ * It inherits common properties from {@link GraphElement} such as unique
+ * identification, fire state, and congestion tracking.
+ * </p>
+ * * @author GI3A
  * 
- * A node is an element in the graph located at a specific position (x, y)
- * in a plane. It inherits common properties
- * from GraphElement such as the identifier, fire state, and congestion.
- * 
- * @author GI3A
  * @version 1.0
  */
 public class Node extends GraphElement {
-    private final int id;
 
-    /** Coordinates X, Y */
+    private final int id;
     private double x;
     private double y;
-
     private boolean isExit;
 
-    /** List of edges connected to this node */
+    /** List of all edges incident to this node. */
     private final List<Edge> connectedEdges;
-    /** List of outgoing edges */
-     
+
+    /** List of edges that agents can travel through from this node. */
     private final List<Edge> outgoingEdges;
 
     /**
-     * Constructor for the Node class.
+     * Constructs a new Node.
+     * * @param id Unique identifier.
      * 
-     * @param id unique identifier for the node
-     * @param x  the X coordinate of the node
-     * @param y  the Y coordinate of the node
+     * @param x        X-coordinate.
+     * @param y        Y-coordinate.
+     * @param capacity Maximum capacity for agents.
      */
     public Node(int id, double x, double y, double capacity) {
         super(id, capacity);
         this.id = id;
         this.x = x;
         this.y = y;
-
-        connectedEdges = new ArrayList<>();
-        outgoingEdges = new ArrayList<>();
+        this.connectedEdges = new ArrayList<>();
+        this.outgoingEdges = new ArrayList<>();
     }
 
+    /**
+     * Calculates an attractiveness multiplier for an agent based on local node
+     * properties, heavily prioritizing exit nodes.
+     * * @param agentState Agent decision properties.
+     * 
+     * @return Score multiplier.
+     */
     @Override
     public double getScoreMultiplierForAgent(AgentDecisionalProperties agentState) {
         double scoreMultiplier = super.getScoreMultiplierForAgent(agentState);
         if (isExit()) {
-            scoreMultiplier *= 10; // prefer exits
+            scoreMultiplier *= 10; // Significant preference for exits
         }
         return scoreMultiplier;
     }
 
-    /**
-     * Returns a textual representation of the node.
-     * 
-     * @return a string containing the node's id and coordinates
-     */
     @Override
     public String toString() {
-
         return "Node{" +
                 "id=" + getId() +
                 ", x=" + x +
@@ -73,75 +72,69 @@ public class Node extends GraphElement {
                 "}";
     }
 
-    /**
-     * Returns the unique identifier of the node.
-     * 
-     * @return the node's id
-     */
+    /** @return The unique identifier of the node. */
+    @Override
     public int getId() {
         return id;
     }
 
-    /**
-     * Returns the X coordinate of the node.
-     * 
-     * @return the X coordinate
-     */
+    /** @return The X coordinate. */
     public double getX() {
         return x;
     }
 
+    /** @param x The X coordinate to set. */
     public void setX(double x) {
         this.x = x;
     }
 
-    /**
-     * Returns the Y coordinate of the node.
-     * 
-     * @return the Y coordinate
-     */
+    /** @return The Y coordinate. */
     public double getY() {
         return y;
     }
 
+    /** @param y The Y coordinate to set. */
     public void setY(double y) {
         this.y = y;
     }
 
+    /** @param capacity The capacity to set. */
+    @Override
     public void setCapacity(double capacity) {
         super.setCapacity(capacity);
     }
 
-    /**
-     * Checks if the node is an exit.
-     * 
-     * @return true if the node is an exit, false otherwise
-     */
+    /** @return True if this node acts as an evacuation exit. */
     public boolean isExit() {
         return isExit;
     }
 
-    /**
-     * Sets whether the node is an exit.
-     * 
-     * @param exit true if the node is an exit, false otherwise
-     */
+    /** @param exit Sets the exit status of the node. */
     public void setExit(boolean exit) {
         isExit = exit;
     }
 
-    /**
-     * Toggles the exit status of the node.
-     */
+    /** Toggles the exit status. */
     public void switchExit() {
         isExit = !isExit;
     }
 
+    /**
+     * Retrieves neighbors based on connected edges.
+     * 
+     * @return A list of {@link GraphElement}s connected to this node.
+     */
     @Override
     public List<GraphElement> getNeighbors() {
         return new ArrayList<>(connectedEdges);
     }
 
+    /**
+     * Finds the edge connecting this node to a specific neighbor.
+     * 
+     * @param neighbor The neighbor node.
+     * @return The connecting {@link Edge}, or null if none exists.
+     */
     public Edge getEdgeTo(Node neighbor) {
         for (Edge edge : connectedEdges) {
             if (edge.getOppositeNode(this).equals(neighbor)) {
@@ -152,14 +145,13 @@ public class Node extends GraphElement {
     }
 
     /**
-     * Adds an edge connected to this node.
+     * Adds an edge to this node's connected list.
      * 
-     * @param edge the edge to add
+     * @param edge The edge to add.
      */
     public void addEdge(Edge edge) {
         if (edge != null) {
             connectedEdges.add(edge);
-
             if (!edge.isDirected() || edge.getStart().equals(this)) {
                 outgoingEdges.add(edge);
             }
@@ -167,9 +159,9 @@ public class Node extends GraphElement {
     }
 
     /**
-     * Removes an edge connected to this node.
+     * Removes an edge from this node's lists.
      * 
-     * @param edge the edge to remove
+     * @param edge The edge to remove.
      */
     public void removeEdge(Edge edge) {
         if (edge != null) {
@@ -179,19 +171,14 @@ public class Node extends GraphElement {
     }
 
     /**
-     * Return all outgoing edges from this node. For undirected edges, they are
-     * considered outgoing from both nodes.
-     * 
-     * @return list of outgoing edges
+     * @return List of edges agents can travel through from this node.
      */
     public List<Edge> getOutgoingEdges() {
         return outgoingEdges;
     }
 
     /**
-     * Returns all edges connected to this node.
-     * 
-     * @return list of edges
+     * @return List of all edges incident to this node.
      */
     public List<Edge> getEdges() {
         return new ArrayList<>(connectedEdges);

@@ -12,11 +12,13 @@ import fr.cy.model.agent.behaviour.agentActions.WaitBeforeOtherAction;
 import fr.cy.model.agent.behaviour.decisions.NodeContext;
 import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 import fr.cy.model.agent.behaviour.properties.AgentPhysicalProperties;
+import fr.cy.model.agent.exceptions.AgentStateException;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
+import fr.cy.model.agent.behaviour.decisions.AgentPossibleEdgeDecision;
 import fr.cy.model.agent.behaviour.decisions.ContextProvider;
+import fr.cy.model.agent.behaviour.decisions.EdgeContext;
 import fr.cy.model.simulation.SimulationSettings;
-import fr.cy.model.agent.behaviour.decisions.ContextProvider;
 
 /**
  * Manager responsible for higher-level operations on {@link Agent} instances.
@@ -32,14 +34,22 @@ public class AgentManager implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    /** Indicates whether the current tick is the first one */
     private boolean isFirstTick = true;
 
-    private AgentSettings agentSettings = AgentSettings.getInstance();
-    private List<Agent> agentsToEvacuate;
-    private List<Agent> deadAgents = new ArrayList<>();
-    private List<Agent> evacuatedAgents = new ArrayList<>();
-    private ContextProvider decisionContextProvider;
-    private AgentGenerator agentGenerator;
+    /** The settings for managing agents */
+    private final AgentSettings agentSettings = AgentSettings.getInstance();
+    /** The list of agents to evacuate */
+    private final List<Agent> agentsToEvacuate;
+    /** The list of dead agents */
+    private final List<Agent> deadAgents = new ArrayList<>();
+    /** The list of evacuated agents */
+    private final List<Agent> evacuatedAgents = new ArrayList<>();
+    /** Provider for decision contexts used by agents during decision-making */
+    private final ContextProvider decisionContextProvider;
+    /** Generator for creating agents with random attributes and placing them in the graph */
+    private final AgentGenerator agentGenerator;
+    /** The settings for managing agents and the simulation */
     private final SimulationSettings simulationSettings;
 
     // private Map<Agent, AgentAction> agentActionsPreviousTick = new HashMap<>();
@@ -47,20 +57,17 @@ public class AgentManager implements Serializable {
     /** For storing initial snapshots of agents (for reset functionality) */
     private List<AgentSnapshot> initialAgentSnapshots = null;
 
+    /** The time elapsed since the last edge decision was made, used to prompt edge decisions TODO*/
+    private double timeSinceLastEdgeDecision = 0.0;
+
     /**
-     * Creer un AgentManager avec n agents
-     * @param agents
-     * @param decisionContextProvider
-     * @param agentGenerator
-     * @param simulationSettings
+     * Creates a new AgentManager with the specified lists of agents and dependencies.
+     * @param agents the initial list of agents to manage (will be copied, so the original list can be modified independently)
+     * @param decisionContextProvider the provider for decision contexts used by agents during decision-making
+     * @param agentGenerator the generator for creating agents with random attributes and placing them in the graph
+     * @param simulationSettings the settings for managing agents and the simulation
      */
-    public AgentManager(int count, ContextProvider decisionContextProvider,
-            AgentGenerator agentGenerator, SimulationSettings simulationSettings) {
-        this(new ArrayList<>(), decisionContextProvider, agentGenerator, simulationSettings);
-        generateRandomsAgents(count);
-    
-    }
-    public AgentManager(List<Agent> agents,ContextProvider decisionContextProvider,
+    private AgentManager(List<Agent> agents, ContextProvider decisionContextProvider,
             AgentGenerator agentGenerator, SimulationSettings simulationSettings) {
         this.agentsToEvacuate = agents;
         this.decisionContextProvider = decisionContextProvider;
@@ -68,11 +75,33 @@ public class AgentManager implements Serializable {
         this.simulationSettings = simulationSettings;
     }
 
+    /**
+     * Creates a new AgentManager with the specified dependencies and an empty initial list of agents, then generates random agents.
+     * @param count the number of random agents to generate
+     * @param decisionContextProvider the provider for decision contexts used by agents during decision-making
+     * @param agentGenerator the generator for creating agents with random attributes and placing them in the graph
+     * @param simulationSettings the settings for managing agents and the simulation
+    */
+    public AgentManager(int count, ContextProvider decisionContextProvider,
+            AgentGenerator agentGenerator, SimulationSettings simulationSettings) {
+        this(new ArrayList<>(), decisionContextProvider, agentGenerator, simulationSettings);
+        generateRandomsAgents(count);
+    }
+
+    /**
+     * Creates a new AgentManager with the specified dependencies and an empty initial list of agents.
+     * @param decisionContextProvider the provider for decision contexts used by agents during decision-making
+     * @param agentGenerator the generator for creating agents with random attributes and placing them in the graph
+     * @param simulationSettings the settings for managing agents and the simulation
+     */
     public AgentManager(ContextProvider decisionContextProvider, AgentGenerator agentGenerator,
             SimulationSettings simulationSettings) {
         this(new ArrayList<>(), decisionContextProvider, agentGenerator, simulationSettings);
     }
 
+    /**
+     * A comparator for sorting agents based on their own decision-making factors.
+     */
     private class AgentByOwnDecisionMakingComparator implements Comparator<Agent> {
         @Override
         public int compare(Agent a1, Agent a2) {
@@ -165,6 +194,14 @@ public class AgentManager implements Serializable {
         tick(simulationSettings.getTickDuration());
     }
 
+    /**
+     * Main update method for the agent manager, called at each tick of the
+     * simulation with a specified tick duration.
+     * It updates the stress levels of agents and processes their decisions and
+     * actions.
+     *
+     * @param tickDuration the duration of the tick in seconds, used for updating agent states and actions
+     */
     public void tick(double tickDuration) {
         if (isFirstTick) {
             setInitialState();
@@ -182,6 +219,12 @@ public class AgentManager implements Serializable {
         // to ensure that all agents have the same information when making their
         // decisions
         for (Agent agent : agentsToEvacuate) {
+            if (agent.getCurrentAction() != null && agent.getCurrentAction().isCompleted()) {
+                if (agent.isOnEdge()){
+                    throw new AgentStateException("Agent " + agent.getName() + " has a completed action but is still on edge " + agent.getCurrentEdge());
+                }
+                agent.setCurrentAction(null);
+            }
             if (agent.isOnNode()) {
 
                 NodeContext decisionContext = decisionContextProvider.getNodeContext(agent.getCurrentNode());
@@ -190,19 +233,32 @@ public class AgentManager implements Serializable {
                 }
                 AgentAction action = agent.makeNodeDecision(decisionContext, agentSettings);
                 boolean registered = decisionContextProvider.registerChosenAction(agent, action);
-                if (!registered) {
+                if (action == null) {
+                    continue;
+                } else if (!registered) {
                     agent.setCurrentAction(new WaitBeforeOtherAction(agent, tickDuration, action));
                 }
             } else if (agent.isOnEdge()) {
-                // EdgeContext decisionContext = decisionContextProvider.getEdgeContext(agent.getCurrentEdge());
-                // if (decisionContext == null) {
-                //     continue;
+                EdgeContext decisionContext = decisionContextProvider.getEdgeContext(agent.getCurrentEdge());
+                if (decisionContext == null) {
+                    continue;
+                }
+                AgentAction action = agent.makeEdgeDecision(decisionContext, agentSettings);
+                // if (agent.getLastSelectedEdgeDecision() == AgentPossibleEdgeDecision.BACKTRACK) {
+                //     System.out.println(
+                //             "Agent " + agent.getName() + " is backtracking from edge " + agent.getCurrentEdge());
                 // }
-                // AgentAction action = agent.makeEdgeDecision(decisionContext, agentSettings);
-                // boolean registered = decisionContextProvider.registerChosenAction(agent, action);
-                // if (!registered) {
-                //     agent.setCurrentAction(new WaitBeforeOtherAction(agent, tickDuration, action));
-                // }
+                boolean registered = decisionContextProvider.registerChosenAction(agent, action);
+                if (action == null) {
+                    throw new AgentStateException("Agent " + agent.getName() + " is on edge " + agent.getCurrentEdge()
+                            + " but made a null decision");
+                } else if (!registered) {
+                    agent.setCurrentAction(new WaitBeforeOtherAction(agent, tickDuration, action));
+                }
+            } else {
+                agent.isOnGraph();
+                throw new AgentStateException("Agent " + agent.getName()
+                        + " is neither on a node nor on an edge but on the list of agents to evacuate");
             }
         }
 
@@ -217,11 +273,6 @@ public class AgentManager implements Serializable {
             if (consumed <= 1E-32) {
                 continue;
             }
-
-            if (agent.getCurrentAction() != null && agent.getCurrentAction().isCompleted()) {
-                agent.setCurrentAction(null);
-            }
-
         }
 
     }
@@ -388,6 +439,11 @@ public class AgentManager implements Serializable {
         }
     }
 
+    /**
+     * Resets the agent settings to their default values.
+     * This does not affect existing agents, but will change the settings used for
+     * future agent generation and decision evaluation.
+     */
     public void resetSettings() {
         this.agentSettings.resetSettings();
     }

@@ -31,7 +31,7 @@ public abstract class AgentAction implements Serializable {
 	 * A value of 0 indicates the action has just started,
 	 * while 1 indicates the action is complete.
 	 */
-	private double progress = 0.0;
+	protected double progress = 0.0;
 
 	/**
 	 * Creates a new AgentAction for the specified agent.

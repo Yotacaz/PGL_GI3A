@@ -44,7 +44,7 @@ public class FollowSingleEdgeAction extends AbstractMoveAction {
      */
     public FollowSingleEdgeAction(Agent agent, Edge edgeToFollow, Node destinationNode, double initialProgress) {
         this(agent, edgeToFollow, destinationNode);
-        setProgress(initialProgress);
+        setEdgeProgress(initialProgress);
     }
 
     // @Override
@@ -59,7 +59,6 @@ public class FollowSingleEdgeAction extends AbstractMoveAction {
         setProgress(newProgress); // keep edge progress in sync with overall action progress
     }
 
-
     @Override
     public Edge getClosestTargetEdge() {
         return edgeToFollow;
@@ -72,11 +71,12 @@ public class FollowSingleEdgeAction extends AbstractMoveAction {
 
     @Override
     public double perform(AgentSettings agentSettings, double availableTime) {
-        if (getProgress() >= 1.0)
+        if (isCompleted()) {
             throw new AgentStateException("Action should not be performed if already completed");
+        }
         double consumedTime = travelAlongEdge(agentSettings, edgeToFollow, availableTime);
         // setProgress(getEdgeProgress()); // single edge progress is the overall action progress
-        
+
         return consumedTime;
     }
 

@@ -13,8 +13,15 @@ import fr.cy.model.graph.element.Node;
 public class FollowAgentAction extends AgentAction {
 	private static final long serialVersionUID = 1L;
 
+	/** The agent that this action will follow */
 	private Agent targetAgent;
 
+	/**
+	 * Creates a new FollowAgentAction with the specified agent and target agent.
+	 * 
+	 * @param agent the agent that will perform the following action
+	 * @param targetAgent the agent to follow
+	 */
 	public FollowAgentAction(Agent agent, Agent targetAgent) {
 		super(agent);
 		this.targetAgent = targetAgent;

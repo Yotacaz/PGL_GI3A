@@ -6,8 +6,15 @@ import java.util.List;
 
 import fr.cy.model.graph.element.GraphElement;
 
+/**
+ * A data container for calculating and storing congestion metrics for a
+ * collection
+ * of {@link GraphElement} objects.
+ * * @param <T> The specific type of {@link GraphElement} being analyzed.
+ */
 public class CongestionStats<T extends GraphElement> implements Serializable {
     private static final long serialVersionUID = 1L;
+
     private double maxCongestionLevel;
     private T mostCongestedElement;
     private double minCongestionLevel;
@@ -17,6 +24,9 @@ public class CongestionStats<T extends GraphElement> implements Serializable {
     private List<T> sortedByCongestion;
     private int count;
 
+    /**
+     * Constructs a new {@code CongestionStats} object with calculated metrics.
+     */
     private CongestionStats(double maxCongestionLevel, double minCongestionLevel, double averageCongestionLevel,
             double totalCongestionLevel, T mostCongestedElement, T leastCongestedElement, List<T> sortedByCongestion,
             int count) {
@@ -31,8 +41,8 @@ public class CongestionStats<T extends GraphElement> implements Serializable {
     }
 
     /**
-     * A comparator for comparing graph elements based on their congestion levels.
-     * From the most to the least congested.
+     * A comparator for ordering graph elements based on their congestion levels
+     * in ascending order.
      */
     private static class CongestionsGraphElementComparator implements Comparator<GraphElement> {
         @Override
@@ -42,62 +52,74 @@ public class CongestionStats<T extends GraphElement> implements Serializable {
     }
 
     /**
-     * Computes congestion statistics for a list of graph elements, including
-     * maximum, minimum, average, and total congestion levels, as well as
-     * identifying the most and least congested elements.
+     * Computes congestion statistics for a list of graph elements.
+     * <p>
+     * This method identifies the maximum, minimum, average, and total congestion,
+     * as well as the most and least congested elements.
+     * <b>Note:</b> The provided list is sorted in place using
+     * {@link CongestionsGraphElementComparator}.
+     * </p>
+     * * @param graphElements The list of elements to analyze.
      * 
-     * @param graphElements the list of graph elements to analyze for congestion
-     *                      statistics **WARNING: the list will be sorted in
-     *                      place**.
-     * @return the congestion statistics for the provided graph elements
+     * @return A {@code CongestionStats} instance containing the metrics,
+     *         or {@code null} if the list is empty or null.
      */
     public static <T extends GraphElement> CongestionStats<T> computeCongestionStats(List<T> graphElements) {
-        // sorted by congestion level, from the most to the least congested
-
         if (graphElements == null || graphElements.isEmpty()) {
             return null;
         }
 
         graphElements.sort(new CongestionsGraphElementComparator());
+
         double totalCongestionLevel = graphElements.stream().mapToDouble(T::getCongestion).sum();
         int count = graphElements.size();
-        double maxCongestionLevel = count > 0 ? graphElements.get(0).getCongestion() : 0.0;
-        double minCongestionLevel = count > 0 ? graphElements.get(count - 1).getCongestion() : 0.0;
 
-        double averageCongestionLevel = count > 0 ? totalCongestionLevel / count : 0.0;
+        // After sorting, index 0 is the least congested, last index is most congested
+        double minCongestionLevel = graphElements.get(0).getCongestion();
+        double maxCongestionLevel = graphElements.get(count - 1).getCongestion();
+        double averageCongestionLevel = totalCongestionLevel / count;
+
         return new CongestionStats<>(maxCongestionLevel, minCongestionLevel, averageCongestionLevel,
                 totalCongestionLevel,
-                graphElements.get(0), graphElements.get(count - 1), graphElements, count);
+                graphElements.get(count - 1), graphElements.get(0), graphElements, count);
     }
 
+    /** @return The average congestion level across all elements. */
     public double getAverageCongestionLevel() {
         return averageCongestionLevel;
     }
 
+    /** @return The maximum congestion level found. */
     public double getMaxCongestionLevel() {
         return maxCongestionLevel;
     }
 
+    /** @return The total number of elements analyzed. */
     public int getCount() {
         return count;
     }
 
+    /** @return The minimum congestion level found. */
     public double getMinCongestionLevel() {
         return minCongestionLevel;
     }
 
+    /** @return The sum of all congestion levels. */
     public double getTotalCongestionLevel() {
         return totalCongestionLevel;
     }
 
+    /** @return The element with the lowest congestion level. */
     public T getLeastCongestedElement() {
         return leastCongestedElement;
     }
 
+    /** @return The element with the highest congestion level. */
     public T getMostCongestedElement() {
         return mostCongestedElement;
     }
 
+    /** @return The list of elements sorted by congestion (ascending). */
     public List<T> getSortedByCongestion() {
         return sortedByCongestion;
     }

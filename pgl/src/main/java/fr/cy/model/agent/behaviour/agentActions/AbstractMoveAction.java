@@ -17,7 +17,10 @@ import fr.cy.model.graph.element.Node;
  */
 public abstract class AbstractMoveAction extends AgentAction {
     private static final long serialVersionUID = 1L;
-
+    /** Flag indicating whether the agent must wait before entering the next node after completing edge traversal 
+     * will be set to true if the agent has just completed traversing an edge and the next node is at max capacity
+    */
+    protected boolean mustWaitBeforeEnteringNextNode = false;
     /**
      * The progress of the agent along the current edge, between 0 and 1.
      * A value of 0 indicates the agent is at the starting node, while 1 indicates
@@ -68,6 +71,11 @@ public abstract class AbstractMoveAction extends AgentAction {
         // floating-point issues
     }
 
+    @Override
+    public boolean isCompleted() {
+        return super.isCompleted() && !mustWaitBeforeEnteringNextNode;
+    }
+
     /**
      * Handles the movement of the agent along the specified edge for the given available time.
      * 
@@ -94,12 +102,12 @@ public abstract class AbstractMoveAction extends AgentAction {
         if (availableTime <= 0.0) {
             return 0.0;
         }
-
+        
         double speed = agent.getEffectiveSpeed(agentSettings);
         double edgeLength = edge.getLength();
         if (edgeLength <= 0.00) {
             setEdgeProgress(1.0);
-            goToNextNodeIfEdgeCompleted();
+            goToNextNodeIfNotFullAndEdgeCompleted();
             return 0.0; // No time consumed if the edge has no length
         }
         double progress = getEdgeProgress();
@@ -113,7 +121,7 @@ public abstract class AbstractMoveAction extends AgentAction {
         double newProgress = progress + (distanceTraveled / edgeLength);
         setEdgeProgress(newProgress);
 
-        goToNextNodeIfEdgeCompleted();
+        goToNextNodeIfNotFullAndEdgeCompleted();
 
         return timeConsumed;
     }
@@ -126,18 +134,20 @@ public abstract class AbstractMoveAction extends AgentAction {
      * 
      * @throws AgentStateException if the agent is not on an edge when edge completion is detected
      */
-    private void goToNextNodeIfEdgeCompleted() {
+    private boolean goToNextNodeIfNotFullAndEdgeCompleted() {
         if (isEdgeCompleted()) {
             agent.incrementNodeVisited();
-            if (agent.isOnEdge()) {
-                // Node nextNode = currentEdge.getOppositeNode(agent.getPreviousOrCurrentNode());
-                Node nextNode = getClosestTargetNode();
-                agent.putOnNode(nextNode);
-                assert getProgress() > 0.99;
-            } else {
+            if (!agent.isOnEdge()) {
                 throw new AgentStateException("Current edge cannot be null when edge is completed");
             }
+            // Node nextNode = currentEdge.getOppositeNode(agent.getPreviousOrCurrentNode());
+            Node nextNode = getClosestTargetNode();
+            assert getProgress() > 0.99;
+            boolean wasPutOnNode = agent.putOnNode(nextNode);
+            mustWaitBeforeEnteringNextNode = !wasPutOnNode;
+            return wasPutOnNode;
         }
+        return false;
     }
 
 }

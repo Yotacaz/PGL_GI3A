@@ -7,46 +7,42 @@ import fr.cy.model.fire.Fire;
 import java.util.*;
 
 /**
- * Represent an edge connecting two nodes in the graph. An edge has a start and end node, a width and
- *
- * An edge has a start and end node, a width and
- * a length, used to calculate the capacity. It can be
- * directed or not and inherits the common properties of
+ * Represents an edge connecting two nodes in the graph.
+ * <p>
+ * An edge has a start and end node, a width and a length (used to calculate
+ * capacity).
+ * It can be directed or undirected and inherits common properties from
  * {@link GraphElement} (identifier, fire state, congestion).
+ * </p>
  *
  * @author GI3A
  * @version 1.0
  */
 public class Edge extends GraphElement {
 
-    /** Node of departure/arrival of the edge */
+    /** Nodes defining the edge endpoints. */
     private Node start;
     private Node end;
 
-    private int agentGoingToStartNode;
-    private int agentGoingToEndNode;
-
-    /** Indicates if the edge is directed */
+    /** Indicates if the edge is directed. */
     private boolean directed;
 
-    /** Dimensions of the edge (>= 0) */
+    /** Dimensions of the edge (must be non-negative). */
     private double width;
     private double length;
-    /** Fire direction */
+
+    /** Fire propagation status. */
     private boolean burningFromStart = false;
     private boolean burningFromEnd = false;
-
     private boolean initialBurningFromStart = false;
     private boolean initialBurningFromEnd = false;
 
     /**
-     * Simplified constructor using default values from
-     * {@link GraphConfig} for the width and length.
+     * Constructs an edge using default values from {@link GraphConfig}.
      *
-     * @param id       unique identifier of the edge
-     * @param start    start node
-     * @param end      end node
-     * @param directed true if the edge is directed
+     * @param id    Unique identifier.
+     * @param start Starting node.
+     * @param end   Ending node.
      */
     public Edge(int id, Node start, Node end) {
         this(id, start, end, GraphConfig.DEFAULT_EDGE_DIRECTED, GraphConfig.DEFAULT_EDGE_WIDTH,
@@ -54,60 +50,54 @@ public class Edge extends GraphElement {
     }
 
     /**
-     * Complete constructor for an edge.
+     * Constructs an edge with explicit dimensions and directionality.
      *
-     * @param id       unique identifier of the edge
-     * @param start    start node
-     * @param end      end node
-     * @param directed true if the edge is directed
-     * @param width    width of the edge (non-negative value)
-     * @param length   length of the edge (non-negative value)
+     * @param id       Unique identifier.
+     * @param start    Starting node.
+     * @param end      Ending node.
+     * @param directed Whether the edge is directed.
+     * @param width    Width of the edge (non-negative).
+     * @param length   Length of the edge (non-negative).
      */
     public Edge(int id, Node start, Node end, boolean directed, double width, double length) {
-
         super(id, width * length);
-
         this.start = start;
         this.end = end;
-
         this.directed = directed;
-
         setLength(length);
         setWidth(width);
     }
 
-    /**
-     * @return the start node
-     */
+    /** @return The starting node. */
     public Node getStart() {
         return start;
     }
 
-    /**
-     * @return the end node
-     */
+    /** @return The ending node. */
     public Node getEnd() {
         return end;
     }
 
+    /**
+     * Retrieves the node opposite to the one provided.
+     * 
+     * @param node One of the nodes connected to this edge.
+     * @return The opposite node, or null if the provided node is not connected.
+     */
     public Node getOppositeNode(Node node) {
-        if (node.equals(start)) {
+        if (node.equals(start))
             return end;
-        }
-        if (node.equals(end)) {
+        if (node.equals(end))
             return start;
-        }
-
         return null;
     }
 
-    /**
-     * @return {@code true} if the edge is directed
-     */
+    /** @return True if the edge is directed. */
     public boolean isDirected() {
         return directed;
     }
 
+    /** Swaps the start and end nodes. */
     public void switchDirection() {
         start.removeEdge(this);
         end.removeEdge(this);   
@@ -122,210 +112,120 @@ public class Edge extends GraphElement {
         
     }
 
-    /**
-     * Sets whether the edge is directed.
-     *
-     * @param directed true for a directed edge
-     */
+    /** @param directed True to make the edge directed. */
     public void setDirected(boolean directed) {
         this.directed = directed;
     }
 
-    /**
-     * @return the length of the edge
-     */
+    /** @return The length of the edge. */
     public double getLength() {
         return length;
     }
 
-    /**
-     * @return the width of the edge
-     */
+    /** @return The width of the edge. */
     public double getWidth() {
         return width;
     }
 
-    /**
-     * Sets the length of the edge, ensuring it is non-negative.
-     *
-     * @param length the new length
-     */
+    /** @param length New length (clamped to non-negative). */
     public void setLength(double length) {
         this.length = Math.max(0, length);
     }
 
-    /**
-     * Sets the width of the edge, ensuring it is non-negative.
-     *
-     * @param width the new width
-     */
+    /** @param width New width (clamped to non-negative). */
     public void setWidth(double width) {
         this.width = Math.max(0, width);
     }
 
-    /**
-     * Calculates the total capacity of the edge by multiplying width and length.
-     *
-     * @return the capacity (width * length)
-     */
+    /** @return Capacity calculated as width * length. */
     @Override
     public double getCapacity() {
         return width * length;
     }
 
     /**
-     * Count agents currently on this edge that entered from the start node.
-     *
-     * <p>
-     * This method inspects each {@link fr.cy.model.agent.Agent} present on the
-     * edge and counts those whose last known node equals the edge's
-     * {@code start} node. It is intended to provide a lightweight direction
-     * estimate (number of agents moving from start → end) without storing
-     * agent lists inside the edge.
-     * </p>
-     *
-     * @return number of agents that most recently came from the start node
+     * Counts agents currently on this edge that entered from the start node.
+     * 
+     * @return Number of agents moving from start to end.
      */
     public int countAgentsGoingFromStartToEnd() {
         int nb = 0;
         for (Agent agent : getAgents()) {
             Node prev = agent.getPreviousOrCurrentNode();
-            if (prev != null && prev.equals(start)) {
+            if (prev != null && prev.equals(start))
                 nb++;
-            }
         }
         return nb;
     }
 
     /**
-     * Count agents currently on this edge that entered from the end node.
-     *
-     * <p>
-     * Symmetric to {@link #countAgentsGoingFromStartToEnd()}: inspects
-     * agents on the edge and returns how many have their previous/current
-     * node equal to the edge's {@code end} node (estimate for end → start flow).
-     * </p>
-     *
-     * @return number of agents that most recently came from the end node
+     * Counts agents currently on this edge that entered from the end node.
+     * 
+     * @return Number of agents moving from end to start.
      */
     public int countAgentsGoingFromEndToStart() {
         int nb = 0;
         for (Agent agent : getAgents()) {
             Node prev = agent.getPreviousOrCurrentNode();
-            if (prev != null && prev.equals(end)) {
+            if (prev != null && prev.equals(end))
                 nb++;
-            }
         }
         return nb;
     }
 
-
     /**
-     * Compute the maximum allowed agent speed when entering this edge from
-     * the given node.
-     *
-     * <p>
-     * The base speed is computed by {@link #getMaxAgentSpeed()} which already
-     * accounts for fires and congestion. For directed edges this base speed is
-     * returned unchanged. For non-directed edges a simple counter-flow penalty is
-     * applied: the method estimates how many agents are moving in the opposite
-     * direction (using {@link #countAgentsGoingFromStartToEnd()} and
-     * {@link #countAgentsGoingFromEndToStart()}) and reduces the speed by a
-     * factor proportional to the ratio of opposite-flow agents.
-     * </p>
-     *
-     * <p>
-     * Current penalty formula: speed * (1 - 0.5 * oppositeRatio), where
-     * {@code oppositeRatio} = opposite / (same + opposite). The coefficient
-     * {@code 0.5} is a tunable penalty constant.
-     * </p>
-     *
-     * @param fromNode node from which the agent enters this edge (must be
-     *                 either the edge's {@code start} or {@code end})
-     * @return maximum agent speed allowed when entering from {@code fromNode}
-     * @throws IllegalArgumentException if {@code fromNode} is not connected to
-     *                                  this edge
+     * Calculates maximum allowed speed for an agent entering from a specific node,
+     * applying counter-flow penalties if the edge is undirected.
+     * * @param fromNode The node the agent is entering from.
+     * 
+     * @return Calculated speed.
+     * @throws IllegalArgumentException if the node is not connected to this edge.
      */
     public double getMaxAgentSpeedInDirection(Node fromNode) {
-
         double speed = getMaxAgentSpeed();
-
-        if (!directed) { // only apply counter-flow penalty on non-directed edges
-            int sameDirection;
-            int oppositeDirection;
-
+        if (!directed) {
+            int same, opposite;
             if (fromNode.equals(start)) {
-                sameDirection = countAgentsGoingFromStartToEnd();
-                oppositeDirection = countAgentsGoingFromEndToStart();
+                same = countAgentsGoingFromStartToEnd();
+                opposite = countAgentsGoingFromEndToStart();
             } else if (fromNode.equals(end)) {
-                sameDirection = countAgentsGoingFromEndToStart();
-                oppositeDirection = countAgentsGoingFromStartToEnd();
+                same = countAgentsGoingFromEndToStart();
+                opposite = countAgentsGoingFromStartToEnd();
             } else {
-                throw new IllegalArgumentException("Le nœud n'appartient pas à l'arête");
+                throw new IllegalArgumentException("Node not connected to edge");
             }
-
-            int total = sameDirection + oppositeDirection;
-            if (total == 0) {
+            int total = same + opposite;
+            if (total == 0)
                 return speed;
-            }
-
-            double oppositeRatio = oppositeDirection / (double) total;
-
-            double counterFlowFactor = 1.0 - 0.5 * oppositeRatio; // 0.5 = penalty coefficient
-
-            return speed * counterFlowFactor;
+            double oppositeRatio = opposite / (double) total;
+            return speed * (1.0 - 0.5 * oppositeRatio);
         }
-
         return speed;
     }
 
     /**
-     * Evaluate a score multiplier for an agent on this edge, based on its
-     * properties and the agent's properties.
+     * Evaluates the attractiveness of this edge for an agent going to a specific
+     * node.
      * 
-     * @param agentState      the properties of the agent for which we want to
-     *                        evaluate the score multiplier
-     * @param destinationNode the node the agent is trying to reach by going through
-     *                        this edge (used to evaluate the score multiplier of
-     *                        that node as well)
-     * @return a score multiplier for an agent on this edge, based on its properties
-     *         and the agent's properties,
+     * @param agentState      Agent decision properties.
+     * @param destinationNode The target node.
+     * @return Multiplier score.
      */
     public double getScoreMultiplierForAgentGoingToNode(AgentDecisionalProperties agentState, Node destinationNode) {
-        double scoreMult = getScoreMultiplierForAgent(agentState);
-        scoreMult *= destinationNode.getScoreMultiplierForAgent(agentState);
-        return scoreMult;
+        return getScoreMultiplierForAgent(agentState) * destinationNode.getScoreMultiplierForAgent(agentState);
     }
 
     @Override
     public List<GraphElement> getNeighbors() {
-        List<GraphElement> neighbors = new ArrayList<>();
-
-        neighbors.add(start);
-        neighbors.add(end);
-
-        return neighbors;
+        return List.of(start, end);
     }
 
-    /**
-     * Textual representation of the edge, including its id, connected nodes, dimensions, max agent speed,
-     *
-     * @return a string describing the edge
-     */
     @Override
     public String toString() {
-
-        return "Edge{" +
-                "id=" + getId() +
-                ", startNode=" + start.getId() +
-                ", endNode=" + end.getId() +
-                ", length=" + length +
-                ", width=" + width +
-                ", maxAgentSpeed=" + String.format("%.2f", getMaxAgentSpeed()) +
-                ", directed=" + directed +
-                ", onFire=" + isOnFire() +
-                ", congestion=" + String.format("%.2f", getCongestion()) +
-                '}';
+        return String.format(
+                "Edge{id=%d, startNode=%d, endNode=%d, length=%.2f, width=%.2f, speed=%.2f, directed=%b, fire=%b, cong=%.2f}",
+                getId(), start.getId(), end.getId(), length, width, getMaxAgentSpeed(), directed, isOnFire(),
+                getCongestion());
     }
 
     public boolean isBurningFromStart() {
@@ -337,49 +237,46 @@ public class Edge extends GraphElement {
     }
 
     /**
-     * Lights the edge on fire from a given source node, using the provided fire properties.
+     * Ignites the edge from a source node.
+     * 
+     * @param source  Node where fire originates.
+     * @param newFire Fire properties.
      */
     public void igniteFrom(Node source, Fire newFire) {
-        if (!isOnFire()) {
+        if (!isOnFire())
             setFire(newFire);
-        }
-        // Save from which side the fire is coming to determine the burning direction and how it spreads on the edge
-        if (source.equals(start)) {
+        if (source.equals(start))
             burningFromStart = true;
-        } else if (source.equals(end)) {
+        else if (source.equals(end))
             burningFromEnd = true;
-        }
     }
 
+    /** @return The distance burned along the edge length. */
     public double getBurnedDistance() {
-        if (!isOnFire()) {
-            return 0.0;
-        }
-
-        return getFire().getBurningTime() * getFire().getSpreadRate();
+        return !isOnFire() ? 0.0 : getFire().getBurningTime() * getFire().getSpreadRate();
     }
 
+    /** @return True if the entire edge is consumed by fire. */
     public boolean isFullyBurned() {
-        if (!isOnFire()) {
+        if (!isOnFire())
             return false;
-        }
-
         double distance = getBurnedDistance();
-
-        /** Case where flames come from both nodes */
-        if (burningFromEnd && burningFromStart) {
-            return (distance * 2) >= length;
-        }
-        return distance >= length;
+        return (burningFromEnd && burningFromStart) ? (distance * 2) >= length : distance >= length;
     }
 
     public void setStart(Node node) {
         start = node;
     }
+
     public void setEnd(Node node) {
         end = node;
     }
-        
+
+    @Override
+    public double getDamageForAgent(Agent agent, double tickDuration) {
+        // Implementation logic for damage calculation
+        return super.getDamageForAgent(agent, tickDuration);
+    }
 
     @Override
     public void removeFire() {
@@ -388,26 +285,14 @@ public class Edge extends GraphElement {
         this.burningFromEnd = false;
     }
 
-    /**
-     * Calculates the percentage of the edge covered by flames (from 0.0 to 1.0).
-     * 
-     * @return Percentage
-     */
+    /** @return Percentage of edge burned (0.0 to 1.0). */
     public double getBurnPercentage() {
-        if (!isOnFire()) {
-            return 0.0;
-        }
-
-        // Distance = Time (ticks) * Spread Rate
-        double burnedDistance = getFire().getBurningTime() * getFire().getSpreadRate();
-
-        return Math.min(1.0, burnedDistance / getLength());
+        return !isOnFire() ? 0.0 : Math.min(1.0, getBurnedDistance() / getLength());
     }
 
     @Override
     public void setInitialState() {
         super.setInitialState();
-
         this.initialBurningFromStart = this.burningFromStart;
         this.initialBurningFromEnd = this.burningFromEnd;
     }
@@ -415,8 +300,6 @@ public class Edge extends GraphElement {
     @Override
     public void reset() {
         super.reset();
-
-        // 2. Reset burning direction to initial state
         this.burningFromStart = this.initialBurningFromStart;
         this.burningFromEnd = this.initialBurningFromEnd;
     }
