@@ -1,28 +1,28 @@
 package fr.cy.model.graph;
 
 /**
- * Exception métier du module graphe.
+ * Exception for the graph module.
  * <p>
- * Elle est levée lorsqu'une opération demandée sur le graphe
- * est invalide au regard de son état courant.
+ * It is thrown when an operation requested on the graph
+ * is invalid with regard to its current state.
  */
 public class GraphException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Crée une exception de graphe avec un message.
+     * Creates a graph exception with a message.
      *
-     * @param message description de l'erreur
+     * @param message description of the error
      */
     public GraphException(String message) {
         super(message);
     }
 
     /**
-     * Crée une exception de graphe avec un message et une cause.
+     * Creates a graph exception with a message and a cause.
      *
-     * @param message description de l'erreur
-     * @param cause   cause initiale
+     * @param message description of the error
+     * @param cause   initial cause
      */
     public GraphException(String message, Throwable cause) {
         super(message, cause);
