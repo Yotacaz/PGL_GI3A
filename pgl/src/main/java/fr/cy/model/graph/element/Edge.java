@@ -20,8 +20,8 @@ import java.util.*;
 public class Edge extends GraphElement {
 
     /** Node of departure/arrival of the edge */
-    private final Node start;
-    private final Node end;
+    private Node start;
+    private Node end;
 
     private int agentGoingToStartNode;
     private int agentGoingToEndNode;
@@ -106,6 +106,12 @@ public class Edge extends GraphElement {
      */
     public boolean isDirected() {
         return directed;
+    }
+
+    public void switchDirection() {
+        Node temp = start;
+        start = end;
+        end = temp;
     }
 
     /**
@@ -358,6 +364,14 @@ public class Edge extends GraphElement {
         }
         return distance >= length;
     }
+
+    public void setStart(Node node) {
+        start = node;
+    }
+    public void setEnd(Node node) {
+        end = node;
+    }
+        
 
     @Override
     public void removeFire() {
