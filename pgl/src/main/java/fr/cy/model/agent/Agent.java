@@ -114,7 +114,7 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * The current action being performed by the agent, which can be null if the
-     * agent is idle
+     * agent is idle on a node <b>ONLY</b>. null on an edge would be an invalid state
      */
     private AgentAction currentAction = null;
 
@@ -155,7 +155,9 @@ public class Agent implements StressInducing, Serializable {
                 repeatLastDecisionTendency, crowdingTolerance);
         this.physicalProperties = new AgentPhysicalProperties(maxSpeed, health, health, surfaceAreaTakenByAgent);
         if (startingNode != null) {
-            putOnNode(startingNode);
+            if(!putOnNode(startingNode)){
+                forcePutOnNode(startingNode);
+            }
         } else {
             this.isOnNode = false; // Agent starts unplaced, not on a node
         }
@@ -186,6 +188,9 @@ public class Agent implements StressInducing, Serializable {
      * @return the AgentAction to be performed based on the decision
      */
     AgentAction makeNodeDecision(NodeContext decisionContext, AgentSettings agentSettings) {
+        if (decisionContext.getAccessibleElements().isEmpty()) {
+            return getCurrentAction(); // No accessible elements, cannot make a decision
+        }
         double totalScore = computeNodeDecisionsScore(agentSettings, decisionContext);
         return makeDecision(totalScore, decisionsScore, AgentPossibleNodeDecision.WAIT,
                 AgentNodeDecisionScore::getScore,
@@ -203,6 +208,9 @@ public class Agent implements StressInducing, Serializable {
      * @return the AgentAction to be performed based on the decision
      */
     AgentAction makeEdgeDecision(EdgeContext decisionContext, AgentSettings agentSettings) {
+        if (decisionContext.getAccessibleElements().isEmpty()) {
+            return getCurrentAction(); // No accessible elements, cannot make a decision
+        }
         double totalScore = computeAgentEdgeDecisionsScore(agentSettings, decisionContext);
         return makeDecision(totalScore, edgeDecisionsScore, AgentPossibleEdgeDecision.CONTINUE,
                 Double::doubleValue,
@@ -600,6 +608,7 @@ public class Agent implements StressInducing, Serializable {
      * Places the agent on a node.
      *
      * @param currentNode the node to place the agent on
+     * @return true if the agent was successfully placed on the node, false if the node is at capacity and cannot accept more agents
      */
     public boolean putOnNode(Node currentNode) {
         Objects.requireNonNull(currentNode,
@@ -612,6 +621,30 @@ public class Agent implements StressInducing, Serializable {
         this.previousOrCurrentNode = currentNode;
         this.currentEdgeProgress = -1.0;
         setIsOnNode(true);
+        return true;
+    }
+
+    public boolean forcePutOnNode(Node node) {
+        Objects.requireNonNull(node, "node cannot be null when force putting agent on node, call removeFromGraph() instead");
+        if (!node.forceAddAgent(this)) {
+            return false;
+        }
+        removeFromGraphElemButKeepReferences();
+        this.previousOrCurrentNode = node;
+        this.currentEdgeProgress = -1.0;
+        setIsOnNode(true);
+        return true;
+    }
+
+    public boolean forcePutOnEdge(Edge edge) {
+        Objects.requireNonNull(edge, "edge cannot be null when force putting agent on edge, call removeFromGraph() instead");
+        if (!edge.forceAddAgent(this)) {
+            return false;
+        }
+        removeFromGraphElemButKeepReferences();
+        this.currentOrPreviousEdge = edge;
+        //do not reset current edge progress
+        setIsOnNode(false);
         return true;
     }
 
@@ -656,24 +689,26 @@ public class Agent implements StressInducing, Serializable {
     }
 
     /**
-     * @return the current edge the agent is on, or {@code null} if the agent is not on an edge
+     * @return the current edge the agent is on, or the next edge if the agent is not on an edge
+     * This method can return null if the agent has no ongoing action and is on a node
      */
     public Edge getCurrentEdgeOrNextEdgeIfOnNode() {
         if (currentAction == null) {
-            if (!isOnNode())
-                throw new AgentStateException("agent action is null but is on node");
+            if (isOnEdge())
+                throw new AgentStateException("agent action is null but is on edge");
             return null;
         }
         return currentAction.getClosestTargetEdge();
     }
 
     /**
-     * @return the current node the agent is on, or {@code null} if the agent is not on a node
+     * @return the current node the agent is on, or the next node if the agent is not on a node
+     * This method can technically return null but should not
      */
     public Node getCurrentNodeOrNextNodeIfOnEdge() {
         if (currentAction == null) {
-            if (!isOnNode())
-                throw new AgentStateException("agent action is null but is not on node");
+            if (isOnEdge())
+                throw new AgentStateException("agent action is null while being on edge");
             return getCurrentNode();
         }
         return currentAction.getClosestTargetNode();

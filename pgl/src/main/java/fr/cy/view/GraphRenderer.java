@@ -270,14 +270,19 @@ public class GraphRenderer {
             double dist = Math.sqrt((agent.getId() * 11.3) % 100 / 100.0) * maxOffset;
             ax = node.getX() + Math.cos(Math.toRadians(angle)) * dist;
             ay = node.getY() + Math.sin(Math.toRadians(angle)) * dist;
-        } else {
+        } else if (agent.isOnEdge()) {
             Edge edge = agent.getCurrentOrPreviousEdge();
+            if (agent.getCurrentNodeOrNextNodeIfOnEdge()==null){
+                System.err.println("Agent " + agent.getId() + " is on edge " + edge.getId() + " but has no valid current or next node");
+            }
             Node target = Objects.requireNonNull(agent.getCurrentNodeOrNextNodeIfOnEdge());
             Node previous = Objects.requireNonNull(edge.getOppositeNode(target));
 
             double ratio = Math.max(0, agent.getCurrentEdgeProgress());
             ax = previous.getX() + (target.getX() - previous.getX()) * ratio;
             ay = previous.getY() + (target.getY() - previous.getY()) * ratio;
+        }else{
+            return; //not on graph
         }
 
         if (agent.equals(selectedEntity))
