@@ -267,6 +267,22 @@ public class Graph implements Serializable {
         nodes.remove(nodeToRemove);
     }
 
+    public void switchEdgeDirection(Edge edge) {
+        if (edge.isDirected()) {
+            
+            edge.getStart().removeEdge(edge);
+            adjacencyList.get(edge.getStart()).remove(edge);
+
+            edge.switchDirection();
+
+            edge.getEnd().addEdge(edge);
+            adjacencyList.get(edge.getEnd()).add(edge);
+            
+
+
+        }
+    }
+
     /**
      * Removes an edge from the graph.
      *
