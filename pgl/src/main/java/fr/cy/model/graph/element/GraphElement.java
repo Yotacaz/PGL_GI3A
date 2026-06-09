@@ -29,11 +29,11 @@ public abstract class GraphElement implements StressInducing, Serializable {
     /** Identifiant unique de l'élément du graphe */
     private final int id;
 
-    private transient List<Agent> agents;
+    private List<Agent> agents;
     private double capacity;
     private boolean isForcedCongested = false;
     private int forcedCongestionTicks = 0;
-    private transient Fire initialFire; // To store the initial fire state for reset
+    private Fire initialFire; // To store the initial fire state for reset
 
     // STRESS:
     /**
@@ -468,6 +468,13 @@ public abstract class GraphElement implements StressInducing, Serializable {
                 isForcedCongested = false;
                 forcedCongestionTicks = 0;
             }
+        }
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        if (agents == null) {
+            agents = new ArrayList<>();
         }
     }
 }

@@ -29,13 +29,17 @@ public class FileManager implements Serializable {
     }
 
     public static void saveSimulation(Simulation simulation) {
-        String filePath = SIMULATION_FOLDER + simulation.getName() + ".bin";
+        File folder = new File(SIMULATION_FOLDER);
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }
+        File saveFile = new File(folder, simulation.getName() + ".bin");
         try (ObjectOutputStream out = new ObjectOutputStream(
-                new FileOutputStream(filePath))) {
+                new FileOutputStream(saveFile))) {
 
             out.writeObject(simulation);
 
-            System.out.println("Simulation sauvegardée avec succès");
+            System.out.println("Simulation sauvegardée avec succès : " + saveFile.getAbsolutePath());
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -44,16 +48,19 @@ public class FileManager implements Serializable {
     }
 
     public static Simulation loadSimulation(String name) {
-        String filePath = SIMULATION_FOLDER + name + ".bin";
+        File file = new File(SIMULATION_FOLDER, name + ".bin");
+        if (!file.exists()) {
+            System.out.println("Simulation file not found: " + file.getAbsolutePath());
+            return null;
+        }
+
         try (ObjectInputStream in = new ObjectInputStream(
-                new FileInputStream(filePath))) {
+                new FileInputStream(file))) {
             return (Simulation) in.readObject();
 
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
-
             System.out.println("Erreur lors du chargement de la simulation : " + e.getMessage());
-
         }
         return null;
     }
