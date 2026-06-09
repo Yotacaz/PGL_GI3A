@@ -18,6 +18,7 @@ import fr.cy.model.agent.behaviour.decisions.AgentPossibleEdgeDecision;
 import fr.cy.model.agent.behaviour.decisions.ContextProvider;
 import fr.cy.model.agent.behaviour.decisions.EdgeContext;
 import fr.cy.model.simulation.SimulationSettings;
+import fr.cy.model.agent.behaviour.decisions.ContextProvider;
 
 /**
  * Manager responsible for higher-level operations on {@link Agent} instances.
@@ -49,6 +50,7 @@ public class AgentManager implements Serializable {
     /** Generator for creating agents with random attributes and placing them in the graph */
     private final AgentGenerator agentGenerator;
     private final SimulationSettings simulationSettings;
+
     // private Map<Agent, AgentAction> agentActionsPreviousTick = new HashMap<>();
 
     /** For storing initial snapshots of agents (for reset functionality) */
@@ -70,6 +72,19 @@ public class AgentManager implements Serializable {
         this.decisionContextProvider = decisionContextProvider;
         this.agentGenerator = agentGenerator;
         this.simulationSettings = simulationSettings;
+    }
+
+    /**
+     * Creates a new AgentManager with the specified dependencies and an empty initial list of agents, then generates random agents.
+     * @param count the number of random agents to generate
+     * @param decisionContextProvider the provider for decision contexts used by agents during decision-making
+     * @param agentGenerator the generator for creating agents with random attributes and placing them in the graph
+     * @param simulationSettings the settings for managing agents and the simulation
+    */
+    public AgentManager(int count, ContextProvider decisionContextProvider,
+            AgentGenerator agentGenerator, SimulationSettings simulationSettings) {
+        this(new ArrayList<>(), decisionContextProvider, agentGenerator, simulationSettings);
+        generateRandomsAgents(count);
     }
 
     /**

@@ -10,7 +10,7 @@ import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.GraphElement;
 import fr.cy.model.graph.element.Node;
 
-/** TODO: VALEURS MAGIQUES: A RETRAVAILLER */
+/** TODO: MAGIC VALUES: REWORK */
 public class FireService implements Serializable {
     private static final long serialVersionUID = 1L;
     private final Random random;
@@ -25,32 +25,32 @@ public class FireService implements Serializable {
 
     public void updateFires(Graph graph, double tickDuration) {
 
-        // UPDATE DES NŒUDS
+        // UPDATE NODES
         for (Node node : graph.getNodes()) {
             if (!node.isOnFire())
                 continue;
 
-            // 1. On met à jour l'intensité locale du feu, même s'il ne se propage pas
+            // 1. Update the local fire intensity even if it does not spread
             node.getFire().update(tickDuration);
 
-            // 2. Coupe-circuit : si le feu n'a pas de force de propagation, on s'arrête là
-            // pour ce nœud
+            // 2. Short-circuit: if the fire has no spread strength, stop here
+            // for this node
             if (node.getFire().getSpreadRate() <= 0.0) {
                 continue;
             }
 
             for (Edge edge : node.getEdges()) {
-                // On pondère la probabilité en fonction du tickDuration (Lissage 60 FPS)
+                // Weight the probability according to tickDuration (60 FPS smoothing)
                 double probability = computeSpreadProbability(edge) * tickDuration;
 
-                // Si l'arête est totalement intacte
+                // If the edge is completely intact
                 if (!edge.isOnFire()) {
                     if (random.nextDouble() < probability) {
                         double dynamicSpreadRate = computeSpreadRate(edge, node.getFire().getSpreadRate());
                         edge.igniteFrom(node, new Fire(1.0, 1.0, dynamicSpreadRate));
                     }
                 }
-                // Si l'arête brûle déjà, mais qu'elle n'est pas consumée
+                // If the edge is already burning but not fully consumed
                 else if (!edge.isFullyBurned()) {
                     boolean alreadyBurningFromHere = (node.equals(edge.getStart()) && edge.isBurningFromStart()) ||
                             (node.equals(edge.getEnd()) && edge.isBurningFromEnd());
@@ -62,24 +62,24 @@ public class FireService implements Serializable {
             }
         }
 
-        // UPDATE DES ARÊTES
+        // UPDATE EDGES
         for (Edge edge : graph.getEdges()) {
             if (!edge.isOnFire())
                 continue;
 
-            // 1. Le feu avance sur le couloir
+            // 1. Fire advances along the corridor
             edge.getFire().update(tickDuration);
 
             double distance = edge.getBurnedDistance();
 
-            // 2. Le front de flamme venant du Start atteint le End
+            // 2. Flame front coming from Start reaches End
             if (edge.isBurningFromStart() && distance >= edge.getLength()) {
                 if (!edge.getEnd().isOnFire()) {
                     edge.getEnd().setFire(new Fire(1.0, 1.0, edge.getFire().getSpreadRate()));
                 }
             }
 
-            // 3. Le front de flamme venant du End atteint le Start
+            // 3. Flame front coming from End reaches Start
             if (edge.isBurningFromEnd() && distance >= edge.getLength()) {
                 if (!edge.getStart().isOnFire()) {
                     edge.getStart().setFire(new Fire(1.0, 1.0, edge.getFire().getSpreadRate()));
@@ -91,12 +91,12 @@ public class FireService implements Serializable {
     private double computeSpreadProbability(Edge edge) {
         double probability = 0.2;
 
-        /** Couloirs étroits */
+        /** Narrow corridors */
         if (edge.getWidth() < 2) {
             probability += 0.2;
         }
 
-        /** Couloirs longs */
+        /** Long corridors */
         if (edge.getLength() > 20) {
             probability -= 0.1;
         }
@@ -111,16 +111,16 @@ public class FireService implements Serializable {
 
         double rate = baseSpreadRate;
 
-        // Effet cheminée : les flammes accélèrent dans les endroits étroits
+        // Chimney effect: flames speed up in narrow areas
         if (edge.getWidth() < 2.0) {
             rate += 0.3;
         }
-        // Dispersion : les flammes avancent moins vite dans les endroits larges
+        // Dispersion: flames advance more slowly in wide areas
         else if (edge.getWidth() > 5.0) {
             rate -= 0.1;
         }
 
-        // On ne met un plancher (0.01) QUE si le feu était censé avancer
+        // Only apply a floor (0.01) if the fire was supposed to advance
         return Math.max(0.01, rate);
     }
 }

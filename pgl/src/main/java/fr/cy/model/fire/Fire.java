@@ -10,9 +10,9 @@ import java.io.Serializable;
 public class Fire implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    // --- CONSTANTES (Remplacement des valeurs magiques) ---
+    // --- CONSTANTS (Replace magic numbers) ---
     /**
-     * Multiplicateur de croissance de l'intensité par seconde (1.35 = +35% par sec)
+     * Intensity growth multiplier per second (1.35 = +35% per sec)
      */
     private static final double INTENSITY_GROWTH_PER_SEC = 1.05;
 
@@ -21,15 +21,15 @@ public class Fire implements Serializable {
      */
     private static final double SMOKE_GROWTH_PER_SEC = 1.05;
 
-    /** Sert a faire peur aux Agents, influence le stress */
+    /** Used to intimidate agents; influences stress */
     private double intensity;
 
-    // TODO: prendre en compte smoke dans la vision ou l'étouffement des agents
+    // TODO: account for smoke in agents' vision or suffocation
     private double smokeLevel;
 
     private double spreadRate;
 
-    /** Temps total de combustion en secondes */
+    /** Total burning time in seconds */
     private double burningTime;
 
     /**
@@ -95,7 +95,7 @@ public class Fire implements Serializable {
     }
 
     public double getDamageForAgent(double duration) {
-        // Simple formule de dégâts basée sur l'intensité et le temps de combustion
-        return duration * intensity * smokeLevel * (1 + burningTime / 60.0); // +100% de dégâts après 1 minute
+        // Simple damage formula based on intensity and burn duration
+        return duration * intensity * smokeLevel * (1 + burningTime / 60.0); // +100% of damage after 1 minute
     }
 }

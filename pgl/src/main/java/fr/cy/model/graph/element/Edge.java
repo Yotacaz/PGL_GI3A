@@ -7,32 +7,32 @@ import fr.cy.model.fire.Fire;
 import java.util.*;
 
 /**
- * Représente une arête entre deux nœuds du graphe.
+ * Represent an edge connecting two nodes in the graph. An edge has a start and end node, a width and
  *
- * Une arête possède un nœud de départ et d'arrivée, une largeur et
- * une longueur, utilisées pour calculer la capacité. Elle peut être
- * orientée ou non et hérite des propriétés communes de
- * {@link GraphElement} (identifiant, état d'incendie, congestion).
+ * An edge has a start and end node, a width and
+ * a length, used to calculate the capacity. It can be
+ * directed or not and inherits the common properties of
+ * {@link GraphElement} (identifier, fire state, congestion).
  *
  * @author GI3A
  * @version 1.0
  */
 public class Edge extends GraphElement {
 
-    /** Nœud de départ/arrivée de l'arête */
-    private final Node start;
-    private final Node end;
+    /** Node of departure/arrival of the edge */
+    private Node start;
+    private Node end;
 
     private int agentGoingToStartNode;
     private int agentGoingToEndNode;
 
-    /** Indique si l'arête est dirigée */
+    /** Indicates if the edge is directed */
     private boolean directed;
 
-    /** Dimensions de l'arête (>= 0) */
+    /** Dimensions of the edge (>= 0) */
     private double width;
     private double length;
-    /** Direction du feu */
+    /** Fire direction */
     private boolean burningFromStart = false;
     private boolean burningFromEnd = false;
 
@@ -40,13 +40,13 @@ public class Edge extends GraphElement {
     private boolean initialBurningFromEnd = false;
 
     /**
-     * Constructeur simplifié utilisant les valeurs par défaut de
-     * {@link GraphConfig} pour la largeur et la longueur.
+     * Simplified constructor using default values from
+     * {@link GraphConfig} for the width and length.
      *
-     * @param id       identifiant unique de l'arête
-     * @param start    nœud de départ
-     * @param end      nœud d'arrivée
-     * @param directed true si l'arête est dirigée
+     * @param id       unique identifier of the edge
+     * @param start    start node
+     * @param end      end node
+     * @param directed true if the edge is directed
      */
     public Edge(int id, Node start, Node end) {
         this(id, start, end, GraphConfig.DEFAULT_EDGE_DIRECTED, GraphConfig.DEFAULT_EDGE_WIDTH,
@@ -54,14 +54,14 @@ public class Edge extends GraphElement {
     }
 
     /**
-     * Constructeur complet d'une arête.
+     * Complete constructor for an edge.
      *
-     * @param id       identifiant unique de l'arête
-     * @param start    nœud de départ
-     * @param end      nœud d'arrivée
-     * @param directed true si l'arête est dirigée
-     * @param width    largeur de l'arête (valeur non-negative)
-     * @param length   longueur de l'arête (valeur non-negative)
+     * @param id       unique identifier of the edge
+     * @param start    start node
+     * @param end      end node
+     * @param directed true if the edge is directed
+     * @param width    width of the edge (non-negative value)
+     * @param length   length of the edge (non-negative value)
      */
     public Edge(int id, Node start, Node end, boolean directed, double width, double length) {
 
@@ -77,14 +77,14 @@ public class Edge extends GraphElement {
     }
 
     /**
-     * @return le nœud de départ
+     * @return the start node
      */
     public Node getStart() {
         return start;
     }
 
     /**
-     * @return le nœud d'arrivée
+     * @return the end node
      */
     public Node getEnd() {
         return end;
@@ -102,57 +102,63 @@ public class Edge extends GraphElement {
     }
 
     /**
-     * @return {@code true} si l'arête est dirigée
+     * @return {@code true} if the edge is directed
      */
     public boolean isDirected() {
         return directed;
     }
 
+    public void switchDirection() {
+        Node temp = start;
+        start = end;
+        end = temp;
+    }
+
     /**
-     * Définit si l'arête est dirigée.
+     * Sets whether the edge is directed.
      *
-     * @param directed vrai pour arête dirigée
+     * @param directed true for a directed edge
      */
     public void setDirected(boolean directed) {
         this.directed = directed;
     }
 
     /**
-     * @return la longueur de l'arête
+     * @return the length of the edge
      */
     public double getLength() {
         return length;
     }
 
     /**
-     * @return la largeur de l'arête
+     * @return the width of the edge
      */
     public double getWidth() {
         return width;
     }
 
     /**
-     * Définit la longueur en veillant qu'elle soit non-négative.
+     * Sets the length of the edge, ensuring it is non-negative.
      *
-     * @param length la nouvelle longueur
+     * @param length the new length
      */
     public void setLength(double length) {
         this.length = Math.max(0, length);
     }
 
     /**
-     * Définit la largeur en veillant qu'elle soit non-négative.
+     * Sets the width of the edge, ensuring it is non-negative.
      *
-     * @param width la nouvelle largeur
+     * @param width the new width
      */
     public void setWidth(double width) {
         this.width = Math.max(0, width);
     }
 
     /**
-     * Calcule la capacité totale de l'arête en multipliant largeur et longueur.
+     * Calculates the total capacity of the edge by multiplying width and length.
      *
-     * @return la capacité (width * length)
+     * @return the capacity (width * length)
      */
     @Override
     public double getCapacity() {
@@ -294,9 +300,9 @@ public class Edge extends GraphElement {
     }
 
     /**
-     * Représentation textuelle complète de l'arête.
+     * Textual representation of the edge, including its id, connected nodes, dimensions, max agent speed,
      *
-     * @return chaîne de description de l'arête
+     * @return a string describing the edge
      */
     @Override
     public String toString() {
@@ -323,13 +329,13 @@ public class Edge extends GraphElement {
     }
 
     /**
-     * Allume l'arête depuis un nœud spécifique.
+     * Lights the edge on fire from a given source node, using the provided fire properties.
      */
     public void igniteFrom(Node source, Fire newFire) {
         if (!isOnFire()) {
             setFire(newFire);
         }
-        // On enregistre d'où viennent les flammes
+        // Save from which side the fire is coming to determine the burning direction and how it spreads on the edge
         if (source.equals(start)) {
             burningFromStart = true;
         } else if (source.equals(end)) {
@@ -352,12 +358,20 @@ public class Edge extends GraphElement {
 
         double distance = getBurnedDistance();
 
-        /** Cas ou les flammes proviennent des deux Nodes */
+        /** Case where flames come from both nodes */
         if (burningFromEnd && burningFromStart) {
             return (distance * 2) >= length;
         }
         return distance >= length;
     }
+
+    public void setStart(Node node) {
+        start = node;
+    }
+    public void setEnd(Node node) {
+        end = node;
+    }
+        
 
     @Override
     public double getDamageForAgent( Agent agent, double tickDuration) {
@@ -382,16 +396,16 @@ public class Edge extends GraphElement {
     }
 
     /**
-     * Calcule le pourcentage de l'arête recouvert par les flammes (de 0.0 à 1.0).
+     * Calculates the percentage of the edge covered by flames (from 0.0 to 1.0).
      * 
-     * @return Pourcentage
+     * @return Percentage
      */
     public double getBurnPercentage() {
         if (!isOnFire()) {
             return 0.0;
         }
 
-        // Distance = Temps (ticks) * Vitesse de propagation
+        // Distance = Time (ticks) * Spread Rate
         double burnedDistance = getFire().getBurningTime() * getFire().getSpreadRate();
 
         return Math.min(1.0, burnedDistance / getLength());
@@ -409,7 +423,7 @@ public class Edge extends GraphElement {
     public void reset() {
         super.reset();
 
-        // 2. On restaure les directions du feu
+        // 2. Reset burning direction to initial state
         this.burningFromStart = this.initialBurningFromStart;
         this.burningFromEnd = this.initialBurningFromEnd;
     }

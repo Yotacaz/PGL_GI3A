@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.io.Serializable;
 
 import java.io.*;
 
@@ -13,8 +14,9 @@ import fr.cy.model.graph.element.Node;
 import fr.cy.model.simulation.SimulationSettings;
 import fr.cy.util.IdManager;
 
+
 /**
- * Représente un graphe composé de nœuds et d'arêtes.
+ * Represents a graph composed of nodes and edges.
  *
  * @author GI3A
  * @version 1.0
@@ -22,11 +24,11 @@ import fr.cy.util.IdManager;
 public class Graph implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /** Liste de tous les nœuds et edges du graphe */
+    /** List of all nodes and edges in the graph */
     private final List<Node> nodes;
     private final List<Edge> edges;
 
-    /** Liste d'adjacence */
+    /** Adjacency list */
     private final Map<Node, List<Edge>> adjacencyList;
 
     private final IdManager nodeIdManager;
@@ -35,7 +37,23 @@ public class Graph implements Serializable {
     private boolean isFirstTick = true;
 
     /**
-     * Crée un graphe vide.
+     * Creates a graph with a specified number of nodes and edges, using random positions
+     * for nodes and random connections for edges.
+     */
+    public Graph(int nodeCount, int edgeCount) {
+        this();
+
+        for (int i = 0; i < nodeCount; i++) {
+            addNode();
+        }
+
+        for (int i = 0; i < edgeCount; i++) {
+            addEdge();
+        }
+    }
+
+    /**
+     * Creates an empty graph.
      */
     public Graph() {
         this.edges = new ArrayList<>();
@@ -82,12 +100,12 @@ public class Graph implements Serializable {
     }
 
     /**
-     * Crée un noeud à une position spécifique dans le graphe
+     * Creates a node at a specific position in the graph.
      * 
-     * @param x        coordonnée x
-     * @param y        coordonnée y
-     * @param capacité maximale
-     * @return le noeud créé
+     * @param x        x coordinate
+     * @param y        y coordinate
+     * @param capacity maximum capacity
+     * @return the created node
      */
     public Node createNode(double x, double y, double capacity) {
         Node node = new Node(nodeIdManager.generateId(), x, y, capacity);
@@ -97,22 +115,22 @@ public class Graph implements Serializable {
     }
 
     /**
-     * Crée un noeud à une position spécifique dans le graphe
+     * Creates a node at a specific position in the graph.
      * 
-     * @param x coordonnée x
-     * @param y coordonnée y
-     * @return le noeud créé
+     * @param x x coordinate
+     * @param y y coordinate
+     * @return the created node
      */
     public Node createNode(double x, double y) {
         return createNode(x, y, GraphConfig.DEFAULT_NODE_CAPACITY);
     }
 
     /**
-     * Crée une arrête entre deux noeuds spécifiés
+     * Creates an edge between two specified nodes.
      * 
-     * @param startNode noeud de départ
-     * @param endNode   noeud d'arrivée
-     * @return l'arrête créée
+     * @param startNode starting node
+     * @param endNode   ending node
+     * @return the created edge
      */
     public Edge createEdge(Node startNode, Node endNode) {
         Edge edge = new Edge(edgeIdManager.generateId(), startNode, endNode);
@@ -122,15 +140,14 @@ public class Graph implements Serializable {
     }
 
     /**
-     * Crée une arrête spécifiée par deux noeuds, largeur, longueur et sa
-     * possibilité à être orienté.
+     * Creates an edge specified by two nodes, width, length, and whether it is directed.
      * 
      * @param startNode
      * @param endNode
      * @param length
      * @param width
      * @param directed
-     * @return l'arrête créée
+     * @return the created edge
      */
     public Edge createEdge(Node startNode, Node endNode, double length, double width, boolean directed) {
         Edge edge = new Edge(edgeIdManager.generateId(), startNode, endNode, directed, width, length);
@@ -140,9 +157,9 @@ public class Graph implements Serializable {
     }
 
     /**
-     * Ajoute un nœud au graphe.
+     * Adds a node to the graph.
      *
-     * @param node le nœud à ajouter
+     * @param node the node to add
      */
     public void addNode(Node node) {
         nodes.add(node);
@@ -150,9 +167,25 @@ public class Graph implements Serializable {
     }
 
     /**
-     * Ajoute une arête au graphe.
+     * Adds a node to the graph at a random position.
+     * 
+     */
+    public void addNode() {
+        double x = Math.random() * 1000; // Example of random position, you can replace it with your own logic
+        double y = Math.random() * 1000;
+        createNode(x, y);
+    }
+
+    public void addNodes(int count) {
+        for (int i = 0; i < count; i++) {
+            addNode();
+        }
+    }
+
+    /**
+     * Adds an edge to the graph.
      *
-     * @param edge l'arête à ajouter
+     * @param edge the edge to add
      */
     public void addEdge(Edge edge) {
         if (edge == null) {
@@ -170,51 +203,67 @@ public class Graph implements Serializable {
         if (!edge.isDirected()) {
             adjacencyList.get(edge.getEnd()).add(edge);
             edge.getEnd().addEdge(edge);
-        } else {
-            edge.getEnd().addEdge(edge);
         }
     }
 
+
     /**
-     * Supprime un nœud et toutes les arêtes qui y sont connectées.
+     * Adds a node at random.
      *
-     * @param node le nœud à supprimer
+     */
+    public void addEdge() {
+        if (nodes.size() < 2) {
+            throw new GraphException("Il doit y avoir au moins 2 nœuds pour ajouter une arête.");
+        }
+
+        Node startNode = nodes.get((int) (Math.random() * nodes.size()));
+        Node endNode = nodes.get((int) (Math.random() * nodes.size()));
+
+        while (endNode == startNode) {
+            endNode = nodes.get((int) (Math.random() * nodes.size()));
+        }
+
+        createEdge(startNode, endNode);
+    }
+
+
+    public void addEdges(int count) {
+        for (int i = 0; i < count; i++) {
+            addEdge();
+        }
+    }
+    /**
+     * Removes a node and all edges connected to it.
+     *
+     * @param node the node to remove
      */
     public void removeNode(Node nodeToRemove) {
-        // 1. Gérer les agents sur les arêtes connectées avant de supprimer l'arête
+        // 1. Handle agents on connected edges before removing the edge
         List<Edge> connectedEdges = new ArrayList<>(nodeToRemove.getEdges());
         for (Edge edge : connectedEdges) {
-            // Pour chaque agent sur cette arête, on le ramène au nœud de départ de l'arête
-            for (Agent agent : new ArrayList<>(edge.getAgents())) {
-                Node startNode = edge.getStart();
-                // Utilise putOnNode : cela met à jour la position de l'agent
-                // ET met à jour la liste des agents du nœud cible
-                agent.putOnNode(startNode);
-            }
             removeEdge(edge);
         }
 
-        // 2. Gérer les agents sur le nœud supprimé
-        List<Node> neighbors = getNeighbors(nodeToRemove); // Liste des nœuds adjacents
+        // 2. Handle agents on the removed node
+        List<Node> neighbors = getNeighbors(nodeToRemove); // List of adjacent nodes
         if (!neighbors.isEmpty()) {
             Node target = neighbors.get(0);
             for (Agent agent : new ArrayList<>(nodeToRemove.getAgents())) {
-                // Déplacement vers le voisin
+                // Move to the neighbor
                 agent.putOnNode(target);
 
-                // Si tu as bien ajouté le flag de congestion dans ta classe Node :
+                // If you have properly added the congestion flag in your Node class:
                 target.setForcedCongestion(true);
             }
         }
 
-        // 3. Suppression finale
+        // 3. Final removal
         nodes.remove(nodeToRemove);
     }
-
     /**
-     * Supprime une arête du graphe.
+     * Removes an edge from the graph.
      *
-     * @param edge l'arête à supprimer
+     * @param edge the edge to remove
      */
     public void removeEdge(Edge edge) {
         edges.remove(edge);
@@ -229,28 +278,53 @@ public class Graph implements Serializable {
         edge.getStart().removeEdge(edge);
         edge.getEnd().removeEdge(edge);
 
+        for (Agent agent : new ArrayList<>(edge.getAgents())) {
+            Node startNode = edge.getStart();
+            agent.putOnNode(startNode);
+        }
+
         edgeIdManager.releaseId(edge.getId());
     }
 
     /**
-     * @return la liste de nœuds du graphe
+     * Switches the direction of a directed edge. If the edge is undirected, this method has no effect.
+     * @param edge
+     */
+    public void switchEdgeDirection(Edge edge) {
+        if (edge.isDirected()) {
+            
+            edge.getStart().removeEdge(edge);
+            adjacencyList.get(edge.getStart()).remove(edge);
+
+            edge.switchDirection();
+
+            edge.getEnd().addEdge(edge);
+            adjacencyList.get(edge.getEnd()).add(edge);
+            
+
+
+        }
+    }
+
+    /**
+     * @return the list of graph nodes
      */
     public List<Node> getNodes() {
         return nodes;
     }
 
     /**
-     * @return la liste d'arêtes du graphe
+     * @return the list of graph edges
      */
     public List<Edge> getEdges() {
         return edges;
     }
 
     /**
-     * Recherche un nœud par son identifiant.
+     * Searches for a node by its identifier.
      *
-     * @param id identifiant recherché
-     * @return le nœud si trouvé, sinon {@code null}
+     * @param id requested identifier
+     * @return the node if found, otherwise {@code null}
      */
     public Node getNodeById(int id) {
         for (Node node : nodes) {
@@ -263,10 +337,10 @@ public class Graph implements Serializable {
     }
 
     /**
-     * Retourne la liste des voisins d'un nœud
+     * Returns the list of neighbors of a node.
      *
-     * @param node nœud dont on veut les voisins
-     * @return liste des nœuds voisins
+     * @param node node whose neighbors are requested
+     * @return list of neighboring nodes
      */
     public List<Node> getNeighbors(Node node) {
         List<Node> neighbors = new ArrayList<>();
