@@ -1,7 +1,11 @@
 package fr.cy.controller;
 
+import java.util.List;
+
 import fr.cy.model.agent.Agent;
+import fr.cy.model.agent.AgentManager;
 import fr.cy.model.agent.AgentSettings;
+import fr.cy.model.agent.behaviour.properties.EmotionalState;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.GraphElement;
@@ -235,24 +239,99 @@ public class MainController {
                 });
     }
 
-    /** Refreshes the statistics panel and detail panel content every frame. */
+    /**
+     * * Refreshes the statistics panel and detail panel content every frame.
+     */
     private void refreshStatsPanel() {
         if (simController.getSimulation() == null)
             return;
-        Graph graph = simController.getSimulation().getGraph();
-        int totalAgents = simController.getSimulation().getAgentManager().getAgentsToEvacuate().size();
-        int onNodes = graph.getNodes().stream().mapToInt(n -> n.getAgents().size()).sum();
-        int onEdges = graph.getEdges().stream().mapToInt(e -> e.getAgents().size()).sum();
+
+        Simulation sim = simController.getSimulation();
+        Graph graph = sim.getGraph();
+        AgentManager agentManager = sim.getAgentManager();
+        AgentSettings settings = agentManager.getAgentSettings();
+
+        // --- 1. ENGINE METRICS ---
+        int tick = sim.getCurrentTick();
+        boolean running = sim.isRunning();
+        double engineLoad = sim.getLastEngineLoadMs();
+        int tps = simController.getCurrentTps();
+
+        // --- 2. EVACUATION & SURVIVAL ---
+        List<Agent> activeAgents = agentManager.getAgentsToEvacuate();
+        List<Agent> deadAgents = agentManager.getDeadAgents();
+        int dead = deadAgents.size();
+
+        int evacuated = agentManager.getEvacuatedAgents().size();
+        double avgEvacTime = 0.0; // TODO: Implement the time taken by exiting agents
+
+        // --- 3. ACTIVE CROWD METRICS ---
+        int totalActive = activeAgents.size();
+        int onNodes = (int) activeAgents.stream().filter(Agent::isOnNode).count();
+        int onEdges = totalActive - onNodes;
+
+        double avgHealth = activeAgents.isEmpty() ? 0
+                : activeAgents.stream().mapToDouble(Agent::getHealth).average().orElse(0);
+
+        double avgSpeed = activeAgents.isEmpty() ? 0
+                : activeAgents.stream().mapToDouble(a -> a.getEffectiveSpeed(settings)).average().orElse(0);
+
+        // Calculate the dominant mood
+        String globalMood = "NONE";
+        if (!activeAgents.isEmpty()) {
+            long panicking = activeAgents.stream().filter(a -> a.getEmotionalState() == EmotionalState.PANICKING)
+                    .count();
+            long selfish = activeAgents.stream().filter(a -> a.getEmotionalState() == EmotionalState.SELFISH).count();
+            long calm = totalActive - panicking - selfish;
+
+            if (panicking >= calm && panicking >= selfish)
+                globalMood = "PANICKING";
+            else if (selfish >= calm)
+                globalMood = "SELFISH";
+            else
+                globalMood = "CALM";
+        }
+
+        // --- 4. HAZARDS (FIRE) ---
         int fireNodes = (int) graph.getNodes().stream().filter(Node::isOnFire).count();
         int fireEdges = (int) graph.getEdges().stream().filter(Edge::isOnFire).count();
+
+        double totalElements = graph.getNodes().size() + graph.getEdges().size();
+        double fireSpread = totalElements > 0 ? (fireNodes + fireEdges) / totalElements : 0.0;
+
+        // --- 5. GRAPH INFRASTRUCTURE ---
+        int totalNodes = graph.getNodes().size();
+        int totalEdges = graph.getEdges().size();
+        int exitNodes = graph.getExits().size();
         double avgCong = graph.getNodes().stream().mapToDouble(Node::getCongestion).average().orElse(0);
 
-        statsPanel.update(simController.getSimulation().getCurrentTick(), simController.isRunning(),
-                totalAgents, onNodes, onEdges, fireNodes, fireEdges,
-                graph.getNodes().size(), graph.getEdges().size(), graph.getExits().size(), avgCong);
+        // Find the worst bottleneck (Node or Edge)
+        String worstBottleneck = null;
+        double maxCongestion = 0;
 
-        if (currentSelectedEntity != null && simController.isRunning()) {
-            AgentSettings settings = simController.getSimulation().getAgentManager().getAgentSettings();
+        for (Node n : graph.getNodes()) {
+            if (n.getCongestion() > maxCongestion) {
+                maxCongestion = n.getCongestion();
+                worstBottleneck = "Node #" + n.getId();
+            }
+        }
+        for (Edge e : graph.getEdges()) {
+            double c = e.getCapacity() > 0 ? (double) e.getAgents().size() / e.getCapacity() : 0;
+            if (c > maxCongestion) {
+                maxCongestion = c;
+                worstBottleneck = "Edge #" + e.getId();
+            }
+        }
+
+        // --- UI Panels Update ---
+        statsPanel.update(
+                tick, running, tps, engineLoad,
+                evacuated, dead, avgEvacTime,
+                totalActive, onNodes, onEdges, avgHealth, avgSpeed, globalMood,
+                fireNodes, fireEdges, fireSpread,
+                totalNodes, totalEdges, exitNodes, avgCong, worstBottleneck);
+
+        if (currentSelectedEntity != null && running) {
             detailsPanel.update(currentSelectedEntity, settings);
         }
     }

@@ -34,17 +34,17 @@ public class DetailsSidePanel extends ScrollPane {
 
     // Component-specific display blocks
     private VBox capacityBox, congestionBox, stressBox, fireBox, agentsBox;
-    private VBox widthBox, lengthBox, speedBox, nodeInfoBox, agentStatsBox, historyBox, actionsBox;
+    private VBox widthBox, lengthBox, speedBox, nodeInfoBox, agentStatsBox, historyBox, actionsBox, healthBox;
 
     // Data value labels
-    private Label capacityTitle, congestionTitle, stressTitle, fireTitle, agentsTitle;
-    private Label capacityValue, congestionValue, stressValue, fireValue, agentsValue;
+    private Label capacityTitle, congestionTitle, stressTitle, fireTitle, agentsTitle, healthTitle;
+    private Label capacityValue, congestionValue, stressValue, fireValue, agentsValue, healthValue;
     private Label widthValue, lengthValue, speedValue, nodeInfoValue;
     private Label avgStressValue, dominantStateValue;
     private Label histTotalValue, histMaxCongValue, histAvgCongValue;
 
     // Progress visualizer tracking overlays
-    private ProgressBar congestionBar, stressBar, fireBar;
+    private ProgressBar congestionBar, stressBar, fireBar, healthBar;
 
     // Action execution buttons (Graph Elements)
     private Button toggleFireBtn;
@@ -77,13 +77,15 @@ public class DetailsSidePanel extends ScrollPane {
         this.setOpacity(0);
         this.setVisible(false);
         this.setManaged(false);
+
+        this.getStyleClass().add("no-scrollbar-pane");
     }
 
     /**
      * Initializes all UI sub-components, registers click loops, and builds layouts.
      */
     private void initUI() {
-        contentBox = new VBox(20);
+        contentBox = new VBox(10);
         contentBox.getStyleClass().add("details-panel");
         contentBox.setMinWidth(PANEL_WIDTH);
         contentBox.setPrefWidth(PANEL_WIDTH);
@@ -112,6 +114,7 @@ public class DetailsSidePanel extends ScrollPane {
         stressValue = new Label("0.0");
         fireValue = new Label("0.0");
         agentsValue = new Label("0");
+        healthValue = new Label("0 / 0");
         widthValue = new Label("0");
         lengthValue = new Label("0");
         speedValue = new Label("0.0 m/s");
@@ -125,6 +128,7 @@ public class DetailsSidePanel extends ScrollPane {
         // Apply CSS style profile configurations
         agentsValue.getStyleClass().add("stat-value-highlight");
         speedValue.getStyleClass().add("stat-value-highlight");
+        healthValue.getStyleClass().add("stat-value-highlight");
 
         Label[] generalLabels = {
                 capacityValue, congestionValue, stressValue, fireValue, widthValue,
@@ -139,6 +143,7 @@ public class DetailsSidePanel extends ScrollPane {
         congestionBar = createProgressBar("congestion-bar");
         stressBar = createProgressBar("stress-bar");
         fireBar = createProgressBar("fire-bar");
+        healthBar = createProgressBar("health-bar"); // Add .health-bar to your CSS (e.g., green/red)
 
         // Infrastructure action buttons
         toggleFireBtn = new Button("🔥 Trigger Fire");
@@ -163,38 +168,115 @@ public class DetailsSidePanel extends ScrollPane {
      * Assembles visual component blocks into their unified parent display layout.
      */
     private void buildLayoutStructure() {
-        capacityTitle = new Label("CAPACITY");
-        congestionTitle = new Label("CONGESTION");
-        stressTitle = new Label("STRESS LEVEL");
-        fireTitle = new Label("FIRE INTENSITY");
-        agentsTitle = new Label("AGENTS ON SITE");
+        // Initialize Titles
+        capacityTitle = new Label();
+        congestionTitle = new Label();
+        stressTitle = new Label();
+        fireTitle = new Label();
+        agentsTitle = new Label();
+        healthTitle = new Label("Health");
 
-        capacityBox = createStatBox(capacityTitle, capacityValue);
-        congestionBox = createStatBox(congestionTitle, new VBox(4, congestionValue, congestionBar));
-        stressBox = createStatBox(stressTitle, new VBox(4, stressValue, stressBar));
-        fireBox = createStatBox(fireTitle, new VBox(4, fireValue, fireBar));
-        agentsBox = createStatBox(agentsTitle, agentsValue);
+        // Core component cards (Always visible, repurposed based on selection)
+        capacityBox = createStatCard(capacityTitle, capacityValue, null);
+        congestionBox = createStatCard(congestionTitle, congestionValue, congestionBar);
+        stressBox = createStatCard(stressTitle, stressValue, stressBar);
+        fireBox = createStatCard(fireTitle, fireValue, fireBar);
+        agentsBox = createStatCard(agentsTitle, agentsValue, null);
 
-        widthBox = createStatBox(new Label("WIDTH"), widthValue);
-        lengthBox = createStatBox(new Label("LENGTH"), lengthValue);
-        speedBox = createStatBox(new Label("CURRENT SPEED"), speedValue);
-        nodeInfoBox = createStatBox(new Label("NODE INFO"), nodeInfoValue);
+        // Modular component cards (Hidden/Shown dynamically)
+        healthBox = createStatCard(healthTitle, healthValue, healthBar);
+        widthBox = createStatCard(new Label("Width"), widthValue, null);
+        lengthBox = createStatCard(new Label("Length"), lengthValue, null);
+        speedBox = createStatCard(new Label("Current speed"), speedValue, null);
+        nodeInfoBox = createStatCard(new Label("Position"), nodeInfoValue, null);
 
-        agentStatsBox = createMultiStatBox("AGENT STATS", avgStressValue, dominantStateValue);
-        historyBox = createMultiStatBox("HISTORY", histTotalValue, histMaxCongValue, histAvgCongValue);
+        // Multi-line sections (History, Global Stats)
+        agentStatsBox = createMultiStatCard("AGENT STATS",
+                new String[] { "Avg Stress", "Dominant State" },
+                avgStressValue, dominantStateValue);
 
-        // Include all contextual action buttons inside the core actions VBox container
-        actionsBox = createStatBox(new Label("ACTIONS"),
-                new VBox(10, toggleFireBtn, deleteBtn, deleteAgentBtn, killAgentBtn));
+        historyBox = createMultiStatCard("HISTORY",
+                new String[] { "Total passed", "Max Congestion", "Avg Congestion" },
+                histTotalValue, histMaxCongValue, histAvgCongValue);
+
+        // Actions Section
+        Label actionsHeader = new Label("ACTIONS");
+        actionsHeader.getStyleClass().add("section-header");
+        actionsBox = new VBox(10, actionsHeader, toggleFireBtn, deleteBtn, deleteAgentBtn, killAgentBtn);
+        VBox.setMargin(actionsBox, new javafx.geometry.Insets(15, 0, 0, 0));
 
         Pane structuralSpacer = new Pane();
         VBox.setVgrow(structuralSpacer, Priority.ALWAYS);
 
         contentBox.getChildren().addAll(
                 panelTitle, new Separator(),
-                nodeInfoBox, speedBox, capacityBox, congestionBox, stressBox, fireBox, agentsBox,
-                agentStatsBox, widthBox, lengthBox, historyBox,
+                nodeInfoBox, healthBox, speedBox, capacityBox, congestionBox, stressBox, fireBox, agentsBox,
+                widthBox, lengthBox,
+                agentStatsBox, historyBox,
                 new Separator(), actionsBox, structuralSpacer);
+    }
+
+    /**
+     * Helper: Creates a "Card" with the title on the left and the value on the
+     * right.
+     */
+    private VBox createStatCard(Label title, Label value, ProgressBar bar) {
+        title.getStyleClass().add("stat-title");
+        value.getStyleClass().add("stat-value");
+
+        javafx.scene.layout.HBox row = new javafx.scene.layout.HBox(10);
+        row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+        // Spacer to push the title left and the value right
+        javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
+        javafx.scene.layout.HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        row.getChildren().addAll(title, spacer, value);
+
+        VBox card = new VBox(5);
+        card.getStyleClass().add("stat-card");
+        card.getChildren().add(row);
+
+        // Append the progress bar below if it exists
+        if (bar != null) {
+            bar.setMinHeight(4);
+            card.getChildren().add(bar);
+        }
+        return card;
+    }
+
+    /**
+     * Helper: Creates a section with a Header followed by a large card containing
+     * multiple rows.
+     */
+    private VBox createMultiStatCard(String sectionTitleText, String[] rowTitles, Label... values) {
+        VBox container = new VBox(10);
+        VBox.setMargin(container, new javafx.geometry.Insets(15, 0, 0, 0));
+
+        Label sectionTitle = new Label(sectionTitleText);
+        sectionTitle.getStyleClass().add("section-header");
+        container.getChildren().add(sectionTitle);
+
+        VBox card = new VBox(12);
+        card.getStyleClass().add("stat-card");
+
+        for (int i = 0; i < rowTitles.length; i++) {
+            Label rowTitle = new Label(rowTitles[i]);
+            rowTitle.getStyleClass().add("stat-title");
+            values[i].getStyleClass().add("stat-value");
+
+            javafx.scene.layout.HBox row = new javafx.scene.layout.HBox(10);
+            row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+            javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
+            javafx.scene.layout.HBox.setHgrow(spacer, Priority.ALWAYS);
+
+            row.getChildren().addAll(rowTitle, spacer, values[i]);
+            card.getChildren().add(row);
+        }
+
+        container.getChildren().add(card);
+        return container;
     }
 
     /**
@@ -238,26 +320,6 @@ public class DetailsSidePanel extends ScrollPane {
         return bar;
     }
 
-    /** Helper factory to create single metric layout containers. */
-    private VBox createStatBox(Label title, javafx.scene.Node valueContainer) {
-        VBox box = new VBox(8);
-        box.getStyleClass().add("stat-box");
-        title.getStyleClass().add("stat-title");
-        box.getChildren().addAll(title, valueContainer);
-        return box;
-    }
-
-    /** Helper factory to build compound group statistic panels. */
-    private VBox createMultiStatBox(String sectionTitle, Label... labels) {
-        VBox box = new VBox(8);
-        box.getStyleClass().add("stat-box");
-        Label title = new Label(sectionTitle);
-        title.getStyleClass().add("stat-title");
-        box.getChildren().add(title);
-        box.getChildren().addAll(labels);
-        return box;
-    }
-
     private void setBoxVisible(VBox box, boolean visible) {
         box.setVisible(visible);
         box.setManaged(visible);
@@ -272,6 +334,17 @@ public class DetailsSidePanel extends ScrollPane {
         bar.setProgress(Math.max(0.0, Math.min(1.0, Double.isNaN(value) || Double.isInfinite(value) ? 0.0 : value)));
     }
 
+    /** Sets common semantic titles dynamically based on context. */
+    private void setCommonTitles(String capacity, String congestion, String stress, String fire, String agents) {
+        capacityTitle.setText(capacity);
+        congestionTitle.setText(congestion);
+        stressTitle.setText(stress);
+        fireTitle.setText(fire);
+        agentsTitle.setText(agents);
+    }
+
+    // --- Callbacks ---
+
     public void setOnToggleFireRequested(Consumer<GraphElement> listener) {
         this.onToggleFireRequested = listener;
     }
@@ -280,15 +353,15 @@ public class DetailsSidePanel extends ScrollPane {
         this.onDeleteRequested = listener;
     }
 
-    /** Sets the consumer to be called when an agent deletion is requested. */
     public void setOnDeleteAgentRequested(Consumer<Agent> listener) {
         this.onDeleteAgentRequested = listener;
     }
 
-    /** Sets the consumer to be called when an agent elimination is requested. */
     public void setOnKillAgentRequested(Consumer<Agent> listener) {
         this.onKillAgentRequested = listener;
     }
+
+    // --- Animations ---
 
     /** Animates the panel smoothly into the viewport. */
     public void showPanel() {
@@ -353,8 +426,9 @@ public class DetailsSidePanel extends ScrollPane {
             return;
         this.currentEntity = entity;
 
-        // Reset visibility of entity-specific blocks
-        VBox[] modularBoxes = { widthBox, lengthBox, nodeInfoBox, agentStatsBox, historyBox, speedBox, actionsBox };
+        // Reset visibility of all modular blocks
+        VBox[] modularBoxes = { widthBox, lengthBox, nodeInfoBox, agentStatsBox, historyBox, speedBox, healthBox,
+                actionsBox };
         for (VBox box : modularBoxes) {
             setBoxVisible(box, false);
         }
@@ -370,16 +444,21 @@ public class DetailsSidePanel extends ScrollPane {
      * Formats and populates layout nodes with custom agent tracking data.
      */
     private void updateAgentDetails(Agent agent, AgentSettings agentSettings) {
-        panelTitle.setText("AGENT #" + agent.getId());
+        panelTitle.setText("Agent #" + agent.getId());
+
+        // Setup Agent context titles cleanly via refactored helper
+        setCommonTitles("Position", "Edge progress", "Stress level", "Emotional State", "Unique ID");
+
+        // Health Tracking
+        setBoxVisible(healthBox, true);
+        double maxHealth = agent.getPhysicalProperties().getMaxHealth();
+        double currentHealth = agent.getHealth();
+        healthValue.setText(String.format("%.1f / %.1f HP", currentHealth, maxHealth));
+        safeSetProgress(healthBar, currentHealth / maxHealth);
+
+        // Speed Tracking
         setBoxVisible(speedBox, true);
         speedValue.setText(String.format("%.2f m/s", agent.getEffectiveSpeed(agentSettings)));
-
-        // Setup Agent context titles cleanly
-        capacityTitle.setText("POSITION");
-        congestionTitle.setText("EDGE PROGRESS");
-        stressTitle.setText("STRESS LEVEL");
-        fireTitle.setText("EMOTIONAL STATE");
-        agentsTitle.setText("UNIQUE ID");
 
         // Process position and navigation progress metrics
         if (agent.isOnNode() && agent.getCurrentNode() != null) {
@@ -413,10 +492,15 @@ public class DetailsSidePanel extends ScrollPane {
     private void updateElementDetails(GraphElement element) {
         setBoxVisible(actionsBox, true);
 
+        // Restore default layout semantic titles via refactored helper
+        setCommonTitles("Capacity", "Congestion", "Stress level", "Fire intensity", "Agents on site");
+
         // Update operational fire button tracking states
         if (element.isOnFire()) {
             toggleFireBtn.setText("🧯 Extinguish");
-            toggleFireBtn.getStyleClass().add("danger-btn");
+            if (!toggleFireBtn.getStyleClass().contains("danger-btn")) {
+                toggleFireBtn.getStyleClass().add("danger-btn");
+            }
         } else {
             toggleFireBtn.setText("🔥 Trigger Fire");
             toggleFireBtn.getStyleClass().remove("danger-btn");
@@ -428,15 +512,8 @@ public class DetailsSidePanel extends ScrollPane {
         setElementVisible(toggleFireBtn, true);
         setElementVisible(deleteBtn, true);
 
-        // Restore default layout semantic titles
-        capacityTitle.setText("CAPACITY");
-        congestionTitle.setText("CONGESTION");
-        stressTitle.setText("STRESS LEVEL");
-        fireTitle.setText("FIRE INTENSITY");
-        agentsTitle.setText("AGENTS ON SITE");
-
-        panelTitle.setText((element instanceof Node ? "NODE" : "EDGE") + " #" + element.getId());
-        capacityValue.setText(String.format("%.1f", element.getCapacity()));
+        panelTitle.setText((element instanceof Node ? "Node" : "Edge") + " #" + element.getId());
+        capacityValue.setText(String.format("%.1f m²", element.getCapacity()));
 
         double congestion = element.getCongestion();
         congestionValue.setText(String.format("%.1f%%", congestion * 100));
@@ -448,8 +525,7 @@ public class DetailsSidePanel extends ScrollPane {
 
         // Update hazardous properties
         if (element.isOnFire()) {
-            fireValue.setText(String.format("%.2f (Smoke %.2f)", element.getFire().getIntensity(),
-                    element.getFire().getSmokeLevel()));
+            fireValue.setText(String.format("%.2f", element.getFire().getIntensity()));
             safeSetProgress(fireBar, element.getFire().getIntensity());
         } else {
             fireValue.setText("None");
@@ -461,12 +537,11 @@ public class DetailsSidePanel extends ScrollPane {
 
         // Branch parameters based on specific element subclasses
         if (element instanceof Node node) {
-            nodeInfoValue.setText(
-                    String.format("(%.0f, %.0f) %s", node.getX(), node.getY(), node.isExit() ? "★ EXIT" : "node"));
+            nodeInfoValue.setText(String.format("(%.0f, %.0f)", node.getX(), node.getY()));
             setBoxVisible(nodeInfoBox, true);
         } else if (element instanceof Edge edge) {
-            widthValue.setText(String.format("%.2f", edge.getWidth()));
-            lengthValue.setText(String.format("%.2f", edge.getLength()));
+            widthValue.setText(String.format("%.2f m", edge.getWidth()));
+            lengthValue.setText(String.format("%.2f m", edge.getLength()));
             setBoxVisible(widthBox, true);
             setBoxVisible(lengthBox, true);
         }
@@ -474,15 +549,15 @@ public class DetailsSidePanel extends ScrollPane {
         // Compute group metrics if agents populate the workspace
         if (!agents.isEmpty()) {
             double avgStress = agents.stream().mapToDouble(Agent::getStressLevel).average().orElse(0);
-            avgStressValue.setText("Avg Stress: " + String.format("%.0f%%", avgStress * 100));
-            dominantStateValue.setText("State: " + computeDominantState(agents).name());
+            avgStressValue.setText(String.format("%.0f%%", avgStress * 100));
+            dominantStateValue.setText(computeDominantState(agents).name());
             setBoxVisible(agentStatsBox, true);
         }
 
-        // Update history collection logs
-        histTotalValue.setText("Total passed: " + element.getTotalAgentsCount());
-        histMaxCongValue.setText("Max Congestion: " + String.format("%.0f%%", element.getMaxCongestion() * 100));
-        histAvgCongValue.setText("Avg Congestion: " + String.format("%.0f%%", element.getAverageCongestion() * 100));
+        histTotalValue.setText(String.valueOf(element.getTotalAgentsCount()));
+        histMaxCongValue.setText(String.format("%.0f%%", element.getMaxCongestion() * 100));
+        histAvgCongValue.setText(String.format("%.0f%%", element.getAverageCongestion() * 100));
+
         setBoxVisible(historyBox, true);
     }
 
