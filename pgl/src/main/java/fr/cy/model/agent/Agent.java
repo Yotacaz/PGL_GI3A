@@ -125,19 +125,69 @@ public class Agent implements StressInducing, Serializable {
     private AgentAction currentAction = null;
 
     /**
-     * Index in graph element list (TODO: document purpose)
+     * Index of this agent inside the "agents" list of a {@code Node}.
+     * <p>
      */
-    private int indexInGraphElemList = -1; // TODO
+    private int indexInNodeAgentsList = -1;
 
     /**
-     * Index in directional list (TODO: document purpose)
+     * Index of this agent inside the edge-forward direction list of an
+     * {@link fr.cy.model.graph.element.Edge} (start -> end).
+     * <p>
+     * This value is meaningful only when {@link #isOnEdge()} is true and the
+     * agent direction is start -> end.
      */
-    private int indexInDirectionnalList = -1; // TODO
+    private int indexInEdgeAgentsListForward = -1;
+
+    /**
+     * Index of this agent inside the edge-backward direction list of an
+     * {@link fr.cy.model.graph.element.Edge} (end -> start).
+     * <p>
+     * This value is meaningful only when {@link #isOnEdge()} is true and the
+     * agent direction is end -> start.
+     */
+    private int indexInEdgeAgentsListBackward = -1;
+
+    public int getIndexInNodeAgentsList() {
+        return indexInNodeAgentsList;
+    }
+
+    void setIndexInNodeAgentsList(int indexInNodeAgentsList) {
+        this.indexInNodeAgentsList = indexInNodeAgentsList;
+    }
+
+    // Edge indices must be accessible from fr.cy.model.graph.element.Edge
+    // (different package), so they are public.
+
+
+    public int getIndexInEdgeAgentsListForward() {
+        return indexInEdgeAgentsListForward;
+    }
+
+    void setIndexInEdgeAgentsListForward(int indexInEdgeAgentsListForward) {
+        this.indexInEdgeAgentsListForward = indexInEdgeAgentsListForward;
+    }
+
+    public int getIndexInEdgeAgentsListBackward() {
+        return indexInEdgeAgentsListBackward;
+    }
+
+    void setIndexInEdgeAgentsListBackward(int indexInEdgeAgentsListBackward) {
+        this.indexInEdgeAgentsListBackward = indexInEdgeAgentsListBackward;
+    }
+
+    void resetAllGraphElementIndices() {
+        indexInNodeAgentsList = -1;
+        indexInEdgeAgentsListForward = -1;
+        indexInEdgeAgentsListBackward = -1;
+    }
+
 
     /**
      * Static IdManager to generate unique identifiers for agents
      */
     private static IdManager idManager = new IdManager();
+
 
     /**
      * Constructs a new Agent with the specified parameters.
@@ -658,6 +708,22 @@ public class Agent implements StressInducing, Serializable {
         this.currentEdgeProgress = -1.0;
         setIsOnNode(true);
         return true;
+    }
+
+    /**
+     * This method should be called just before the current graph element of the agent is deleted from the graph.
+     * It teleports the agent to a neighboring node when on a node or the previous node when on an edge.
+     */
+    public void onCurrentGraphElementDeleted(){
+        if (isOnNode()){
+            Node currentNode = Objects.requireNonNull(getCurrentNode());
+            Edge firstEdge = currentNode.getEdges().getFirst();
+            Node oppositeNode = firstEdge.getOppositeNode(currentNode);
+            tpToNode(oppositeNode);
+        }
+        else if (isOnEdge()){
+            tpToNode(getPreviousOrCurrentNode());
+        }
     }
 
     /**
