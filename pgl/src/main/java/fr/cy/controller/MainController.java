@@ -4,6 +4,7 @@ import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Edge;
+import fr.cy.model.graph.element.GraphElement;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.simulation.Simulation;
 import fr.cy.view.*;
@@ -137,6 +138,8 @@ public class MainController {
     /**
      * Unified orchestration routine handling removal tasks for Nodes, Edges, or
      * Agents.
+     * Delegates agent physics and relocation tasks safely to the Model layer before
+     * structural deletion.
      * Shared dynamically between side context bars and rapid canvas tool modes.
      *
      * @param entity The generic element target to scrub from the workspace.
@@ -145,28 +148,33 @@ public class MainController {
         if (entity == null || simController.getSimulation() == null)
             return;
 
-        Graph graph = simController.getSimulation().getGraph();
+        var graph = simController.getSimulation().getGraph();
         var agentManager = simController.getSimulation().getAgentManager();
 
-        if (entity instanceof Node node && graph != null) {
-            graph.removeNode(node);
-        } else if (entity instanceof Edge edge && graph != null) {
-            graph.removeEdge(edge);
-        } else if (entity instanceof Agent agent) {
+        if (entity instanceof Node) {
+            Node node = (Node) entity;
             if (agentManager != null) {
-                agentManager.removeAgentFromGraph(agent);
-
-                // Disconnect container links to prevent structural graph leak tracks
-                if (agent.isOnNode() && agent.getCurrentNode() != null) {
-                    agent.getCurrentNode().getAgents().remove(agent);
-                } else if (agent.getCurrentOrPreviousEdge() != null) {
-                    agent.getCurrentOrPreviousEdge().getAgents().remove(agent);
-                }
+                agentManager.evacuateAgentsBeforeDeletion(node); // 1. Évacuation
+            }
+            if (graph != null) {
+                graph.removeNode(node); // 2. Destruction
+            }
+        } else if (entity instanceof Edge) {
+            Edge edge = (Edge) entity;
+            if (agentManager != null) {
+                agentManager.evacuateAgentsBeforeDeletion(edge);
+            }
+            if (graph != null) {
+                graph.removeEdge(edge);
+            }
+        } else if (entity instanceof Agent) {
+            Agent agent = (Agent) entity;
+            if (agentManager != null) {
+                agentManager.deleteAgent(agent); // Suppression directe
             }
         }
 
-        // Clean selection state mappings if the removed element matches current view
-        // focus
+        // Nettoyage visuel de la sélection
         if (entity.equals(currentSelectedEntity)) {
             this.currentSelectedEntity = null;
             this.graphCanvas.setSelectedEntity(null);
