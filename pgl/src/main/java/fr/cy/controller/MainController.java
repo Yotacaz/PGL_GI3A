@@ -14,6 +14,9 @@ import fr.cy.model.simulation.Simulation;
 import fr.cy.view.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.StrokeType;
 
 /**
  * The {@code MainController} acts as the primary orchestrator of the
@@ -60,6 +63,17 @@ public class MainController {
         this.graphCanvas.widthProperty().bind(canvasContainer.widthProperty());
         this.graphCanvas.heightProperty().bind(canvasContainer.heightProperty());
         canvasContainer.getChildren().add(graphCanvas);
+
+        // Overlay for rectangle selection in DELETE mode
+        Rectangle selectionOverlay = new Rectangle();
+        selectionOverlay.setFill(Color.web("#FF3333", 0.15));
+        selectionOverlay.setStroke(Color.web("#FF3333", 0.75));
+        selectionOverlay.setStrokeWidth(1.5);
+        selectionOverlay.setStrokeType(StrokeType.OUTSIDE);
+        selectionOverlay.setMouseTransparent(true);
+        selectionOverlay.setVisible(false);
+        canvasContainer.getChildren().add(selectionOverlay);
+
         root.setCenter(canvasContainer);
 
         // 2. Initialize Simulation Controller
@@ -70,6 +84,35 @@ public class MainController {
         this.statsPanel = new SimulationStatsPanel();
         root.setLeft(statsPanel);
         this.detailsPanel = new DetailsSidePanel();
+
+        // Wire inline edit callbacks for nodes and edges
+        this.detailsPanel.setOnNodeCapacityChanged(cap -> {
+            if (currentSelectedEntity instanceof Node node)
+                node.setCapacity(cap);
+        });
+        this.detailsPanel.setOnNodeExitChanged(exit -> {
+            if (currentSelectedEntity instanceof Node node)
+                node.setExit(exit);
+        });
+        this.detailsPanel.setOnEdgeWidthChanged(width -> {
+            if (currentSelectedEntity instanceof Edge edge)
+                edge.setWidth(width);
+        });
+        this.detailsPanel.setOnEdgeLengthChanged(length -> {
+            if (currentSelectedEntity instanceof Edge edge)
+                edge.setLength(length);
+        });
+        this.detailsPanel.setOnEdgeDirectedChanged(directed -> {
+            if (currentSelectedEntity instanceof Edge edge)
+                simController.getSimulation().getGraph().setEdgeDirected(edge, directed);
+        });
+        this.detailsPanel.setOnReverseEdgeDirectionRequested(() -> {
+            if (currentSelectedEntity instanceof Edge edge && edge.isDirected()) {
+                simController.getSimulation().getGraph().reverseEdgeDirection(edge);
+                AgentSettings settings = simController.getSimulation().getAgentManager().getAgentSettings();
+                detailsPanel.update(edge, settings);
+            }
+        });
 
         // Wire detail panel fire management actions
         this.detailsPanel.setOnToggleFireRequested(element -> {
@@ -114,7 +157,7 @@ public class MainController {
         // 4. Initialize Toolbars
         this.toolBar = new SimulationToolBar(simController);
         root.setBottom(toolBar);
-        this.editingToolBar = new GraphEditingToolBar();
+        this.editingToolBar = new GraphEditingToolBar(simController);
         root.setTop(editingToolBar);
 
         // 5. Initialize Interaction Controller
@@ -126,6 +169,16 @@ public class MainController {
 
         // Wire rapid canvas deletion mode clicks to the unified deletion pipeline
         this.interactionController.setOnDeleteElementRequested(this::deleteEntity);
+
+        // Wire rectangle-selection deletion (DELETE mode drag)
+        this.interactionController.setSelectionOverlay(selectionOverlay);
+        this.interactionController.setOnDeleteInRegionRequested(entities -> {
+            for (Object entity : entities)
+                deleteEntity(entity);
+            this.currentSelectedEntity = null;
+            this.graphCanvas.setSelectedEntity(null);
+            this.detailsPanel.hidePanel();
+        });
 
         this.interactionController.setOnEntitySelected(entity -> {
             this.currentSelectedEntity = entity;
