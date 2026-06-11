@@ -157,7 +157,7 @@ public class MainController {
         // 4. Initialize Toolbars
         this.toolBar = new SimulationToolBar(simController);
         root.setBottom(toolBar);
-        this.editingToolBar = new GraphEditingToolBar();
+        this.editingToolBar = new GraphEditingToolBar(simController);
         root.setTop(editingToolBar);
 
         // 5. Initialize Interaction Controller
