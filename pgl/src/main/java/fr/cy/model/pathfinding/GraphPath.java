@@ -6,7 +6,7 @@ import java.util.List;
 
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
-
+//test
 public class GraphPath implements Serializable {
     private static final long serialVersionUID = 1L;
     // TODO: this is an example of a path class, adapt it
