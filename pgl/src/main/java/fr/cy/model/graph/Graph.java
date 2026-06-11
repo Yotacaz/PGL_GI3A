@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.io.Serializable;
-import fr.cy.model.agent.Agent;
-import fr.cy.model.agent.exceptions.AgentStateException;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.simulation.SimulationSettings;

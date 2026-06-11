@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import fr.cy.model.agent.Agent;
+import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.agent.exceptions.AgentStateException;
 import fr.cy.model.graph.Graph;
@@ -131,56 +132,46 @@ public class ContextProvider implements Serializable {
         Node currentNode = Objects.requireNonNull(node,
                 "Node must be valid to construct decision context");
         List<Edge> allEdges = currentNode.getEdges();
-        Map<Edge, List<Agent>> nearbyIncomingAgents = new HashMap<>();
-        Map<Edge, List<Agent>> nearbyOutgoingAgents = new HashMap<>();
+        Map<Edge, Integer> nearbyOutgoingAgents = new HashMap<>();
         Map<Edge, Double> spaceOccupiedAtEdgesEntrance = new HashMap<>();
         for (Edge edge : allEdges) {
-            double spaceOccupiedAtEntrance = 0.0;
-            Node oppositeNode = edge.getOppositeNode(currentNode);
-            for (Agent nearbyAgent : edge.getAgents()) {
-                // Determine if the nearby agent is incoming or outgoing relative to the current
-                // node
-                double progress = nearbyAgent.getCurrentEdgeProgress();
-                double distToNode = -1.0;
-                if (progress < 0) {
-                    throw new AgentStateException(
-                            "Agent travel progress on edge cannot be <0 if is on an edge (got+" + progress + ")");
-                }
-                if (oppositeNode.equals(nearbyAgent.getPreviousOrCurrentNode())) { //coming from opposite side
-                    nearbyIncomingAgents.computeIfAbsent(edge, k -> new ArrayList<>()).add(nearbyAgent);
-                    distToNode = (1 - progress) * edge.getLength();
-                } else { //coming from this side
-                    nearbyOutgoingAgents.computeIfAbsent(edge, k -> new ArrayList<>()).add(nearbyAgent);
-                    distToNode = progress * edge.getLength();
-                }
-                //add to space occuppied at entrance if close enougth
-                double agentWidth = nearbyAgent.getSurfaceAreaTakenByAgent();
-                if (distToNode <= agentWidth) {
-                    spaceOccupiedAtEntrance += agentWidth;
-                }
-
+            boolean isForward = edge.getStart().equals(currentNode);
+            double agentWidth = AgentSettings.getInstance().getMedianSurfaceAreaTakenByAgent();
+            double startDistance = isForward ? 0 : edge.getLength() - agentWidth;
+            double endDistance = isForward ? agentWidth : edge.getLength();
+            assert startDistance >= 0 && endDistance <= edge.getLength() : "Invalid distance window for edge entrance";
+            double occupiedSurface = edge.getAreaOccupiedByAgentsBetween(startDistance, endDistance, isForward);
+            occupiedSurface += edge.getAreaOccupiedByAgentsBetween(startDistance, endDistance, !isForward);
+            spaceOccupiedAtEdgesEntrance.put(edge, occupiedSurface);
+            int numAgentsEnteringEdge = edge.getNumberOfAgentsBetween(startDistance, endDistance, isForward)
+                    + edge.getNumberOfAgentsBetween(startDistance, endDistance, !isForward);
+            if (numAgentsEnteringEdge < 0) {
+                throw new IllegalStateException("Number of agents entering edge cannot be negative");
             }
-            spaceOccupiedAtEdgesEntrance.put(edge, spaceOccupiedAtEntrance);
+            nearbyOutgoingAgents.put(edge, numAgentsEnteringEdge);
+            
         }
         // account for agents that are currently on the node and planning to take an
         // outgoing edge
         for (Agent nearbyAgent : currentNode.getAgents()) {
             Edge targetOutgoinEdge = nearbyAgent.getCurrentEdgeOrNextEdgeIfOnNode();
             if (targetOutgoinEdge != null) {
-                nearbyOutgoingAgents.computeIfAbsent(targetOutgoinEdge, k -> new ArrayList<>()).add(nearbyAgent);
+                nearbyOutgoingAgents.put(targetOutgoinEdge, nearbyOutgoingAgents.getOrDefault(targetOutgoinEdge, 0) + 1);
+                double pendingSurface = spaceOccupiedAtEdgesEntrance.getOrDefault(targetOutgoinEdge, 0.0)
+                        + nearbyAgent.getSurfaceAreaTakenByAgent();
+                spaceOccupiedAtEdgesEntrance.put(targetOutgoinEdge, pendingSurface);
             }
         }
 
         List<Edge> outgoingEdges = currentNode.getOutgoingEdges();
-        return new NodeContext(currentNode, null, null, outgoingEdges, nearbyIncomingAgents,
-                nearbyOutgoingAgents, spaceOccupiedAtEdgesEntrance);
+        return new NodeContext(currentNode, null, null, outgoingEdges, nearbyOutgoingAgents, spaceOccupiedAtEdgesEntrance);
     }
 
     private EdgeContext constructEdgeContext(Edge edge) {
         // List<Node> recommendedPath = pathFinder.findPath(agent.getCurrentNode(),
         // agent.getDestinationNode());
         Edge currentEdge = Objects.requireNonNull(edge,
-                "Node must be valid to construct decision context");
+                "Edge must be valid to construct decision context");
         List<Node> accessiblesNodes = new ArrayList<>();
         accessiblesNodes.add(currentEdge.getStart());
         if (!currentEdge.isDirected()) {
