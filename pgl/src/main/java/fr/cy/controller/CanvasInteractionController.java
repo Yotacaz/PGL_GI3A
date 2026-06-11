@@ -233,8 +233,14 @@ public class CanvasInteractionController {
                     onAddAgentRequested.accept(clickedNode);
             }
         } else if (currentMode == InteractionMode.DELETE) {
-            // Rapid deletion mode: immediately trigger deletion on clicked structural
-            // elements
+            Agent clickedAgent = findClosestAgent(mx, my);
+
+            if (clickedAgent != null) {
+                if (onEntitySelected != null) {
+                    onEntitySelected.accept(clickedAgent);
+                }
+
+            }
             GraphElement clicked = findClosestElement(mx, my);
             if (clicked != null && onDeleteElementRequested != null) {
                 onDeleteElementRequested.accept(clicked);
@@ -266,14 +272,38 @@ public class CanvasInteractionController {
     private Agent findClosestAgent(double mx, double my) {
         if (simController.getSimulation() == null || simController.getSimulation().getAgentManager() == null)
             return null;
+
+        Agent closest = null;
+        double minDistance = 8.0;
+
         for (Agent agent : simController.getSimulation().getAgentManager().getAgentsToEvacuate()) {
-            // Simplified approximation for hit detection
-            double ax = agent.isOnNode() ? agent.getCurrentNode().getX() : 0; // Logic omitted for brevity
-            double ay = agent.isOnNode() ? agent.getCurrentNode().getY() : 0;
-            if (Math.hypot(ax - mx, ay - my) <= 8.0)
-                return agent;
+            double ax = 0;
+            double ay = 0;
+
+            if (agent.isOnNode() && agent.getCurrentNode() != null) {
+                ax = agent.getCurrentNode().getX();
+                ay = agent.getCurrentNode().getY();
+            } else if (agent.getPreviousOrCurrentEdge() != null) {
+                Edge edge = agent.getPreviousOrCurrentEdge();
+                double progress = agent.getCurrentEdgeProgress();
+                double startX = edge.getStart().getX();
+                double startY = edge.getStart().getY();
+                double endX = edge.getEnd().getX();
+                double endY = edge.getEnd().getY();
+
+                ax = startX + progress * (endX - startX);
+                ay = startY + progress * (endY - startY);
+            } else {
+                continue;
+            }
+
+            double dist = Math.hypot(ax - mx, ay - my);
+            if (dist <= minDistance) {
+                minDistance = dist;
+                closest = agent;
+            }
         }
-        return null;
+        return closest;
     }
 
     /**

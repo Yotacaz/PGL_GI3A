@@ -97,7 +97,7 @@ public abstract class AgentAction implements Serializable {
 	 * 
 	 * @param agentSettings the agent settings containing parameters that may affect action execution
 	 * @param availableTime the time available for this action in the current tick (in simulation time units)
-	 * @return the time effectively consumed by this action (should be <= availableTime)
+	 * @return the time effectively consumed by this action (should be less than or equal to {@code availableTime})
 	 */
 	public abstract double perform(AgentSettings agentSettings, double availableTime);
 

@@ -1,7 +1,12 @@
 package fr.cy.controller;
 
+import java.util.List;
+import java.util.Random;
+
 import fr.cy.model.agent.Agent;
+import fr.cy.model.agent.AgentManager;
 import fr.cy.model.agent.AgentSettings;
+import fr.cy.model.agent.behaviour.properties.EmotionalState;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
@@ -23,6 +28,9 @@ import javafx.scene.layout.Pane;
  * </p>
  */
 public class MainController {
+
+    /** A random number generator for stochastic decisions. */
+    private static final Random RNG = new Random();
 
     private final BorderPane root;
     private GraphCanvas graphCanvas;
@@ -92,8 +100,8 @@ public class MainController {
 
                 if (agent.isOnNode() && agent.getCurrentNode() != null) {
                     agent.getCurrentNode().getAgents().remove(agent);
-                } else if (agent.getCurrentOrPreviousEdge() != null) {
-                    agent.getCurrentOrPreviousEdge().getAgents().remove(agent);
+                } else if (agent.getPreviousOrCurrentEdge() != null) {
+                    agent.getPreviousOrCurrentEdge().getAgents().remove(agent);
                 }
 
                 this.currentSelectedEntity = null;
@@ -137,6 +145,8 @@ public class MainController {
     /**
      * Unified orchestration routine handling removal tasks for Nodes, Edges, or
      * Agents.
+     * Delegates agent physics and relocation tasks safely to the Model layer before
+     * structural deletion.
      * Shared dynamically between side context bars and rapid canvas tool modes.
      *
      * @param entity The generic element target to scrub from the workspace.
@@ -145,28 +155,36 @@ public class MainController {
         if (entity == null || simController.getSimulation() == null)
             return;
 
-        Graph graph = simController.getSimulation().getGraph();
+        var graph = simController.getSimulation().getGraph();
         var agentManager = simController.getSimulation().getAgentManager();
 
-        if (entity instanceof Node node && graph != null) {
-            graph.removeNode(node);
-        } else if (entity instanceof Edge edge && graph != null) {
-            graph.removeEdge(edge);
-        } else if (entity instanceof Agent agent) {
+        if (entity instanceof Node) {
+            Node node = (Node) entity;
             if (agentManager != null) {
-                agentManager.removeAgentFromGraph(agent);
-
-                // Disconnect container links to prevent structural graph leak tracks
-                if (agent.isOnNode() && agent.getCurrentNode() != null) {
-                    agent.getCurrentNode().getAgents().remove(agent);
-                } else if (agent.getCurrentOrPreviousEdge() != null) {
-                    agent.getCurrentOrPreviousEdge().getAgents().remove(agent);
-                }
+                List<Node> adjacentNodes = graph.getAdjacentNodes(node);
+                
+                Node targetNodeForRelocation = adjacentNodes.isEmpty() ? null : adjacentNodes.get(RNG.nextInt(adjacentNodes.size())); 
+                agentManager.relocateAgentsOnNode(node, targetNodeForRelocation); // 1. evacuation
+            }
+            if (graph != null) {
+                graph.removeNode(node); // 2. Destruction
+            }
+        } else if (entity instanceof Edge) {
+            Edge edge = (Edge) entity;
+            if (agentManager != null) {
+                agentManager.relocateAgentsOnEdge(edge, null);
+            }
+            if (graph != null) {
+                graph.removeEdge(edge);
+            }
+        } else if (entity instanceof Agent) {
+            Agent agent = (Agent) entity;
+            if (agentManager != null) {
+                agentManager.deleteAgent(agent); // Suppression directe
             }
         }
 
-        // Clean selection state mappings if the removed element matches current view
-        // focus
+        // Nettoyage visuel de la sélection
         if (entity.equals(currentSelectedEntity)) {
             this.currentSelectedEntity = null;
             this.graphCanvas.setSelectedEntity(null);
@@ -227,24 +245,99 @@ public class MainController {
                 });
     }
 
-    /** Refreshes the statistics panel and detail panel content every frame. */
+    /**
+     * * Refreshes the statistics panel and detail panel content every frame.
+     */
     private void refreshStatsPanel() {
         if (simController.getSimulation() == null)
             return;
-        Graph graph = simController.getSimulation().getGraph();
-        int totalAgents = simController.getSimulation().getAgentManager().getAgentsToEvacuate().size();
-        int onNodes = graph.getNodes().stream().mapToInt(n -> n.getAgents().size()).sum();
-        int onEdges = graph.getEdges().stream().mapToInt(e -> e.getAgents().size()).sum();
+
+        Simulation sim = simController.getSimulation();
+        Graph graph = sim.getGraph();
+        AgentManager agentManager = sim.getAgentManager();
+        AgentSettings settings = agentManager.getAgentSettings();
+
+        // --- 1. ENGINE METRICS ---
+        int tick = sim.getCurrentTick();
+        boolean running = sim.isRunning();
+        double engineLoad = sim.getLastEngineLoadMs();
+        int tps = simController.getCurrentTps();
+
+        // --- 2. EVACUATION & SURVIVAL ---
+        List<Agent> activeAgents = agentManager.getAgentsToEvacuate();
+        List<Agent> deadAgents = agentManager.getDeadAgents();
+        int dead = deadAgents.size();
+
+        int evacuated = agentManager.getEvacuatedAgents().size();
+        double avgEvacTime = 0.0; // TODO: Implement the time taken by exiting agents
+
+        // --- 3. ACTIVE CROWD METRICS ---
+        int totalActive = activeAgents.size();
+        int onNodes = (int) activeAgents.stream().filter(Agent::isOnNode).count();
+        int onEdges = totalActive - onNodes;
+
+        double avgHealth = activeAgents.isEmpty() ? 0
+                : activeAgents.stream().mapToDouble(Agent::getHealth).average().orElse(0);
+
+        double avgSpeed = activeAgents.isEmpty() ? 0
+                : activeAgents.stream().mapToDouble(a -> a.getEffectiveSpeed(settings)).average().orElse(0);
+
+        // Calculate the dominant mood
+        String globalMood = "NONE";
+        if (!activeAgents.isEmpty()) {
+            long panicking = activeAgents.stream().filter(a -> a.getEmotionalState() == EmotionalState.PANICKING)
+                    .count();
+            long selfish = activeAgents.stream().filter(a -> a.getEmotionalState() == EmotionalState.SELFISH).count();
+            long calm = totalActive - panicking - selfish;
+
+            if (panicking >= calm && panicking >= selfish)
+                globalMood = "PANICKING";
+            else if (selfish >= calm)
+                globalMood = "SELFISH";
+            else
+                globalMood = "CALM";
+        }
+
+        // --- 4. HAZARDS (FIRE) ---
         int fireNodes = (int) graph.getNodes().stream().filter(Node::isOnFire).count();
         int fireEdges = (int) graph.getEdges().stream().filter(Edge::isOnFire).count();
+
+        double totalElements = graph.getNodes().size() + graph.getEdges().size();
+        double fireSpread = totalElements > 0 ? (fireNodes + fireEdges) / totalElements : 0.0;
+
+        // --- 5. GRAPH INFRASTRUCTURE ---
+        int totalNodes = graph.getNodes().size();
+        int totalEdges = graph.getEdges().size();
+        int exitNodes = graph.getExits().size();
         double avgCong = graph.getNodes().stream().mapToDouble(Node::getCongestion).average().orElse(0);
 
-        statsPanel.update(simController.getSimulation().getCurrentTick(), simController.isRunning(),
-                totalAgents, onNodes, onEdges, fireNodes, fireEdges,
-                graph.getNodes().size(), graph.getEdges().size(), graph.getExits().size(), avgCong);
+        // Find the worst bottleneck (Node or Edge)
+        String worstBottleneck = null;
+        double maxCongestion = 0;
 
-        if (currentSelectedEntity != null && simController.isRunning()) {
-            AgentSettings settings = simController.getSimulation().getAgentManager().getAgentSettings();
+        for (Node n : graph.getNodes()) {
+            if (n.getCongestion() > maxCongestion) {
+                maxCongestion = n.getCongestion();
+                worstBottleneck = "Node #" + n.getId();
+            }
+        }
+        for (Edge e : graph.getEdges()) {
+            double c = e.getCapacity() > 0 ? (double) e.getAgents().size() / e.getCapacity() : 0;
+            if (c > maxCongestion) {
+                maxCongestion = c;
+                worstBottleneck = "Edge #" + e.getId();
+            }
+        }
+
+        // --- UI Panels Update ---
+        statsPanel.update(
+                tick, running, tps, engineLoad,
+                evacuated, dead, avgEvacTime,
+                totalActive, onNodes, onEdges, avgHealth, avgSpeed, globalMood,
+                fireNodes, fireEdges, fireSpread,
+                totalNodes, totalEdges, exitNodes, avgCong, worstBottleneck);
+
+        if (currentSelectedEntity != null && running) {
             detailsPanel.update(currentSelectedEntity, settings);
         }
     }

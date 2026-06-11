@@ -100,7 +100,7 @@ public class Edge extends GraphElement {
     /** Swaps the start and end nodes. */
     public void switchDirection() {
         start.removeEdge(this);
-        end.removeEdge(this);   
+        end.removeEdge(this);
 
         Node temp = start;
         start = end;
@@ -109,7 +109,35 @@ public class Edge extends GraphElement {
         start.addEdge(this);
         end.addEdge(this);
 
-        
+    }
+
+    /**
+     * Handles cleanup when the edge is removed from the graph.
+     * Updates agents on connected nodes to prevent dangling references.
+     * Also removes this edge from the connected nodes' edge lists.
+     */
+    public void onRemove() {
+        // move agents that are on the edge
+
+        // reset previous edge reference for agents on connected nodes
+        Objects.requireNonNull(end,
+                " Edge end node cannot be null when removing edge, please call edge.onRemove() before node.onRemove()");
+        for (Agent agent : end.getAgents()) {
+            if (agent.getPreviousOrCurrentEdge() != null && agent.getPreviousOrCurrentEdge().equals(this)) {
+                agent.onPreviousEdgeDeleted();
+            }
+        }
+        end.removeEdge(this);
+
+        Objects.requireNonNull(start,
+                " Edge start node cannot be null when removing edge, please call edge.onRemove() before node.onRemove()");
+        for (Agent agent : start.getAgents()) {
+            if (agent.getPreviousOrCurrentEdge() != null && agent.getPreviousOrCurrentEdge().equals(this)) {
+                agent.onPreviousEdgeDeleted();
+            }
+        }
+        start.removeEdge(this);
+
     }
 
     /** @param directed True to make the edge directed. */

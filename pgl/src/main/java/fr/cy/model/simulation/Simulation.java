@@ -6,10 +6,9 @@ import fr.cy.model.agent.AgentManager;
 import fr.cy.model.agent.behaviour.decisions.ContextProvider;
 import fr.cy.model.fire.FireService;
 import fr.cy.model.graph.Graph;
-import fr.cy.model.graph.element.Node;
 import fr.cy.model.pathfinding.PathFinder;
 
-import java.io.*;
+import java.io.Serializable;
 import java.util.stream.Collectors;
 
 /**
@@ -17,8 +16,7 @@ import java.util.stream.Collectors;
  * scenario.
  * <p>
  * It orchestrates the lifecycle of the simulation, including the graph state,
- * agent
- * behavior management, fire propagation, and pathfinding synchronization.
+ * agent behavior management, fire propagation, and pathfinding synchronization.
  * </p>
  */
 public class Simulation implements Serializable {
@@ -40,10 +38,13 @@ public class Simulation implements Serializable {
     /** Running state of the simulation. */
     private boolean running;
 
+    /** Tracks the execution time of the last computed tick in milliseconds. */
+    private double lastEngineLoadMs;
+
     /**
      * Constructs a simulation with a specific name and graph.
+     * * @param name Simulation name.
      * 
-     * @param name  Simulation name.
      * @param graph Environment graph.
      */
     public Simulation(String name, Graph graph) {
@@ -52,8 +53,8 @@ public class Simulation implements Serializable {
 
     /**
      * Constructs a simulation with generated graph and agents.
+     * * @param name Simulation name.
      * 
-     * @param name               Simulation name.
      * @param nodeCount          Number of nodes.
      * @param edgeCount          Number of edges.
      * @param agentCount         Number of agents to generate.
@@ -67,8 +68,8 @@ public class Simulation implements Serializable {
 
     /**
      * Base constructor for the Simulation.
+     * * @param name Simulation name.
      * 
-     * @param name               Simulation name.
      * @param graph              Environment graph.
      * @param simulationSettings Simulation configuration.
      */
@@ -87,6 +88,7 @@ public class Simulation implements Serializable {
 
         this.currentTick = 0;
         this.running = false;
+        this.lastEngineLoadMs = 0;
     }
 
     /**
@@ -97,6 +99,7 @@ public class Simulation implements Serializable {
         agentManager.reset();
         currentTick = 0;
         running = false;
+        lastEngineLoadMs = 0.0;
     }
 
     /** Starts the simulation execution. */
@@ -116,22 +119,30 @@ public class Simulation implements Serializable {
         if (!running)
             return;
 
+        long startTime = System.nanoTime();
+
         double effectiveTickDuration = simulationSettings.getTickDuration() * simulationSettings.getSpeedMultiplier();
         fireService.updateFires(graph, effectiveTickDuration);
         graph.tick();
         agentManager.tick(effectiveTickDuration);
         currentTick++;
+
+        this.lastEngineLoadMs = (System.nanoTime() - startTime) / 1_000_000.0;
     }
 
     /**
      * Forces a single tick execution, regardless of the running state.
      */
     public void stepTick() {
+        long startTime = System.nanoTime();
+
         double effectiveTickDuration = simulationSettings.getTickDuration() * simulationSettings.getSpeedMultiplier();
         fireService.updateFires(graph, effectiveTickDuration);
         graph.tick();
         agentManager.tick(effectiveTickDuration);
         currentTick++;
+
+        this.lastEngineLoadMs = (System.nanoTime() - startTime) / 1_000_000.0;
     }
 
     // --- GETTERS ---
@@ -167,6 +178,13 @@ public class Simulation implements Serializable {
         return name;
     }
 
+    /**
+     * @return The time in milliseconds it took to compute the last tick.
+     */
+    public double getLastEngineLoadMs() {
+        return lastEngineLoadMs;
+    }
+
     @Override
     public String toString() {
         String agentDetails = agentManager.getAgentsToEvacuate().stream()
@@ -176,6 +194,7 @@ public class Simulation implements Serializable {
                 "Current Tick: " + currentTick + "\n" +
                 "Running: " + (running ? "Yes" : "No") + "\n" +
                 "Active Agents: " + agentManager.getAgentsToEvacuate().size() + "\n" +
+                "Last Engine Load: " + lastEngineLoadMs + " ms\n" +
                 "========================\n" +
                 "Graph:\n" + graph.toString() +
                 "\nAgents:\n" + agentDetails;
