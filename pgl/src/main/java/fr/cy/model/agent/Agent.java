@@ -20,6 +20,7 @@ import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 import fr.cy.model.agent.behaviour.properties.AgentPhysicalProperties;
 import fr.cy.model.agent.behaviour.properties.EmotionalState;
 import fr.cy.model.agent.exceptions.AgentStateException;
+import fr.cy.model.graph.GraphException;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.GraphElement;
 import fr.cy.model.graph.element.Node;
@@ -105,7 +106,7 @@ public class Agent implements StressInducing, Serializable {
     /**
      * Current or previous edge of the graph where the agent is located
      */
-    private Edge currentOrPreviousEdge;
+    private Edge previousOrCurrentEdge;
 
     /**
      * True if the agent is currently on a node, false if on an edge
@@ -120,7 +121,8 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * The current action being performed by the agent, which can be null if the
-     * agent is idle on a node <b>ONLY</b>. null on an edge would be an invalid state
+     * agent is idle on a node <b>ONLY</b>. null on an edge would be an invalid
+     * state
      */
     private AgentAction currentAction = null;
 
@@ -159,7 +161,6 @@ public class Agent implements StressInducing, Serializable {
     // Edge indices must be accessible from fr.cy.model.graph.element.Edge
     // (different package), so they are public.
 
-
     public int getIndexInEdgeAgentsListForward() {
         return indexInEdgeAgentsListForward;
     }
@@ -182,12 +183,10 @@ public class Agent implements StressInducing, Serializable {
         indexInEdgeAgentsListBackward = -1;
     }
 
-
     /**
      * Static IdManager to generate unique identifiers for agents
      */
     private static IdManager idManager = new IdManager();
-
 
     /**
      * Constructs a new Agent with the specified parameters.
@@ -206,7 +205,7 @@ public class Agent implements StressInducing, Serializable {
      * @param health                      the initial health of the agent
      * @param surfaceAreaTakenByAgent     the surface area taken by the agent
      */
-    public Agent(String name, Node startingNode, double maxSpeed, double stressTolerance, double crowdingTolerance,
+    Agent(String name, Node startingNode, double maxSpeed, double stressTolerance, double crowdingTolerance,
             double baseOwnDecisionMakingFactor, double repeatLastDecisionTendency, double health,
             double surfaceAreaTakenByAgent) {
         this.id = idManager.generateId();
@@ -215,9 +214,7 @@ public class Agent implements StressInducing, Serializable {
                 repeatLastDecisionTendency, crowdingTolerance);
         this.physicalProperties = new AgentPhysicalProperties(maxSpeed, health, health, surfaceAreaTakenByAgent);
         if (startingNode != null) {
-            if (!putOnNode(startingNode)) {
-                tpToNode(startingNode);
-            }
+            tpToNode(startingNode);
         } else {
             this.isOnNode = false; // Agent starts unplaced, not on a node
         }
@@ -425,7 +422,7 @@ public class Agent implements StressInducing, Serializable {
         if (!isOnNode()) {
             throw new AgentStateException("Agent should be on a node to compute edge score multipliers");
         }
-        Edge previousEdge = getCurrentOrPreviousEdge();
+        Edge previousEdge = getPreviousOrCurrentEdge();
         AgentSettings agentSettings = AgentSettings.getInstance();
         for (Edge edge : decisionContext.getOutgoingEdges()) {
 
@@ -520,10 +517,10 @@ public class Agent implements StressInducing, Serializable {
     public double getEffectiveSpeed(AgentSettings agentSettings) {
         double maxElemSpeed = Double.MAX_VALUE;
         if (!isOnNode()) {
-            assert previousOrCurrentNode != null || currentOrPreviousEdge == null
+            assert previousOrCurrentNode != null || previousOrCurrentEdge == null
                     : "Agent on edge should have a previous or current node";
-            maxElemSpeed = currentOrPreviousEdge == null ? Double.MAX_VALUE
-                    : currentOrPreviousEdge.getMaxAgentSpeedInDirection(previousOrCurrentNode);
+            maxElemSpeed = previousOrCurrentEdge == null ? Double.MAX_VALUE
+                    : previousOrCurrentEdge.getMaxAgentSpeedInDirection(previousOrCurrentNode);
         }
         double agentMaxSpeed = getEffectiveSpeedOutsideOfGraph();
         double effectiveSpeed = Math.min(agentMaxSpeed, maxElemSpeed);
@@ -679,6 +676,8 @@ public class Agent implements StressInducing, Serializable {
         if (currentElement != null) {
             currentElement.removeAgent(this);
         }
+        this.isOnNode = false;
+        this.currentEdgeProgress = -1.0;
     }
 
     /**
@@ -687,14 +686,16 @@ public class Agent implements StressInducing, Serializable {
     void removeFromGraph() {
         removeFromGraphElemButKeepReferences();
         this.previousOrCurrentNode = null;
-        this.currentOrPreviousEdge = null;
+        this.previousOrCurrentEdge = null;
     }
 
     /**
      * Places the agent on a node.
      * Should be used when agent is on neighbouring edges or at initialization
+     * 
      * @param currentNode the node to place the agent on
-     * @return true if the agent was successfully placed on the node, false if the node is at capacity and cannot accept more agents
+     * @return true if the agent was successfully placed on the node, false if the
+     *         node is at capacity and cannot accept more agents
      */
     public boolean putOnNode(Node currentNode) {
         Objects.requireNonNull(currentNode,
@@ -710,37 +711,32 @@ public class Agent implements StressInducing, Serializable {
         return true;
     }
 
-    /**
-     * This method should be called just before the current graph element of the agent is deleted from the graph.
-     * It teleports the agent to a neighboring node when on a node or the previous node when on an edge.
-     */
-    public void onCurrentGraphElementDeleted(){
-        if (isOnNode()){
-            Node currentNode = Objects.requireNonNull(getCurrentNode());
-            Edge firstEdge = currentNode.getEdges().getFirst();
-            Node oppositeNode = firstEdge.getOppositeNode(currentNode);
-            tpToNode(oppositeNode);
+    public void onPreviousEdgeDeleted() {
+        if (isOnEdge()) {
+            throw new AgentStateException(
+                    "Cannot call onPreviousEdgeDeleted when on edge, call onCurrentGraphElementDeleted instead");
         }
-        else if (isOnEdge()){
-            tpToNode(getPreviousOrCurrentNode());
-        }
+        // current node will be kept, just need to clear the previous edge reference
+        previousOrCurrentEdge = null;
     }
 
     /**
      * Forces the agent to be placed on a node, regardless of capacity.
-     *  And resets the agent's current action and edge progress. 
+     * And resets the agent's current action, previous edge and edge progress.
      *
      * @param node the node to place the agent on
-     * @return true if the agent was successfully placed on the node, false otherwise
+     * @return true if the agent was successfully placed on the node, false
+     *         otherwise
      */
     public boolean tpToNode(Node node) {
         Objects.requireNonNull(node,
                 "node cannot be null when force putting agent on node, call removeFromGraph() instead");
         if (!node.forceAddAgent(this)) {
-            return false;
+            throw new GraphException("Failed to force add agent to node, this should not happen");
         }
-        removeFromGraphElemButKeepReferences();
+        removeFromGraph();
         this.previousOrCurrentNode = node;
+        // this.previousOrCurrentEdge = null;
         this.currentEdgeProgress = -1.0;
         this.currentAction = null;
         setIsOnNode(true);
@@ -748,25 +744,34 @@ public class Agent implements StressInducing, Serializable {
     }
 
     /**
-     * Places by force the agent on an edge, regardless of capacity. 
-     * The agent will start following the edge from the defined start node to the end node at the defined progress. 
-     * This method should be use when wanting to teleport an agent on an edge that is not necessary adjacent to its current position
-     * @param edge the edge to place the agent on
-     * @param progressFromEdgeStart the progress from the start of the edge to place the agent at, between 0 and 1
+     * Places by force the agent on an edge, regardless of capacity.
+     * The agent will start following the edge from the defined start node to the
+     * end node at the defined progress.
+     * This method should be use when wanting to teleport an agent on an edge that
+     * is not necessary adjacent to its current position
+     * 
+     * @param edge                  the edge to place the agent on
+     * @param progressFromEdgeStart the progress from the start of the edge to place
+     *                              the agent at, between 0 and 1
      * @return true if the agent was successfully placed on the edge
      */
-    public boolean tpToEdge(Edge edge, double progressFromEdgeStart) {
+    public boolean tpToEdge(Edge edge, Node startingNode, double progressFromEdgeStart) {
         Objects.requireNonNull(edge,
                 "edge cannot be null when force putting agent on edge, call removeFromGraph() instead");
         if (!edge.forceAddAgent(this)) {
-            return false;
+            throw new GraphException("Failed to force add agent to edge, this should not happen");
         }
-        removeFromGraphElemButKeepReferences();
-        this.currentOrPreviousEdge = edge;
-        this.currentAction = new FollowSingleEdgeAction(this, edge, edge.getEnd());
-        this.previousOrCurrentNode = edge.getStart();
+        removeFromGraph();
+        this.previousOrCurrentEdge = edge;
+        this.currentAction = new FollowSingleEdgeAction(this, edge, edge.getEnd(), progressFromEdgeStart);
+        if (edge.isDirected()) {
+            if (!edge.getStart().equals(startingNode)) {
+                throw new IllegalArgumentException("Starting node must be the start of the edge for directed edges");
+            }
+        }
+        this.previousOrCurrentNode = startingNode;
         this.currentEdgeProgress = progressFromEdgeStart;
-        //do not reset current edge progress
+        // do not reset current edge progress
         setIsOnNode(false);
         return true;
     }
@@ -783,13 +788,14 @@ public class Agent implements StressInducing, Serializable {
      * @return the current or previous edge the agent is on, or {@code null} if the
      *         agent is not on an edge
      */
-    public Edge getCurrentOrPreviousEdge() {
-        return currentOrPreviousEdge;
+    public Edge getPreviousOrCurrentEdge() {
+        return previousOrCurrentEdge;
     }
 
     /**
      * Places the agent on an edge. It does not reset the current action
      * Should be used when the agent is on an neighbouring node
+     * 
      * @param edge the edge to place the agent on
      */
     public boolean putOnEdge(Edge edge) {
@@ -798,7 +804,7 @@ public class Agent implements StressInducing, Serializable {
             return false;
         }
         removeFromGraphElemButKeepReferences();
-        this.currentOrPreviousEdge = edge;
+        this.previousOrCurrentEdge = edge;
         currentEdgeProgress = 0.0;
         setIsOnNode(false);
         return true;
@@ -809,12 +815,14 @@ public class Agent implements StressInducing, Serializable {
      *         on an edge
      */
     public Edge getCurrentEdge() {
-        return isOnNode() ? null : getCurrentOrPreviousEdge();
+        return isOnNode() ? null : getPreviousOrCurrentEdge();
     }
 
     /**
-     * @return the current edge the agent is on, or the next edge if the agent is not on an edge
-     * This method can return null if the agent has no ongoing action and is on a node
+     * @return the current edge the agent is on, or the next edge if the agent is
+     *         not on an edge
+     *         This method can return null if the agent has no ongoing action and is
+     *         on a node
      */
     public Edge getCurrentEdgeOrNextEdgeIfOnNode() {
         if (currentAction == null) {
@@ -826,8 +834,9 @@ public class Agent implements StressInducing, Serializable {
     }
 
     /**
-     * @return the current node the agent is on, or the next node if the agent is not on a node
-     * This method can technically return null but should not
+     * @return the current node the agent is on, or the next node if the agent is
+     *         not on a node
+     *         This method can technically return null but should not
      */
     public Node getCurrentNodeOrNextNodeIfOnEdge() {
         if (currentAction == null) {
@@ -843,7 +852,7 @@ public class Agent implements StressInducing, Serializable {
      *         agent is not on a graph element
      */
     public GraphElement getCurrentGraphElement() {
-        return isOnNode ? getCurrentNode() : getCurrentOrPreviousEdge();
+        return isOnNode ? getCurrentNode() : getPreviousOrCurrentEdge();
     }
 
     /**
@@ -894,7 +903,7 @@ public class Agent implements StressInducing, Serializable {
      *         edge reference, false otherwise
      */
     public boolean isOnEdge() {
-        return !isOnNode && getCurrentOrPreviousEdge() != null;
+        return !isOnNode && getPreviousOrCurrentEdge() != null;
     }
 
     /**
@@ -1190,7 +1199,7 @@ public class Agent implements StressInducing, Serializable {
         if (isOnNode) {
             position = previousOrCurrentNode == null ? "Node[?]" : "Node[" + previousOrCurrentNode.getId() + "]";
         } else {
-            position = currentOrPreviousEdge == null ? "Edge[?]" : "Edge[" + currentOrPreviousEdge.getId() + "]";
+            position = previousOrCurrentEdge == null ? "Edge[?]" : "Edge[" + previousOrCurrentEdge.getId() + "]";
         }
         String state = behavioralState == null ? "unknown" : behavioralState.getEmotionnalState().name();
         double stress = behavioralState == null ? 0.0 : behavioralState.getStressLevel();

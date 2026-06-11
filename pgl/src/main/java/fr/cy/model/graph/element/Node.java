@@ -178,7 +178,7 @@ public class Node extends GraphElement {
     }
 
     /**
-     * @return List of all edges incident to this node.
+     * @return a copy of all edges incident to this node.
      */
     public List<Edge> getEdges() {
         return new ArrayList<>(connectedEdges);

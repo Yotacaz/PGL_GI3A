@@ -252,6 +252,7 @@ public abstract class GraphElement implements StressInducing, Serializable {
         }
     }
 
+
     /**
      * Verifies if a specific agent is authorized to leave this element based on
      * congestion rules.

@@ -270,8 +270,8 @@ public class GraphRenderer {
             if (!isDead) {
                 Node targetNode = agent.getCurrentNodeOrNextNodeIfOnEdge();
                 if (agent.getCurrentEdgeProgress() >= 0.0 && agent.getCurrentEdgeProgress() <= 1.0
-                        && agent.getCurrentOrPreviousEdge() != null) {
-                    drawEdgeTargetHighlight(agent.getCurrentOrPreviousEdge(), agent, agent.getCurrentEdgeProgress());
+                        && agent.getPreviousOrCurrentEdge() != null) {
+                    drawEdgeTargetHighlight(agent.getPreviousOrCurrentEdge(), agent, agent.getCurrentEdgeProgress());
                 }
                 if (targetNode != null)
                     drawTargetNodeHighlight(targetNode);
@@ -314,7 +314,7 @@ public class GraphRenderer {
                     node.getY() + Math.sin(Math.toRadians(angle)) * dist
             };
         } else if (agent.isOnEdge()) {
-            Edge edge = agent.getCurrentOrPreviousEdge();
+            Edge edge = agent.getPreviousOrCurrentEdge();
             Node target = Objects.requireNonNull(agent.getCurrentNodeOrNextNodeIfOnEdge());
             Node previous = Objects.requireNonNull(edge.getOppositeNode(target));
 

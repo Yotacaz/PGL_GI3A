@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.io.Serializable;
 import fr.cy.model.agent.Agent;
+import fr.cy.model.agent.exceptions.AgentStateException;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.simulation.SimulationSettings;
@@ -20,7 +22,8 @@ import fr.cy.util.IdManager;
  */
 public class Graph implements Serializable {
     private static final long serialVersionUID = 1L;
-
+    /** A random number generator for stochastic operations. */
+    private static final Random random = new Random();
     private final List<Node> nodes;
     private final List<Edge> edges;
     private final Map<Node, List<Edge>> adjacencyList;
@@ -185,8 +188,8 @@ public class Graph implements Serializable {
         if (!nodes.contains(nodeToRemove))
             return;
 
-        // Strip and eliminate all attached edges first
         List<Edge> connectedEdges = new ArrayList<>(nodeToRemove.getEdges());
+        // Strip and eliminate all attached edges first
         for (Edge edge : connectedEdges) {
             removeEdge(edge);
         }
@@ -195,6 +198,31 @@ public class Graph implements Serializable {
         adjacencyList.remove(nodeToRemove);
         nodes.remove(nodeToRemove);
         nodeIdManager.releaseId(nodeToRemove.getId());
+    }
+
+    /**
+     * Get a list of all nodes directly connected to a given node by an edge.
+     * 
+     * @param node The node to search adjacent nodes from
+     * @return A list of all nodes directly connected to the given node by an edge.
+     */
+    public List<Node> getAdjacentNodes(Node node) {
+        List<Node> neighbors = new ArrayList<>();
+        List<Edge> connectedEdges = node.getEdges();
+        for (Edge edge : connectedEdges) {
+            neighbors.add(edge.getOppositeNode(node));
+        }
+        return neighbors;
+    }
+
+    /**
+     * @return A random node from the graph, or null if the graph is empty.
+     */
+    public Node getRandomNode() {
+        if (nodes.isEmpty()) {
+            return null;
+        }
+        return nodes.get(random.nextInt(nodes.size()));
     }
 
     // =========================================================================
@@ -307,9 +335,8 @@ public class Graph implements Serializable {
             adjacencyList.get(edge.getEnd()).remove(edge);
         }
 
-        // Clean up node-level tracking
-        edge.getStart().removeEdge(edge);
-        edge.getEnd().removeEdge(edge);
+        // Clean up node-level tracking to avoid concurrent modification issues
+        edge.onRemove();
 
         // Release the unique identifier back to the pool
         edgeIdManager.releaseId(edge.getId());
