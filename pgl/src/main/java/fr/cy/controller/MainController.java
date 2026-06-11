@@ -1,6 +1,7 @@
 package fr.cy.controller;
 
 import java.util.List;
+import java.util.Random;
 
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentManager;
@@ -8,7 +9,6 @@ import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.agent.behaviour.properties.EmotionalState;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Edge;
-import fr.cy.model.graph.element.GraphElement;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.simulation.Simulation;
 import fr.cy.view.*;
@@ -28,6 +28,9 @@ import javafx.scene.layout.Pane;
  * </p>
  */
 public class MainController {
+
+    /** A random number generator for stochastic decisions. */
+    private static final Random RNG = new Random();
 
     private final BorderPane root;
     private GraphCanvas graphCanvas;
@@ -97,8 +100,8 @@ public class MainController {
 
                 if (agent.isOnNode() && agent.getCurrentNode() != null) {
                     agent.getCurrentNode().getAgents().remove(agent);
-                } else if (agent.getCurrentOrPreviousEdge() != null) {
-                    agent.getCurrentOrPreviousEdge().getAgents().remove(agent);
+                } else if (agent.getPreviousOrCurrentEdge() != null) {
+                    agent.getPreviousOrCurrentEdge().getAgents().remove(agent);
                 }
 
                 this.currentSelectedEntity = null;
@@ -158,7 +161,10 @@ public class MainController {
         if (entity instanceof Node) {
             Node node = (Node) entity;
             if (agentManager != null) {
-                agentManager.evacuateAgentsBeforeDeletion(node); // 1. Évacuation
+                List<Node> adjacentNodes = graph.getAdjacentNodes(node);
+                
+                Node targetNodeForRelocation = adjacentNodes.isEmpty() ? null : adjacentNodes.get(RNG.nextInt(adjacentNodes.size())); 
+                agentManager.relocateAgentsOnNode(node, targetNodeForRelocation); // 1. evacuation
             }
             if (graph != null) {
                 graph.removeNode(node); // 2. Destruction
@@ -166,7 +172,7 @@ public class MainController {
         } else if (entity instanceof Edge) {
             Edge edge = (Edge) entity;
             if (agentManager != null) {
-                agentManager.evacuateAgentsBeforeDeletion(edge);
+                agentManager.relocateAgentsOnEdge(edge, null);
             }
             if (graph != null) {
                 graph.removeEdge(edge);

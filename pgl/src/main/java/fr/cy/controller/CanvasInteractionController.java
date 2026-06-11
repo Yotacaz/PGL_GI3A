@@ -283,8 +283,8 @@ public class CanvasInteractionController {
             if (agent.isOnNode() && agent.getCurrentNode() != null) {
                 ax = agent.getCurrentNode().getX();
                 ay = agent.getCurrentNode().getY();
-            } else if (agent.getCurrentOrPreviousEdge() != null) {
-                Edge edge = agent.getCurrentOrPreviousEdge();
+            } else if (agent.getPreviousOrCurrentEdge() != null) {
+                Edge edge = agent.getPreviousOrCurrentEdge();
                 double progress = agent.getCurrentEdgeProgress();
                 double startX = edge.getStart().getX();
                 double startY = edge.getStart().getY();

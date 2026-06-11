@@ -41,6 +41,8 @@ public class AgentManager implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    private static final Random RNG = new Random();
+
     /** Indicates whether the current tick is the first one */
     private boolean isFirstTick = true;
 
@@ -490,67 +492,34 @@ public class AgentManager implements Serializable {
         this.agentSettings.resetSettings();
     }
 
-    // =========================================================================
-    // EMERGENCY GRAPH EVACUATION & RELOCATION SERVICES
-    // =========================================================================
-
-    /**
-     * Evacuates all agents from a structural component before its deletion.
-     * * @param element The graph infrastructure component being destroyed.
-     */
-    public void evacuateAgentsBeforeDeletion(GraphElement element) {
-        if (element == null)
-            return;
-
-        if (element instanceof Node node) {
-            // Priority 1: Clear agents trapped on edges attached to the collapsing node
-            for (Edge edge : new ArrayList<>(node.getEdges())) {
-                relocateAgentsOnEdge(edge, node);
-            }
-            // Priority 2: Clear agents standing directly on the collapsing node
-            relocateAgentsOnNode(node);
-
-        } else if (element instanceof Edge edge) {
-            // Clear agents on a standalone deleted edge
-            relocateAgentsOnEdge(edge, null);
-        }
-    }
+    // RELOCATION
 
     /**
      * Intercepts agents transiting along an edge and forces them to retreat
      * to their departure node safely.
-     * * @param edge The edge currently being evacuated and deleted.
+     * 
+     * @param edge             The edge currently being evacuated and deleted.
      * 
      * @param nodeBeingDeleted The node triggering this edge deletion (if any).
      */
-    private void relocateAgentsOnEdge(Edge edge, Node nodeBeingDeleted) {
-        java.util.List<Agent> agentsToMove = new java.util.ArrayList<>(edge.getAgents());
+    public void relocateAgentsOnEdge(Edge edge, Node nodeBeingDeleted) {
+        List<Agent> agentsToMove = edge.getAgents();
 
-        for (Agent agent : agentsToMove) {
-            Node target = agent.getCurrentNodeOrNextNodeIfOnEdge();
-            Node departure = edge.getOppositeNode(target);
+        for (int i = agentsToMove.size() - 1; i >= 0; i--) {
+            Agent agent = agentsToMove.get(i);
+            Node target = Objects.requireNonNull(agent.getCurrentNodeOrNextNodeIfOnEdge(),
+                    "Target node cannot be null when agent is on edge, this should not happen");
+            Node departure = Objects.requireNonNull(agent.getPreviousOrCurrentNode(),
+                    "Previous node cannot be null when agent is on edge, this should not happen");
 
             // If the departure node is the one being destroyed, push agents forward instead
-            Node safeDestination = (departure == null || departure.equals(nodeBeingDeleted)) ? target : departure;
+            Node safeDestination = Objects.requireNonNull(departure.equals(nodeBeingDeleted) ? target : departure,
+                    "Safe destination cannot be null, this should not happen");
 
             if (safeDestination != null) {
-                // 1. Interrupt the current AI action
-                agent.setCurrentAction(null);
-
-                // 2. Clean the previous state (removes from edge)
-                agent.removeFromGraph();
-
-                // 3. --- SECURITY BYPASS ---
-                // Save the real capacity and temporarily open the gates to infinity
-                double realCapacity = safeDestination.getCapacity();
-                safeDestination.setCapacity(999999.0);
-
-                // Force the placement (the Agent class will accept it due to infinite capacity)
-                agent.putOnNode(safeDestination);
-
-                // Restore the real capacity (this will immediately trigger the Heavy Congestion
-                // penalty)
-                safeDestination.setCapacity(realCapacity);
+                agent.tpToNode(safeDestination);
+            } else {
+                throw new IllegalStateException("Failed to determine safe destination for agent: " + agent.getName());
             }
         }
     }
@@ -558,49 +527,30 @@ public class AgentManager implements Serializable {
     /**
      * Evacuates agents standing on a node by randomly scattering them across
      * available adjacent neighboring nodes.
-     * * @param node The node currently collapsing.
+     * 
+     * @param node                    The node currently collapsing.
+     * @param targetNodeForRelocation The node to which agents should be relocated.
      */
-    private void relocateAgentsOnNode(Node node) {
-        java.util.List<Node> adjacentNodes = new java.util.ArrayList<>();
-        for (Edge e : node.getEdges()) {
-            Node opp = e.getOppositeNode(node);
-            if (opp != null) {
-                adjacentNodes.add(opp);
-            }
+    public void relocateAgentsOnNode(Node node, Node targetNodeForRelocation) {
+        for (Edge edge : node.getEdges()) {
+            relocateAgentsOnEdge(edge, node);
         }
 
-        java.util.List<Agent> agentsToMove = new java.util.ArrayList<>(node.getAgents());
+        List<Agent> agentsToMove = node.getAgents();
 
         // EDGE CASE: Completely isolated node (platform collapse)
-        if (adjacentNodes.isEmpty()) {
-            for (Agent agent : agentsToMove) {
-                agent.setCurrentAction(null);
+        if (targetNodeForRelocation == null) {
+            for (int i = agentsToMove.size() - 1; i >= 0; i--) {
+                Agent agent = agentsToMove.get(i);
                 // Completely scrub the agent from all global simulation lists
                 deleteAgent(agent);
             }
             return;
         }
 
-        // NORMAL CASE: Emergency scatter to neighboring nodes
-        java.util.Random random = new java.util.Random();
-
-        for (Agent agent : agentsToMove) {
-            Node randomAdjacent = adjacentNodes.get(random.nextInt(adjacentNodes.size()));
-
-            agent.setCurrentAction(null);
-            agent.removeFromGraph();
-
-            // --- SECURITY BYPASS ---
-            double realCapacity = randomAdjacent.getCapacity();
-
-            // Temporarily disable capacity checks to force the internal update
-            randomAdjacent.setCapacity(999999.0);
-
-            // Cleanly install the agent (updates internal coordinates and lists)
-            agent.putOnNode(randomAdjacent);
-
-            // Revert to original capacity (triggers the 2-cycle wait penalty)
-            randomAdjacent.setCapacity(realCapacity);
+        for (int i = agentsToMove.size() - 1; i >= 0; i--) {
+            Agent agent = agentsToMove.get(i);
+            agent.tpToNode(targetNodeForRelocation);
         }
     }
 
@@ -661,7 +611,7 @@ public class AgentManager implements Serializable {
 
             // Position and state
             this.previousOrCurrentNode = agent.getPreviousOrCurrentNode();
-            this.currentOrPreviousEdge = agent.getCurrentOrPreviousEdge();
+            this.currentOrPreviousEdge = agent.getPreviousOrCurrentEdge();
             this.isOnNode = agent.isOnNode();
             this.nOfNodeVisited = agent.getnOfNodeVisited();
             this.currentEdgeProgress = agent.getCurrentEdgeProgress();
@@ -710,15 +660,14 @@ public class AgentManager implements Serializable {
             // Restore position
             if (!this.isOnNode && this.currentOrPreviousEdge != null) {
                 // Agent was on an edge, restore that state
-                agent.putOnEdge(this.currentOrPreviousEdge);
-                agent.setCurrentEdgeProgress(this.currentEdgeProgress);
+                agent.tpToEdge(this.currentOrPreviousEdge, this.previousOrCurrentNode, this.currentEdgeProgress);
                 // Restore the action if it exists
                 if (this.currentAction != null) {
                     agent.setCurrentAction(this.currentAction);
                 }
             } else if (this.isOnNode && this.previousOrCurrentNode != null) {
                 // Agent was on a node, ensure it's on the node
-                agent.putOnNode(this.previousOrCurrentNode);
+                agent.tpToNode(this.previousOrCurrentNode);
             }
             // If agent is neither on node nor edge, it's unplaced (which is the agent's
             // initial state)
