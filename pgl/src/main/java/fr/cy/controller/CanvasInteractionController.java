@@ -252,12 +252,8 @@ public class CanvasInteractionController {
             GraphElement clickedElement = (clickedAgent == null) ? findClosestElement(mx, my) : null;
             Object selected = (clickedAgent != null) ? clickedAgent : clickedElement;
 
-            if (event.getClickCount() == 2 && selected != null)
-                handleModification(selected);
-            else {
-                canvas.setSelectedEntity(selected);
-                notifySelection(selected);
-            }
+            canvas.setSelectedEntity(selected);
+            notifySelection(selected);
         }
     }
 
@@ -315,22 +311,6 @@ public class CanvasInteractionController {
             return Math.hypot(px - x1, py - y1);
         double t = Math.max(0, Math.min(1, ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / l2));
         return Math.hypot(px - (x1 + t * (x2 - x1)), py - (y1 + t * (y2 - y1)));
-    }
-
-    private void handleModification(Object entity) {
-        javafx.application.Platform.runLater(() -> {
-            if (entity instanceof Node n)
-                DialogHelper.showNodeUpdateDialog(n, canvas).ifPresent(p -> {
-                    n.setCapacity(p.capacity);
-                    n.setExit(p.isExit);
-                });
-            else if (entity instanceof Edge e)
-                DialogHelper.showEdgeUpdateDialog(e, canvas).ifPresent(p -> {
-                    e.setWidth(p.width);
-                    e.setLength(p.length);
-                    e.setDirected(p.directed);
-                });
-        });
     }
 
     /**

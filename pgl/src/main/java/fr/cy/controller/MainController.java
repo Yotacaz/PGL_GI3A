@@ -71,6 +71,28 @@ public class MainController {
         root.setLeft(statsPanel);
         this.detailsPanel = new DetailsSidePanel();
 
+        // Wire inline edit callbacks for nodes and edges
+        this.detailsPanel.setOnNodeCapacityChanged(cap -> {
+            if (currentSelectedEntity instanceof Node node)
+                node.setCapacity(cap);
+        });
+        this.detailsPanel.setOnNodeExitChanged(exit -> {
+            if (currentSelectedEntity instanceof Node node)
+                node.setExit(exit);
+        });
+        this.detailsPanel.setOnEdgeWidthChanged(width -> {
+            if (currentSelectedEntity instanceof Edge edge)
+                edge.setWidth(width);
+        });
+        this.detailsPanel.setOnEdgeLengthChanged(length -> {
+            if (currentSelectedEntity instanceof Edge edge)
+                edge.setLength(length);
+        });
+        this.detailsPanel.setOnEdgeDirectedChanged(directed -> {
+            if (currentSelectedEntity instanceof Edge edge)
+                simController.getSimulation().getGraph().setEdgeDirected(edge, directed);
+        });
+
         // Wire detail panel fire management actions
         this.detailsPanel.setOnToggleFireRequested(element -> {
             if (element.isOnFire()) {
