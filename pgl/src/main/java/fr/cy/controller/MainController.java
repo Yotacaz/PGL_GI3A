@@ -14,6 +14,9 @@ import fr.cy.model.simulation.Simulation;
 import fr.cy.view.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.StrokeType;
 
 /**
  * The {@code MainController} acts as the primary orchestrator of the
@@ -60,6 +63,17 @@ public class MainController {
         this.graphCanvas.widthProperty().bind(canvasContainer.widthProperty());
         this.graphCanvas.heightProperty().bind(canvasContainer.heightProperty());
         canvasContainer.getChildren().add(graphCanvas);
+
+        // Overlay for rectangle selection in DELETE mode
+        Rectangle selectionOverlay = new Rectangle();
+        selectionOverlay.setFill(Color.web("#FF3333", 0.15));
+        selectionOverlay.setStroke(Color.web("#FF3333", 0.75));
+        selectionOverlay.setStrokeWidth(1.5);
+        selectionOverlay.setStrokeType(StrokeType.OUTSIDE);
+        selectionOverlay.setMouseTransparent(true);
+        selectionOverlay.setVisible(false);
+        canvasContainer.getChildren().add(selectionOverlay);
+
         root.setCenter(canvasContainer);
 
         // 2. Initialize Simulation Controller
@@ -155,6 +169,16 @@ public class MainController {
 
         // Wire rapid canvas deletion mode clicks to the unified deletion pipeline
         this.interactionController.setOnDeleteElementRequested(this::deleteEntity);
+
+        // Wire rectangle-selection deletion (DELETE mode drag)
+        this.interactionController.setSelectionOverlay(selectionOverlay);
+        this.interactionController.setOnDeleteInRegionRequested(entities -> {
+            for (Object entity : entities)
+                deleteEntity(entity);
+            this.currentSelectedEntity = null;
+            this.graphCanvas.setSelectedEntity(null);
+            this.detailsPanel.hidePanel();
+        });
 
         this.interactionController.setOnEntitySelected(entity -> {
             this.currentSelectedEntity = entity;
