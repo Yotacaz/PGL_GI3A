@@ -74,4 +74,7 @@ public class PathFinder implements Serializable {
         return minDistance;
     }
 
+    // TODO : Get nearest exit use Dijkstra
+    // TODO : Shortest path use MAPF
+
 }
