@@ -132,7 +132,7 @@ public abstract class GraphElement implements StressInducing, Serializable {
     }
 
     //FIXME : proper integration of this method for forced congestion + code duplication with addAgent 
-    public boolean forceAddAgent(Agent a) { //TODO
+    public boolean forceAddAgent(Agent a) { 
         if (isFull())
             setForcedCongestion(true);
         agents.add(a);  
