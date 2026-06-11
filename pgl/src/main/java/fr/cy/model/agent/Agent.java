@@ -520,8 +520,7 @@ public class Agent implements StressInducing, Serializable {
             assert previousOrCurrentNode != null || previousOrCurrentEdge == null
                     : "Agent on edge should have a previous or current node";
             maxElemSpeed = previousOrCurrentEdge == null ? Double.MAX_VALUE
-                    : previousOrCurrentEdge.getMaxAgentSpeedInDirection(previousOrCurrentNode);
-        }
+                    : previousOrCurrentEdge.getLocalMaxAgentSpeedInDirection(this);        }
         double agentMaxSpeed = getEffectiveSpeedOutsideOfGraph();
         double effectiveSpeed = Math.min(agentMaxSpeed, maxElemSpeed);
         assert effectiveSpeed >= 0 : "Effective max speed should be non-negative";
