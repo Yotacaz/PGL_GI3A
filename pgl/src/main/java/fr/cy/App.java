@@ -12,9 +12,9 @@ import javafx.stage.Stage;
 import java.util.Objects;
 
 /**
- * Point d'entrée de l'application (View).
- * Initialise le backend (Simulation), le JavaFX stage,
- * charge le MainController et applique le thème CSS.
+ * Entry point (View).
+ * Initialize  backend (Simulation), JavaFX stage,
+ * charge MainController and apply the CSS theme.
  */
 public class App extends Application {
 
