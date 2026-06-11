@@ -2,8 +2,10 @@ package fr.cy.model.graph.element;
 
 import fr.cy.model.graph.GraphConfig;
 import fr.cy.model.agent.Agent;
+import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 import fr.cy.model.fire.Fire;
+import fr.cy.model.simulation.SimulationSettings;
 import java.util.*;
 
 /**
@@ -30,6 +32,15 @@ public class Edge extends GraphElement {
     /** Dimensions of the edge (must be non-negative). */
     private double width;
     private double length;
+
+    /**
+     * Local discretization of the edge into segments (buckets) used by the local
+     * congestion model. Rebuilt every simulation tick from the agents currently
+     * on the edge, hence {@code transient} (no need to serialize it).
+     *
+     * @see EdgeSegment
+     */
+    private transient EdgeSegment[] segments;
 
     /** Fire propagation status. */
     private boolean burningFromStart = false;
@@ -229,6 +240,271 @@ public class Edge extends GraphElement {
             return speed * (1.0 - 0.5 * oppositeRatio);
         }
         return speed;
+    }
+
+    // =========================================================================
+    // LOCAL CONGESTION MODEL (segment discretization)
+    // =========================================================================
+
+    /**
+     * Returns the number of discretization segments this edge is split into.
+     * <p>
+     * The count is derived from the edge length so that each segment is roughly
+     * {@link GraphConfig#SEGMENT_TARGET_LENGTH} meters long, clamped between
+     * {@link GraphConfig#MIN_SEGMENTS_PER_EDGE} and
+     * {@link GraphConfig#MAX_SEGMENTS_PER_EDGE}.
+     * </p>
+     *
+     * @return the number of segments (always &ge; 1)
+     */
+    public int getSegmentCount() {
+        int derived = (int) Math.ceil(length / GraphConfig.SEGMENT_TARGET_LENGTH);
+        derived = Math.max(GraphConfig.MIN_SEGMENTS_PER_EDGE, derived);
+        derived = Math.min(GraphConfig.MAX_SEGMENTS_PER_EDGE, derived);
+        return derived;
+    }
+
+    /**
+     * Lazily (re)allocates the segment array so that it matches the current
+     * {@link #getSegmentCount()}. Existing segments are reused when the count is
+     * unchanged.
+     */
+    private void ensureSegments() {
+        int n = getSegmentCount();
+        if (segments == null || segments.length != n) {
+            segments = new EdgeSegment[n];
+            for (int i = 0; i < n; i++) {
+                segments[i] = new EdgeSegment();
+            }
+        }
+    }
+
+    /**
+     * Empties every segment while keeping the array allocated. Call this once per
+     * tick before reassigning all agents to obtain an O(n) rebuild.
+     */
+    public void clearSegments() {
+        ensureSegments();
+        for (EdgeSegment segment : segments) {
+            segment.clear();
+        }
+    }
+
+    /**
+     * Determines whether an agent travels in the forward direction (from the edge
+     * {@code start} node towards the {@code end} node).
+     *
+     * @param agent the agent currently on this edge
+     * @return {@code true} if the agent moves from start to end, {@code false}
+     *         otherwise
+     */
+    private boolean isAgentMovingForward(Agent agent) {
+        Node entryNode = agent.getPreviousOrCurrentNode();
+        // Agents enter from the start node by default (always true for directed
+        // edges); only an explicit entry from the end node is backward.
+        return !(entryNode != null && entryNode.equals(end));
+    }
+
+    /**
+     * Converts an agent state into its normalized position measured from the edge
+     * {@code start} node, in {@code [0, 1]}.
+     * <p>
+     * {@link Agent#getCurrentEdgeProgress()} is always measured from the node the
+     * agent entered from, so the value is mirrored for backward agents.
+     * </p>
+     *
+     * @param agent   the agent currently on this edge
+     * @param forward whether the agent moves forward (start to end)
+     * @return the position from the start node, in {@code [0, 1]}
+     */
+    private double progressFromStart(Agent agent, boolean forward) {
+        double progress = agent.getCurrentEdgeProgress();
+        if (progress < 0.0) {
+            progress = 0.0;
+        }
+        return forward ? progress : 1.0 - progress;
+    }
+
+    /**
+     * Maps a position measured from the start node to a segment index.
+     *
+     * @param progressFromStart the normalized position from the start node
+     *                          ({@code [0, 1]})
+     * @return the index of the segment containing that position
+     */
+    public int segmentIndexForProgressFromStart(double progressFromStart) {
+        int n = getSegmentCount();
+        int index = (int) (progressFromStart * n);
+        if (index >= n) {
+            index = n - 1;
+        }
+        if (index < 0) {
+            index = 0;
+        }
+        return index;
+    }
+
+    /**
+     * Inserts an agent into the segment matching its current position, in the list
+     * matching its travel direction. The per-direction occupied-surface sums are
+     * updated incrementally.
+     *
+     * @param agent the agent to assign (must be on this edge)
+     */
+    public void assignAgentToSegment(Agent agent) {
+        ensureSegments();
+        boolean forward = isAgentMovingForward(agent);
+        double position = progressFromStart(agent, forward);
+        int index = segmentIndexForProgressFromStart(position);
+        segments[index].addAgent(agent, forward);
+    }
+
+    /**
+     * Computes the local density (occupied surface per available surface) around a
+     * position, for agents travelling in a given physical direction.
+     * <p>
+     * A symmetric window of {@link GraphConfig#DENSITY_WINDOW_RADIUS} segments on
+     * each side of the central segment is considered. The numerator uses the
+     * pre-computed surface sums ({@link Agent#getSurfaceAreaTakenByAgent()}, not a
+     * mere agent count); the denominator is the physically available surface
+     * {@code windowLength * width}.
+     * </p>
+     *
+     * @param progressFromStart the normalized position from the start node
+     *                          ({@code [0, 1]})
+     * @param forwardDirection  {@code true} to sum forward agents, {@code false}
+     *                          to sum backward agents
+     * @return the local density ratio (may exceed 1.0 when over-crowded)
+     */
+    public double getLocalDensity(double progressFromStart, boolean forwardDirection) {
+        ensureSegments();
+        int n = segments.length;
+        int center = segmentIndexForProgressFromStart(progressFromStart);
+        int radius = GraphConfig.DENSITY_WINDOW_RADIUS;
+        int low = Math.max(0, center - radius);
+        int high = Math.min(n - 1, center + radius);
+
+        double occupiedSurface = 0.0;
+        for (int i = low; i <= high; i++) {
+            occupiedSurface += segments[i].getOccupiedSurface(forwardDirection);
+        }
+
+        double segmentLength = length / n;
+        double windowLength = (high - low + 1) * segmentLength;
+        double availableSurface = windowLength * width;
+        if (availableSurface <= 0.0) {
+            return 0.0;
+        }
+        return occupiedSurface / availableSurface;
+    }
+
+    /**
+     * Free-flow maximum speed of the edge, i.e. the speed an agent would reach
+     * with no local congestion. Unlike {@link #getMaxAgentSpeed()}, it does not
+     * apply the global congestion factor, because the local model now accounts for
+     * crowding through {@link #getLocalDensity(double, boolean)}.
+     *
+     * @return the free-flow maximum speed (m/s)
+     */
+    public double getFreeFlowMaxAgentSpeed() {
+        double base = AgentSettings.getInstance().getMAX_RUNNING_SPEED();
+        return isOnFire() ? base * 1.5 : base;
+    }
+
+    /**
+     * Local, position-dependent maximum speed for an agent on this edge.
+     * <p>
+     * The speed follows {@code v = v_max * exp(-alpha * rho_same - beta *
+     * rho_opposite)}, where {@code rho_same} and {@code rho_opposite} are the local
+     * densities of agents moving in the same and opposite directions around the
+     * agent, and {@code alpha}/{@code beta} are taken from {@link AgentSettings}
+     * (with {@code beta > alpha} so counter-flow slows agents down more). When
+     * enabled, the result is further capped so the agent does not overlap the
+     * closest agent ahead (see {@link #freeDistanceSpeedLimit}).
+     * </p>
+     *
+     * @param agent the agent currently on this edge
+     * @return the local maximum speed (m/s), never below {@code 0.1}
+     */
+    public double getLocalMaxAgentSpeedInDirection(Agent agent) {
+        ensureSegments();
+        boolean forward = isAgentMovingForward(agent);
+        double position = progressFromStart(agent, forward);
+
+        double sameDensity = getLocalDensity(position, forward);
+        double oppositeDensity = getLocalDensity(position, !forward);
+
+        AgentSettings settings = AgentSettings.getInstance();
+        double alpha = settings.getCONGESTION_ALPHA();
+        double beta = settings.getCONGESTION_BETA();
+        double factor = Math.exp(-alpha * sameDensity - beta * oppositeDensity);
+
+        double speed = getFreeFlowMaxAgentSpeed() * factor;
+
+        if (settings.isFreeDistanceLimitEnabled()) {
+            int center = segmentIndexForProgressFromStart(position);
+            speed = Math.min(speed, freeDistanceSpeedLimit(agent, forward, center));
+        }
+
+        return Math.max(speed, 0.1);
+    }
+
+    /**
+     * Computes a speed cap based on the free distance to the closest agent ahead
+     * travelling in the same direction.
+     * <p>
+     * Only the agent's segment and the next segment in its travel direction are
+     * scanned, keeping the cost local. Positions are compared through
+     * {@link Agent#getCurrentEdgeProgress()} (same reference node for same-direction
+     * agents). The required gap accounts for the surfaces occupied by both agents
+     * (converted to a length via the edge width). If nobody is ahead, no cap is
+     * applied.
+     * </p>
+     *
+     * @param agent     the moving agent
+     * @param forward   the agent travel direction
+     * @param centerIdx the index of the agent's current segment
+     * @return the maximum speed (m/s) allowed by the free distance, or
+     *         {@link Double#MAX_VALUE} when unconstrained
+     */
+    private double freeDistanceSpeedLimit(Agent agent, boolean forward, int centerIdx) {
+        int travelStep = forward ? 1 : -1;
+        double myProgress = agent.getCurrentEdgeProgress();
+        double nearestAheadProgress = Double.MAX_VALUE;
+        double nearestAheadArea = 0.0;
+
+        for (int k = 0; k <= 1; k++) {
+            int idx = centerIdx + k * travelStep;
+            if (idx < 0 || idx >= segments.length) {
+                continue;
+            }
+            for (Agent other : segments[idx].getAgents(forward)) {
+                if (other == agent) {
+                    continue;
+                }
+                double otherProgress = other.getCurrentEdgeProgress();
+                if (otherProgress > myProgress && otherProgress < nearestAheadProgress) {
+                    nearestAheadProgress = otherProgress;
+                    nearestAheadArea = other.getSurfaceAreaTakenByAgent();
+                }
+            }
+        }
+
+        if (nearestAheadProgress == Double.MAX_VALUE) {
+            return Double.MAX_VALUE;
+        }
+
+        double gapMeters = (nearestAheadProgress - myProgress) * length;
+        double minGapMeters = width > 0
+                ? (agent.getSurfaceAreaTakenByAgent() + nearestAheadArea) / (2.0 * width)
+                : 0.0;
+        double freeMeters = Math.max(0.0, gapMeters - minGapMeters);
+
+        double tickDuration = SimulationSettings.getInstance().getTickDuration();
+        if (tickDuration <= 0.0) {
+            return Double.MAX_VALUE;
+        }
+        return freeMeters / tickDuration;
     }
 
     /**

@@ -4,9 +4,11 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
+import java.util.Set;
 
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.agent.behaviour.agentActions.WaitBeforeOtherAction;
@@ -249,6 +251,7 @@ public class AgentManager implements Serializable {
 
     private void moveAgents(double tickDuration) {
         decisionContextProvider.clearCache();
+        rebuildEdgeSegments();
         sortAgentsByOwnDecisionMakingFactor();
 
         // generate and register decisions for all agents before performing any action,
@@ -319,6 +322,35 @@ public class AgentManager implements Serializable {
             }
         }
 
+    }
+
+    /**
+     * Rebuilds, in O(n), the local segment buckets of every edge that currently
+     * hosts at least one agent.
+     * <p>
+     * Each relevant edge is cleared once, then every agent on an edge is assigned
+     * to the segment matching its position and travel direction. The resulting
+     * per-segment, per-direction occupied-surface sums are used by the local
+     * congestion speed model (see {@link Edge#getLocalMaxAgentSpeedInDirection}).
+     * Working from the snapshot at the start of the tick keeps the densities
+     * order-independent across agents.
+     * </p>
+     */
+    private void rebuildEdgeSegments() {
+        Set<Edge> edgesWithAgents = new HashSet<>();
+        for (Agent agent : agentsToEvacuate) {
+            if (agent.isOnEdge()) {
+                edgesWithAgents.add(agent.getCurrentEdge());
+            }
+        }
+        for (Edge edge : edgesWithAgents) {
+            edge.clearSegments();
+        }
+        for (Agent agent : agentsToEvacuate) {
+            if (agent.isOnEdge()) {
+                agent.getCurrentEdge().assignAgentToSegment(agent);
+            }
+        }
     }
 
     /** @return the unmodifiable list of agents that are still to evacuate */

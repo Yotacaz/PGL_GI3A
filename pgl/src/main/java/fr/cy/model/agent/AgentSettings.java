@@ -115,6 +115,27 @@ public class AgentSettings implements Serializable {
     private double timeStepBetweenEdgeDecisions = 0.1; // in seconds
 
     /**
+     * Sensitivity of the local speed model to the local density of agents moving
+     * in the <b>same</b> direction (see {@code v = v_max * exp(-alpha*rho_same -
+     * beta*rho_opposite)}). Higher values mean a stronger slowdown when the lane
+     * fills up with agents going the same way.
+     */
+    private double CONGESTION_ALPHA = 1.0;
+    /**
+     * Sensitivity of the local speed model to the local density of agents moving
+     * in the <b>opposite</b> direction (counter-flow). It is intentionally larger
+     * than {@link #CONGESTION_ALPHA} because facing a counter-flow is more
+     * disruptive than following the crowd.
+     */
+    private double CONGESTION_BETA = 2.5;
+    /**
+     * Enables the optional "free distance" safety cap that prevents an agent from
+     * overlapping the closest agent ahead in the same direction. When disabled,
+     * only the exponential density model drives the local speed.
+     */
+    private boolean enableFreeDistanceLimit = true;
+
+    /**
      * Gets an immutable view of the default decision-making factors for node decisions.
      * @return an unmodifiable map of default decision-making factors for node decisions
      */
@@ -348,6 +369,66 @@ public class AgentSettings implements Serializable {
      */
     public double getMAX_SURFACE_AREA_TAKEN_BY_AGENT() {
         return MAX_SURFACE_AREA_TAKEN_BY_AGENT;
+    }
+
+    /**
+     * Returns the sensitivity of the local speed model to same-direction density.
+     *
+     * @return the {@code alpha} coefficient of the local congestion speed model
+     */
+    public double getCONGESTION_ALPHA() {
+        return CONGESTION_ALPHA;
+    }
+
+    /**
+     * Sets the sensitivity of the local speed model to same-direction density.
+     *
+     * @param congestionAlpha the new {@code alpha} coefficient (must be &ge; 0)
+     * @throws IllegalArgumentException if {@code congestionAlpha} is negative
+     */
+    public void setCONGESTION_ALPHA(double congestionAlpha) {
+        if (congestionAlpha < 0) {
+            throw new IllegalArgumentException("CONGESTION_ALPHA must be non-negative");
+        }
+        this.CONGESTION_ALPHA = congestionAlpha;
+    }
+
+    /**
+     * Returns the sensitivity of the local speed model to counter-flow density.
+     *
+     * @return the {@code beta} coefficient of the local congestion speed model
+     */
+    public double getCONGESTION_BETA() {
+        return CONGESTION_BETA;
+    }
+
+    /**
+     * Sets the sensitivity of the local speed model to counter-flow density.
+     *
+     * @param congestionBeta the new {@code beta} coefficient (must be &ge; 0)
+     * @throws IllegalArgumentException if {@code congestionBeta} is negative
+     */
+    public void setCONGESTION_BETA(double congestionBeta) {
+        if (congestionBeta < 0) {
+            throw new IllegalArgumentException("CONGESTION_BETA must be non-negative");
+        }
+        this.CONGESTION_BETA = congestionBeta;
+    }
+
+    /**
+     * @return whether the optional free-distance speed cap is enabled
+     */
+    public boolean isFreeDistanceLimitEnabled() {
+        return enableFreeDistanceLimit;
+    }
+
+    /**
+     * Enables or disables the optional free-distance speed cap.
+     *
+     * @param enableFreeDistanceLimit {@code true} to enable the cap
+     */
+    public void setFreeDistanceLimitEnabled(boolean enableFreeDistanceLimit) {
+        this.enableFreeDistanceLimit = enableFreeDistanceLimit;
     }
 
     @Deprecated
