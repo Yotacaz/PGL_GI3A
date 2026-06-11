@@ -6,7 +6,8 @@ import java.util.Optional;
 import java.util.Objects;
 import java.util.Set;
 
-import fr.cy.model.agent.behaviour.properties.personalityTraits.AgentPersonalityTrait;
+// Personality traits feature disabled (missing types). Kept comment to avoid compilation/javadoc failures.
+
 
 /**
  * Represents the decisional and behavioral properties of an agent.
@@ -50,8 +51,12 @@ public class AgentDecisionalProperties implements Serializable {
      */
     private double maxAccumulatedStress = 0;
 
-    /** List of personality traits that can influence the agent's behavior */
-    private final Set<AgentPersonalityTrait> personalityTraits = new HashSet<>(); // TODO: implement feature
+    /**
+     * Personality traits feature is currently disabled because the corresponding
+     * types are not present in the codebase.
+     */
+    private final Set<Object> personalityTraits = new HashSet<>();
+
 
     public AgentDecisionalProperties(int agentId, double stressTolerance, double baseOwnDecisionMakingFactor,
             double repeatLastDecisionTendency, double congestionTolerance) {
