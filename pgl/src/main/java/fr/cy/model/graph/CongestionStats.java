@@ -10,7 +10,8 @@ import fr.cy.model.graph.element.GraphElement;
  * A data container for calculating and storing congestion metrics for a
  * collection
  * of {@link GraphElement} objects.
- * * @param <T> The specific type of {@link GraphElement} being analyzed.
+ *
+ * @param <T> The specific type of {@link GraphElement} being analyzed.
  */
 public class CongestionStats<T extends GraphElement> implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -53,6 +54,7 @@ public class CongestionStats<T extends GraphElement> implements Serializable {
 
     /**
      * Computes congestion statistics for a list of graph elements.
+
      * <p>
      * This method identifies the maximum, minimum, average, and total congestion,
      * as well as the most and least congested elements.
@@ -89,12 +91,21 @@ public class CongestionStats<T extends GraphElement> implements Serializable {
         return averageCongestionLevel;
     }
 
-    /** @return The maximum congestion level found. */
+    /**
+     * Returns the maximum congestion level found among the analyzed elements.
+     * 
+     * @return The maximum congestion level found.
+     */
     public double getMaxCongestionLevel() {
         return maxCongestionLevel;
     }
 
-    /** @return The total number of elements analyzed. */
+    /**
+     * Returns the total number of elements that were analyzed to compute the
+     * congestion statistics.
+     * 
+     * @return The total number of elements analyzed.
+     */
     public int getCount() {
         return count;
     }

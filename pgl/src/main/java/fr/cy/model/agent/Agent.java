@@ -230,7 +230,7 @@ public class Agent implements StressInducing, Serializable {
      *                          above which the agent starts panicking
      * @param crowdingTolerance the crowding tolerance of the agent, between 0 and
      *                          1, above which the agent starts panicking
-     * @apiNote should not be multithreaded, as it uses a static IdManager
+     * <p>Should not be multithreaded, as it uses a static {@code IdManager}.</p>
      */
     @Deprecated
     public Agent(String name, double maxSpeed, double stressTolerance, double crowdingTolerance) {
@@ -1134,11 +1134,13 @@ public class Agent implements StressInducing, Serializable {
     /**
      * Checks if the agent is alive (health > 0).
      * 
-     * @return true if the agent is alive, false if the agent is dead (health <= 0)
+     * @return true if the agent is alive, false if the agent is dead (health is 0 or less).
+
      */
     public boolean isAlive() {
         return physicalProperties.isAlive();
     }
+
 
     /**
      * @return the physical properties of the agent
