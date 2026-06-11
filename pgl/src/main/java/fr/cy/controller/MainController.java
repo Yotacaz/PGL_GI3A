@@ -92,6 +92,13 @@ public class MainController {
             if (currentSelectedEntity instanceof Edge edge)
                 simController.getSimulation().getGraph().setEdgeDirected(edge, directed);
         });
+        this.detailsPanel.setOnReverseEdgeDirectionRequested(() -> {
+            if (currentSelectedEntity instanceof Edge edge && edge.isDirected()) {
+                simController.getSimulation().getGraph().reverseEdgeDirection(edge);
+                AgentSettings settings = simController.getSimulation().getAgentManager().getAgentSettings();
+                detailsPanel.update(edge, settings);
+            }
+        });
 
         // Wire detail panel fire management actions
         this.detailsPanel.setOnToggleFireRequested(element -> {

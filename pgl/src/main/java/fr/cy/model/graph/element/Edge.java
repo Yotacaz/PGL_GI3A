@@ -108,7 +108,16 @@ public class Edge extends GraphElement {
 
         start.addEdge(this);
         end.addEdge(this);
+    }
 
+    /**
+     * Swaps start and end without touching node or graph adjacency structures.
+     * Callers must update those structures before calling this method.
+     */
+    public void reverseDirection() {
+        Node temp = start;
+        start = end;
+        end = temp;
     }
 
     /**
