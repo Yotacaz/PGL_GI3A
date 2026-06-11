@@ -375,6 +375,39 @@ public class Graph implements Serializable {
     }
 
     /**
+     * Reverses the direction of a directed edge (start→end becomes end→start).
+     * Updates all adjacency list and node edge-list references accordingly.
+     * Has no effect on undirected edges.
+     *
+     * @param edge The directed edge to reverse.
+     */
+    public void reverseEdgeDirection(Edge edge) {
+        if (!edge.isDirected())
+            return;
+
+        Node oldStart = edge.getStart();
+        Node oldEnd   = edge.getEnd();
+
+        // Detach from old start
+        List<Edge> startAdj = adjacencyList.get(oldStart);
+        if (startAdj != null)
+            startAdj.remove(edge);
+        oldStart.removeEdge(edge);
+
+        // Swap start/end inside the edge
+        edge.reverseDirection();
+
+        // Attach to new start (old end)
+        List<Edge> endAdj = adjacencyList.get(oldEnd);
+        if (endAdj != null)
+            endAdj.add(edge);
+        oldEnd.addEdge(edge);   // connectedEdges + outgoingEdges (directed, getStart()==oldEnd)
+
+        // Register on new end (old start) — connectedEdges only for a directed edge
+        oldStart.addEdge(edge);
+    }
+
+    /**
      * Flips the traversal direction parameter of a one-way edge and remaps
      * adjacency matrices.
      * * @param edge The directed edge targeted for reversal.

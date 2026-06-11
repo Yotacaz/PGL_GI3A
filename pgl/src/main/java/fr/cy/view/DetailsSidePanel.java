@@ -64,6 +64,7 @@ public class DetailsSidePanel extends ScrollPane {
     private Spinner<Double> widthSpinner;
     private Spinner<Double> lengthSpinner;
     private CheckBox directedCheckBox;
+    private Button reverseDirectionBtn;
 
     // Edit callbacks
     private Consumer<Double> onNodeCapacityChanged;
@@ -71,6 +72,7 @@ public class DetailsSidePanel extends ScrollPane {
     private Consumer<Double> onEdgeWidthChanged;
     private Consumer<Double> onEdgeLengthChanged;
     private Consumer<Boolean> onEdgeDirectedChanged;
+    private Runnable onReverseEdgeDirectionRequested;
 
     // Interaction triggers and state variables
     private Object currentEntity;
@@ -206,6 +208,10 @@ public class DetailsSidePanel extends ScrollPane {
         commitSpinnerOnBlur(lengthSpinner);
 
         directedCheckBox = new CheckBox("One-way (directed)");
+
+        reverseDirectionBtn = new Button("↔ Invert Direction");
+        reverseDirectionBtn.setMaxWidth(Double.MAX_VALUE);
+        reverseDirectionBtn.getStyleClass().add("action-btn");
     }
 
     /** Commits the spinner editor text on focus loss so the value stays consistent. */
@@ -329,7 +335,7 @@ public class DetailsSidePanel extends ScrollPane {
         lengthSpinner.setPrefWidth(115);
         lRow.getChildren().addAll(lLabel, sp2, lengthSpinner);
 
-        card.getChildren().addAll(wRow, lRow, directedCheckBox);
+        card.getChildren().addAll(wRow, lRow, directedCheckBox, reverseDirectionBtn);
         return card;
     }
 
@@ -452,6 +458,12 @@ public class DetailsSidePanel extends ScrollPane {
         directedCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
             if (!updatingUI && onEdgeDirectedChanged != null)
                 onEdgeDirectedChanged.accept(newVal);
+            setElementVisible(reverseDirectionBtn, newVal);
+        });
+
+        reverseDirectionBtn.setOnAction(e -> {
+            if (onReverseEdgeDirectionRequested != null)
+                onReverseEdgeDirectionRequested.run();
         });
     }
 
@@ -525,6 +537,10 @@ public class DetailsSidePanel extends ScrollPane {
 
     public void setOnEdgeDirectedChanged(Consumer<Boolean> listener) {
         this.onEdgeDirectedChanged = listener;
+    }
+
+    public void setOnReverseEdgeDirectionRequested(Runnable listener) {
+        this.onReverseEdgeDirectionRequested = listener;
     }
 
     // --- Animations ---
@@ -728,6 +744,7 @@ public class DetailsSidePanel extends ScrollPane {
                     .setValue(edge.getLength());
             directedCheckBox.setSelected(edge.isDirected());
             updatingUI = false;
+            setElementVisible(reverseDirectionBtn, edge.isDirected());
             setBoxVisible(editEdgeBox, true);
         }
 
