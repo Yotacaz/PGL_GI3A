@@ -82,7 +82,7 @@ public class AgentGenerator implements Serializable {
 			startingNode = edge.getEnd();
 		}
 		Agent agent = createRandomAgent(baseName, startingNode);
-		agent.putOnEdge(edge);
+		agent.tpToEdge(edge, startingNode, edgeProgress);
 		Node oppositeNode = Objects.requireNonNull(edge.getOppositeNode(startingNode));
 		agent.setCurrentAction(new FollowSingleEdgeAction(agent, edge, oppositeNode, edgeProgress));
 		return agent;
