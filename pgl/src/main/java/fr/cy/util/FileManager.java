@@ -80,6 +80,28 @@ public class FileManager implements Serializable {
     }
 
     /**
+     * Saves a simulation to a file under a custom filename (differs from
+     * {@code simulation.getName()}).  The simulation's internal name is unchanged.
+     *
+     * @param simulation the simulation to save
+     * @param fileName   the file name to use (without extension)
+     */
+    public static void saveSimulationAs(Simulation simulation, String fileName) {
+        File folder = new File(SIMULATION_FOLDER);
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }
+        File saveFile = new File(folder, fileName + ".bin");
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(saveFile))) {
+            out.writeObject(simulation);
+            System.out.println("Simulation sauvegardée sous : " + saveFile.getAbsolutePath());
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Erreur lors de la sauvegarde : " + e.getMessage());
+        }
+    }
+
+    /**
      * Lists all available simulations in the simulations folder.
      * @return list of simulation names (without file extension)
      */
