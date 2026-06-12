@@ -4,7 +4,7 @@ import fr.cy.model.graph.element.Node;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.io.Serializable;
 /**
  * Container for the results of Dijkstra's algorithm execution.
  * 
@@ -13,7 +13,7 @@ import java.util.List;
  * @author GI3A
  * @version 1.0
  */
-public class DijkstraResult {
+public class DijkstraResult implements Serializable {
     
     private final Map<Node, Double> distances;
     private final Map<Node, Node> predecessors;

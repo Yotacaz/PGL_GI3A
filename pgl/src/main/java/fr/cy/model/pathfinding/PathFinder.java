@@ -5,6 +5,7 @@ import fr.cy.model.graph.element.Node;
 import fr.cy.model.graph.element.Edge;
 import java.util.List;
 import java.util.ArrayList;
+import java.io.Serializable;
 
 /**
  * Main pathfinding system for agents in the simulation.
@@ -17,7 +18,7 @@ import java.util.ArrayList;
  * @author GI3A
  * @version 1.0
  */
-public class PathFinder {
+public class PathFinder implements Serializable {
     
     private final Graph graph;
     private final DijkstraAlgorithm dijkstra;
