@@ -46,6 +46,7 @@ public class App extends Application {
         primaryStage.setScene(scene);
         primaryStage.setMinWidth(800);
         primaryStage.setMinHeight(600);
+        primaryStage.setMaximized(true);
         primaryStage.show();
     }
 
