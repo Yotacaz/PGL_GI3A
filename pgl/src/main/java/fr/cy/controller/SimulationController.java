@@ -9,9 +9,8 @@ import javafx.animation.AnimationTimer;
  * The {@code SimulationController} manages the main simulation execution loop.
  * <p>
  * It acts as the bridge between the {@link Simulation} model and the view
- * components,
- * running at a fixed frame rate (~60 FPS) to handle both logic updates and
- * graphical rendering.
+ * components, running at a fixed frame rate (~60 FPS) to handle both logic
+ * updates and graphical rendering.
  * </p>
  */
 public class SimulationController {
@@ -20,9 +19,15 @@ public class SimulationController {
     private final GraphRenderer renderer;
     private final GraphCanvas canvas;
     private AnimationTimer timer;
+
     private boolean isRunning = false;
     private Runnable onRender = null;
     private int stepTicks = 15;
+
+    // --- TPS (Ticks Per Second) Tracking ---
+    private int currentTps = 0;
+    private int frameCount = 0;
+    private long lastFpsTime = 0;
 
     /**
      * Constructs the controller and initializes the game loop.
@@ -32,7 +37,7 @@ public class SimulationController {
      */
     public SimulationController(Simulation simulation, GraphCanvas canvas) {
         this.simulation = simulation;
-        simulation.getSimulationSettings().setTickDuration(0.016); // Target ~60 FPS
+        this.simulation.getSimulationSettings().setTickDuration(0.016); // Target ~60 FPS
         this.canvas = canvas;
         this.renderer = new GraphRenderer(canvas.getGraphicsContext2D());
 
@@ -42,21 +47,33 @@ public class SimulationController {
     /**
      * Initializes the {@link AnimationTimer} representing the simulation's game
      * loop.
-     * Handles logic advancement (if running) and triggers UI rendering.
+     * Handles logic advancement (if running), triggers UI rendering, and calculates
+     * active TPS.
      */
     private void initGameLoop() {
         timer = new AnimationTimer() {
             @Override
             public void handle(long now) {
-                // Advance logic if simulation is in play mode
+                // 1. Calculate TPS (Frames Per Second)
+                if (lastFpsTime == 0) {
+                    lastFpsTime = now;
+                }
+                frameCount++;
+                if (now - lastFpsTime >= 1_000_000_000L) { // 1 second has elapsed
+                    currentTps = frameCount;
+                    frameCount = 0;
+                    lastFpsTime = now;
+                }
+
+                // 2. Advance logic if simulation is in play mode
                 if (isRunning) {
                     simulation.tick();
                 }
 
-                // Render the current state
+                // 3. Render the current state
                 renderer.render(simulation, canvas);
 
-                // Notify UI components of the frame update
+                // 4. Notify UI components of the frame update
                 if (onRender != null) {
                     onRender.run();
                 }
@@ -66,8 +83,7 @@ public class SimulationController {
 
     /**
      * Sets a callback to be executed on every frame render.
-     * 
-     * @param onRender The runnable to execute.
+     * * @param onRender The runnable to execute.
      */
     public void setOnRender(Runnable onRender) {
         this.onRender = onRender;
@@ -100,6 +116,12 @@ public class SimulationController {
         isRunning = false;
         simulation.stop();
         simulation.reset();
+
+        // Reset TPS counters on restart
+        currentTps = 0;
+        frameCount = 0;
+        lastFpsTime = 0;
+
         renderer.render(simulation, canvas);
     }
 
@@ -125,8 +147,7 @@ public class SimulationController {
 
     /**
      * Sets the number of ticks to advance per step.
-     * 
-     * @param stepTicks Number of ticks (> 0).
+     * * @param stepTicks Number of ticks (> 0).
      */
     public void setStepTicks(int stepTicks) {
         if (stepTicks < 1) {
@@ -164,18 +185,32 @@ public class SimulationController {
 
     /**
      * Replaces the current simulation with a new instance and resets the state.
-     * 
-     * @param newSimulation The simulation to load.
+     * * @param newSimulation The simulation to load.
      */
     public void loadSimulation(Simulation newSimulation) {
         this.simulation = newSimulation;
         this.simulation.getSimulationSettings().setTickDuration(0.016);
         this.isRunning = false;
         this.simulation.stop();
+
+        // Reset TPS counters for the new simulation
+        currentTps = 0;
+        frameCount = 0;
+        lastFpsTime = 0;
+
         renderer.render(simulation, canvas);
 
         if (onRender != null) {
             onRender.run();
         }
+    }
+
+    /**
+     * Retrieves the current real-time frames per second (Ticks Per Second)
+     * processed by the animation loop.
+     * * @return The current TPS count.
+     */
+    public int getCurrentTps() {
+        return currentTps;
     }
 }
