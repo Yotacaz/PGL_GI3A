@@ -415,13 +415,12 @@ public class Edge extends GraphElement {
      * @return {@code true} if there is space left at the entrance for the largest possible agent, {@code false}
      *         otherwise
      */
-    public boolean hasSpaceLeftAtEntrance(Node entranceNode) {
+    public boolean hasSpaceLeftAtEntranceForMaxSizedAgent(Node entranceNode) {
         double occupiedSurface = getTotalAreaOccupiedByAgentsAtEntrance(entranceNode);
         double maxAgentSurface = AgentSettings.getInstance().getMAX_SURFACE_AREA_TAKEN_BY_AGENT();
         double medianAgentSurface = AgentSettings.getInstance().getMedianSurfaceAreaTakenByAgent();
         return occupiedSurface + maxAgentSurface <= width * medianAgentSurface; 
     }
-
 
 
     public int getNumberOfAgentsBetween(double startDistance, double endDistance, boolean forwardDirection) {
@@ -550,6 +549,17 @@ public class Edge extends GraphElement {
 
         double speed = getFreeFlowMaxAgentSpeed() * factor;
         return Math.max(speed, 0.1);
+    }
+
+    /**
+     * Checks if the largest possible agent can fit at the entrance of the edge when it is empty.
+     *
+     * @param entranceNode the node at which to check for space
+     * @return {@code true} if the largest possible agent can fit at the entrance when the edge is empty, {@code false}
+     */
+    public boolean canMaxSizedAgentFitAtEntranceWhenEdgeIsEmpty(Node entranceNode) {
+        double maxAgentSurface = AgentSettings.getInstance().getMAX_SURFACE_AREA_TAKEN_BY_AGENT();
+        return maxAgentSurface <= width;
     }
 
     @Override
