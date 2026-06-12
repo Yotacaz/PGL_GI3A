@@ -4,6 +4,7 @@ import java.security.InvalidParameterException;
 import java.util.List;
 import java.util.Objects;
 
+
 import fr.cy.model.agent.Agent;
 import fr.cy.model.graph.CongestionStats;
 import fr.cy.model.graph.element.Edge;
