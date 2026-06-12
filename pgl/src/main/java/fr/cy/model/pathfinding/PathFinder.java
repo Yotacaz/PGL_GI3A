@@ -4,7 +4,6 @@ import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.graph.element.Edge;
 import java.util.List;
-import java.util.ArrayList;
 import java.io.Serializable;
 
 /**

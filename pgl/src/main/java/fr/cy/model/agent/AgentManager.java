@@ -70,7 +70,7 @@ public class AgentManager implements Serializable {
 
     /**
      * The time elapsed since the last edge decision was made, used to prompt edge
-     * decisions TODO
+     * decisions 
      */
     private double timeSinceLastEdgeDecision = 0.0;
 

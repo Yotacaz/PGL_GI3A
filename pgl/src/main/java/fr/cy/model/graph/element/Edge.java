@@ -6,7 +6,6 @@ import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 import fr.cy.model.agent.exceptions.AgentStateException;
 import fr.cy.model.fire.Fire;
-import fr.cy.model.simulation.SimulationSettings;
 import java.util.List;
 import java.util.Objects;
 
