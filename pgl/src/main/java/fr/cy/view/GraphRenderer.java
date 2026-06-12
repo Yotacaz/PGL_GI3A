@@ -4,6 +4,8 @@ import java.util.Objects;
 
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.behaviour.properties.EmotionalState;
+import fr.cy.model.agent.AgentProfile;
+import fr.cy.model.agent.AgentProfileRegistry;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
@@ -278,12 +280,33 @@ public class GraphRenderer {
             }
         }
 
-        // Render physical body
+        // Render physical body according to profile
+        AgentProfile profile = AgentProfileRegistry.getProfile(agent);
         gc.setFill(isDead ? AGENT_DEAD : getAgentStateColor(agent.getEmotionalState()));
-        gc.fillOval(ax - visualRadius, ay - visualRadius, visualDiameter, visualDiameter);
         gc.setStroke(Color.web("#121212"));
         gc.setLineWidth(1);
-        gc.strokeOval(ax - visualRadius, ay - visualRadius, visualDiameter, visualDiameter);
+
+        switch (profile) {
+            case ELDERLY -> {
+                // triangle pointing up
+                double h = visualDiameter * 1.1;
+                double half = visualDiameter / 2.0;
+                double[] xs = new double[] { ax, ax - half, ax + half };
+                double[] ys = new double[] { ay - h / 2.0, ay + h / 2.0, ay + h / 2.0 };
+                gc.fillPolygon(xs, ys, 3);
+                gc.strokePolygon(xs, ys, 3);
+            }
+            case TOURIST -> {
+                // square centered
+                gc.fillRect(ax - visualRadius, ay - visualRadius, visualDiameter, visualDiameter);
+                gc.strokeRect(ax - visualRadius, ay - visualRadius, visualDiameter, visualDiameter);
+            }
+            default -> {
+                // circle (default)
+                gc.fillOval(ax - visualRadius, ay - visualRadius, visualDiameter, visualDiameter);
+                gc.strokeOval(ax - visualRadius, ay - visualRadius, visualDiameter, visualDiameter);
+            }
+        }
     }
 
     /** Helper: Maps the emotional enum to the visual palette. */

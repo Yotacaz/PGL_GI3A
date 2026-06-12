@@ -17,6 +17,8 @@ import fr.cy.model.agent.exceptions.AgentStateException;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.agent.behaviour.decisions.ContextProvider;
+import fr.cy.model.agent.AgentProfile;
+import fr.cy.model.agent.AgentProfileRegistry;
 import fr.cy.model.agent.behaviour.decisions.EdgeContext;
 import fr.cy.model.simulation.SimulationSettings;
 
@@ -205,6 +207,33 @@ public class AgentManager implements Serializable {
             Agent newAgent = agentGenerator.generateAgent(baseName + (i + 1), node);
             agentsToEvacuate.add(newAgent);
         }
+    }
+
+    /**
+     * Generates multiple agents on the specified node and associates them to the
+     * provided profile. Passing {@code null} uses {@link AgentProfile#DEFAULT}.
+     *
+     * @param baseName base name for created agents
+     * @param node     target node
+     * @param count    number of agents
+     * @param profile  profile to associate to created agents
+     */
+    public void generateAgentsOnNode(String baseName, Node node, int count, AgentProfile profile) {
+        for (int i = 0; i < count; i++) {
+            Agent newAgent = agentGenerator.generateAgent(baseName + (i + 1), node);
+            agentsToEvacuate.add(newAgent);
+            AgentProfileRegistry.setProfile(newAgent, profile);
+        }
+    }
+
+    /**
+     * Generates a single agent on the specified node and associates it to the
+     * provided profile.
+     */
+    public void generateAgentOnNode(String baseName, Node node, AgentProfile profile) {
+        Agent newAgent = agentGenerator.generateAgent(baseName, node);
+        agentsToEvacuate.add(newAgent);
+        AgentProfileRegistry.setProfile(newAgent, profile);
     }
 
     /**
