@@ -1,137 +1,138 @@
 package fr.cy.view;
 
 import java.util.function.Consumer;
+
 import fr.cy.controller.CanvasInteractionController;
+import fr.cy.controller.SimulationController;
+import javafx.css.PseudoClass;
 import javafx.scene.control.Button;
+import javafx.scene.control.MenuButton;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.Separator;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.ToolBar;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 
 /**
- * The {@code GraphEditingToolBar} class provides a toolbar for manipulating the
- * graph and simulation entities.
- * <p>
- * It allows users to toggle between different interaction modes
- * (selecting, adding nodes/edges/agents, rapid deletion) and triggers
- * generation processes.
- * </p>
+ * Toolbar d'édition du graphe : modes d'interaction à gauche,
+ * {@link FileManagementBar} poussée à droite via un spacer flexible.
  */
 public class GraphEditingToolBar extends ToolBar {
 
-    /** Callback invoked when the user changes the interaction mode. */
+    private final SimulationController simController;
+
     private Consumer<CanvasInteractionController.InteractionMode> onModeChange;
-
-    /** Callback invoked when the user requests random graph generation. */
     private Runnable onGenerateRandom;
-
-    /** Callback invoked when the user requests random agent population. */
     private Runnable onGenerateRandomAgents;
 
-    /**
-     * Sets the listener for random agent generation.
-     *
-     * @param listener The runnable to execute when generating agents.
-     */
-    public void setOnGenerateRandomAgents(Runnable listener) {
-        this.onGenerateRandomAgents = listener;
-    }
+    // PseudoClass partagé avec ToggleButton pour un rendu CSS identique
+    private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
 
-    /**
-     * Constructs the {@code GraphEditingToolBar} and initializes the UI components.
-     */
-    public GraphEditingToolBar() {
+    public GraphEditingToolBar(SimulationController simController) {
+        this.simController = simController;
         this.getStyleClass().add("custom-toolbar");
         initToolBar();
     }
 
-    /**
-     * Initializes the toolbar UI, groups the toggle buttons, and sets up
-     * the event handlers for interaction modes and generation triggers.
-     */
     private void initToolBar() {
+        // ── Boutons de mode (gauche) ─────────────────────────────────────────────
         ToggleButton selectBtn = new ToggleButton("🖱️ Sélection");
-        ToggleButton addNodeBtn = new ToggleButton("🔵 + Nœud");
-        ToggleButton addEdgeBtn = new ToggleButton("➖ + Arête");
-        ToggleButton addAgentBtn = new ToggleButton("🚶 + Agents");
-        ToggleButton deleteBtn = new ToggleButton("🗑️ Suppression"); // New deletion mode toggle button
+        ToggleButton deleteBtn = new ToggleButton("🗑️ Suppression");
 
-        // Apply visual style profile configurations
         selectBtn.getStyleClass().add("action-btn");
-        addNodeBtn.getStyleClass().add("action-btn");
-        addEdgeBtn.getStyleClass().add("action-btn");
-        addAgentBtn.getStyleClass().add("action-btn");
         deleteBtn.getStyleClass().add("action-btn");
 
-        // Regulate buttons inside a single mutually exclusive group context
+        // Fantôme invisible : représente "un mode de création est actif" dans le groupe
+        ToggleButton createPhantom = new ToggleButton();
+        createPhantom.setVisible(false);
+        createPhantom.setManaged(false);
+
         ToggleGroup modeGroup = new ToggleGroup();
         selectBtn.setToggleGroup(modeGroup);
-        addNodeBtn.setToggleGroup(modeGroup);
-        addEdgeBtn.setToggleGroup(modeGroup);
-        addAgentBtn.setToggleGroup(modeGroup);
         deleteBtn.setToggleGroup(modeGroup);
-
+        createPhantom.setToggleGroup(modeGroup);
         selectBtn.setSelected(true);
 
-        // Define state flow triggers on selection changes
+        // ── Bouton dépliant "Créer" ──────────────────────────────────────────────
+        MenuButton createBtn = new MenuButton("➕ Créer");
+        createBtn.getStyleClass().add("action-btn");
+
+        MenuItem addNodeItem  = new MenuItem("🔵 + Nœud");
+        MenuItem addEdgeItem  = new MenuItem("➖ + Arête");
+        MenuItem addAgentItem = new MenuItem("🚶 + Agents");
+        createBtn.getItems().addAll(addNodeItem, addEdgeItem, addAgentItem);
+
+        addNodeItem.setOnAction(e -> activateCreation(createBtn, createPhantom, "🔵 + Nœud",
+                CanvasInteractionController.InteractionMode.ADD_NODE));
+        addEdgeItem.setOnAction(e -> activateCreation(createBtn, createPhantom, "➖ + Arête",
+                CanvasInteractionController.InteractionMode.ADD_EDGE_START));
+        addAgentItem.setOnAction(e -> activateCreation(createBtn, createPhantom, "🚶 + Agents",
+                CanvasInteractionController.InteractionMode.ADD_AGENT));
+
+        // Quand on quitte le mode création, réinitialise le MenuButton
         modeGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal == null) {
-                oldVal.setSelected(true);
-                return;
+            if (newVal == null) { oldVal.setSelected(true); return; }
+
+            boolean creationActive = newVal == createPhantom;
+            createBtn.pseudoClassStateChanged(SELECTED, creationActive);
+            if (!creationActive) {
+                createBtn.setText("➕ Créer");
             }
+
             if (onModeChange != null) {
-                if (newVal == selectBtn) {
+                if (newVal == selectBtn)
                     onModeChange.accept(CanvasInteractionController.InteractionMode.SELECT_AND_DRAG);
-                } else if (newVal == addNodeBtn) {
-                    onModeChange.accept(CanvasInteractionController.InteractionMode.ADD_NODE);
-                } else if (newVal == addEdgeBtn) {
-                    onModeChange.accept(CanvasInteractionController.InteractionMode.ADD_EDGE_START);
-                } else if (newVal == addAgentBtn) {
-                    onModeChange.accept(CanvasInteractionController.InteractionMode.ADD_AGENT);
-                } else if (newVal == deleteBtn) {
+                else if (newVal == deleteBtn)
                     onModeChange.accept(CanvasInteractionController.InteractionMode.DELETE);
-                }
+                // Les modes de création sont déjà transmis par activateCreation()
             }
         });
 
+        // ── Boutons de génération ────────────────────────────────────────────────
         Button randomGenBtn = new Button("🎲 Génération Aléatoire");
-        randomGenBtn.getStyleClass().addAll("action-btn");
-        randomGenBtn.setOnAction(event -> {
-            if (onGenerateRandom != null) {
-                onGenerateRandom.run();
-            }
-        });
+        randomGenBtn.getStyleClass().add("action-btn");
+        randomGenBtn.setOnAction(e -> { if (onGenerateRandom != null) onGenerateRandom.run(); });
 
         Button randomAgentsBtn = new Button("🎲 Agents Auto");
-        randomAgentsBtn.getStyleClass().addAll("action-btn");
-        randomAgentsBtn.setOnAction(event -> {
-            if (onGenerateRandomAgents != null)
-                onGenerateRandomAgents.run();
-        });
+        randomAgentsBtn.getStyleClass().add("action-btn");
+        randomAgentsBtn.setOnAction(e -> { if (onGenerateRandomAgents != null) onGenerateRandomAgents.run(); });
 
-        // Pack structural items sequentially onto the layout timeline
+        // ── Spacer + barre de fichiers (droite) ──────────────────────────────────
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        FileManagementBar fileBar = new FileManagementBar(simController);
+
         this.getItems().addAll(
-                selectBtn, deleteBtn, addNodeBtn, addEdgeBtn, addAgentBtn,
+                selectBtn, deleteBtn, createBtn, createPhantom,
                 new Separator(),
-                randomGenBtn, randomAgentsBtn);
+                randomGenBtn, randomAgentsBtn,
+                spacer,
+                new Separator(),
+                fileBar);
     }
 
-    /**
-     * Sets the listener for interaction mode changes.
-     *
-     * @param listener A consumer function that receives the new
-     *                 {@link CanvasInteractionController.InteractionMode}.
-     */
+    private void activateCreation(MenuButton createBtn, ToggleButton createPhantom,
+                                  String label, CanvasInteractionController.InteractionMode mode) {
+        createBtn.setText(label);
+        createPhantom.setSelected(true); // déclenche le listener → SELECTED pseudo-class
+        if (onModeChange != null) onModeChange.accept(mode);
+    }
+
+    // ── Setters pour les callbacks ────────────────────────────────────────────
+
     public void setOnModeChange(Consumer<CanvasInteractionController.InteractionMode> listener) {
         this.onModeChange = listener;
     }
 
-    /**
-     * Sets the listener for random graph generation.
-     *
-     * @param listener The runnable to execute when generating a random graph.
-     */
     public void setOnGenerateRandom(Runnable listener) {
         this.onGenerateRandom = listener;
+    }
+
+    public void setOnGenerateRandomAgents(Runnable listener) {
+        this.onGenerateRandomAgents = listener;
     }
 }

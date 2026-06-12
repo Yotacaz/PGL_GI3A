@@ -8,7 +8,10 @@ import fr.cy.view.DialogHelper;
 import fr.cy.view.GraphCanvas;
 import javafx.scene.Cursor;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.shape.Rectangle;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -36,6 +39,12 @@ public class CanvasInteractionController {
     private Node edgeStartNode = null;
     private InteractionMode currentMode = InteractionMode.SELECT_AND_DRAG;
 
+    // Rectangle selection state (DELETE mode)
+    private double selectionStartScreenX, selectionStartScreenY;
+    private boolean isDraggingSelection = false;
+    private Rectangle selectionOverlay;
+    private Consumer<List<Object>> onDeleteInRegionRequested;
+
     /**
      * Defines the supported interaction modes for the canvas.
      */
@@ -62,16 +71,29 @@ public class CanvasInteractionController {
      */
     public void setMode(InteractionMode mode) {
         this.currentMode = mode;
-        this.edgeStartNode = null; // Clear creation state
+        this.edgeStartNode = null;
+        this.isDraggingSelection = false;
+        if (selectionOverlay != null)
+            selectionOverlay.setVisible(false);
 
         switch (mode) {
             case ADD_NODE, ADD_EDGE_START, ADD_AGENT -> canvas.setCursor(Cursor.CROSSHAIR);
-            case DELETE -> canvas.setCursor(Cursor.DEFAULT); // Cursor handled dynamically on move
+            case DELETE -> canvas.setCursor(Cursor.CROSSHAIR);
             case SELECT_AND_DRAG -> canvas.setCursor(Cursor.DEFAULT);
         }
 
         canvas.setSelectedEntity(null);
         notifySelection(null);
+    }
+
+    /** Provides the overlay Rectangle used to visualise the selection zone in DELETE mode. */
+    public void setSelectionOverlay(Rectangle overlay) {
+        this.selectionOverlay = overlay;
+    }
+
+    /** Callback fired with every object inside the drawn selection rectangle. */
+    public void setOnDeleteInRegionRequested(Consumer<List<Object>> callback) {
+        this.onDeleteInRegionRequested = callback;
     }
 
     /**
@@ -126,18 +148,40 @@ public class CanvasInteractionController {
                 }
             }
 
-            // Panning is allowed in SELECT_AND_DRAG or DELETE modes
             if (currentMode == InteractionMode.SELECT_AND_DRAG) {
                 canvas.setCursor(draggedNode != null ? Cursor.CLOSED_HAND : Cursor.MOVE);
             } else if (currentMode == InteractionMode.DELETE) {
-                canvas.setCursor(Cursor.MOVE);
+                // Record the drag-start position for rectangle selection
+                selectionStartScreenX = event.getX();
+                selectionStartScreenY = event.getY();
+                isDraggingSelection = false;
+                canvas.setCursor(Cursor.CROSSHAIR);
             }
         });
 
         canvas.setOnMouseReleased(event -> {
             draggedNode = null;
-            if (currentMode == InteractionMode.SELECT_AND_DRAG || currentMode == InteractionMode.DELETE)
+            if (currentMode == InteractionMode.DELETE && isDraggingSelection) {
+                // Hide overlay and process zone deletion
+                if (selectionOverlay != null)
+                    selectionOverlay.setVisible(false);
+                isDraggingSelection = false;
+
+                double zoom = canvas.getZoom();
+                double panX = canvas.getPanX();
+                double panY = canvas.getPanY();
+                double worldMinX = (Math.min(selectionStartScreenX, event.getX()) - panX) / zoom;
+                double worldMinY = (Math.min(selectionStartScreenY, event.getY()) - panY) / zoom;
+                double worldMaxX = (Math.max(selectionStartScreenX, event.getX()) - panX) / zoom;
+                double worldMaxY = (Math.max(selectionStartScreenY, event.getY()) - panY) / zoom;
+
+                List<Object> toDelete = collectElementsInRect(worldMinX, worldMinY, worldMaxX, worldMaxY);
+                if (!toDelete.isEmpty() && onDeleteInRegionRequested != null)
+                    onDeleteInRegionRequested.accept(toDelete);
+
+            } else if (currentMode == InteractionMode.SELECT_AND_DRAG) {
                 canvas.setCursor(Cursor.DEFAULT);
+            }
         });
 
         canvas.setOnMouseMoved(event -> {
@@ -157,24 +201,34 @@ public class CanvasInteractionController {
         });
 
         canvas.setOnMouseDragged(event -> {
-            // Drag node (only in default mode)
             if (currentMode == InteractionMode.SELECT_AND_DRAG && draggedNode != null) {
+                // Drag a node to reposition it
                 draggedNode.setX((event.getX() - canvas.getPanX()) / canvas.getZoom());
                 draggedNode.setY((event.getY() - canvas.getPanY()) / canvas.getZoom());
                 notifySelection(draggedNode);
-            } else {
-                // Pan canvas (allowed in SELECT_AND_DRAG or DELETE)
-                if (currentMode == InteractionMode.SELECT_AND_DRAG || currentMode == InteractionMode.DELETE) {
-                    canvas.setPanX(canvas.getPanX() + (event.getX() - lastMouseX));
-                    canvas.setPanY(canvas.getPanY() + (event.getY() - lastMouseY));
-                    lastMouseX = event.getX();
-                    lastMouseY = event.getY();
+            } else if (currentMode == InteractionMode.DELETE) {
+                // Draw the selection rectangle
+                isDraggingSelection = true;
+                if (selectionOverlay != null) {
+                    double x = Math.min(selectionStartScreenX, event.getX());
+                    double y = Math.min(selectionStartScreenY, event.getY());
+                    selectionOverlay.setX(x);
+                    selectionOverlay.setY(y);
+                    selectionOverlay.setWidth(Math.abs(event.getX() - selectionStartScreenX));
+                    selectionOverlay.setHeight(Math.abs(event.getY() - selectionStartScreenY));
+                    selectionOverlay.setVisible(true);
                 }
+            } else if (currentMode == InteractionMode.SELECT_AND_DRAG) {
+                // Pan the canvas
+                canvas.setPanX(canvas.getPanX() + (event.getX() - lastMouseX));
+                canvas.setPanY(canvas.getPanY() + (event.getY() - lastMouseY));
+                lastMouseX = event.getX();
+                lastMouseY = event.getY();
             }
         });
 
         canvas.setOnScroll(event -> {
-            double zoomFactor = event.getDeltaY() < 0 ? 0.95 : 1.05;
+            double zoomFactor = event.getDeltaY() < 0 ? 0.9 : 1.05;
             double oldZoom = canvas.getZoom();
             double newZoom = Math.max(0.2, Math.min(oldZoom * zoomFactor, 5.0));
             double f = (newZoom / oldZoom) - 1;
@@ -189,9 +243,9 @@ public class CanvasInteractionController {
      * {@code currentMode}.
      */
     private void handleCanvasClick(MouseEvent event) {
-        // Ignore clicks if a drag occurred (except selection mode where drag selection
-        // is complex)
-        if (!event.isStillSincePress() && currentMode == InteractionMode.SELECT_AND_DRAG)
+        // Ignore drag-end events in modes that handle drags themselves
+        if (!event.isStillSincePress() &&
+                (currentMode == InteractionMode.SELECT_AND_DRAG || currentMode == InteractionMode.DELETE))
             return;
 
         double mx = (event.getX() - canvas.getPanX()) / canvas.getZoom();
@@ -252,12 +306,8 @@ public class CanvasInteractionController {
             GraphElement clickedElement = (clickedAgent == null) ? findClosestElement(mx, my) : null;
             Object selected = (clickedAgent != null) ? clickedAgent : clickedElement;
 
-            if (event.getClickCount() == 2 && selected != null)
-                handleModification(selected);
-            else {
-                canvas.setSelectedEntity(selected);
-                notifySelection(selected);
-            }
+            canvas.setSelectedEntity(selected);
+            notifySelection(selected);
         }
     }
 
@@ -317,20 +367,53 @@ public class CanvasInteractionController {
         return Math.hypot(px - (x1 + t * (x2 - x1)), py - (y1 + t * (y2 - y1)));
     }
 
-    private void handleModification(Object entity) {
-        javafx.application.Platform.runLater(() -> {
-            if (entity instanceof Node n)
-                DialogHelper.showNodeUpdateDialog(n, canvas).ifPresent(p -> {
-                    n.setCapacity(p.capacity);
-                    n.setExit(p.isExit);
-                });
-            else if (entity instanceof Edge e)
-                DialogHelper.showEdgeUpdateDialog(e, canvas).ifPresent(p -> {
-                    e.setWidth(p.width);
-                    e.setLength(p.length);
-                    e.setDirected(p.directed);
-                });
-        });
+    /**
+     * Collects every simulation object whose key position falls inside the given
+     * world-coordinate rectangle. Nodes are tested by centre; edges by their
+     * midpoint (only when neither endpoint is already selected, to avoid
+     * double-deletion when a node removal already cascades to its edges);
+     * agents by their interpolated position on the graph.
+     */
+    private List<Object> collectElementsInRect(double minX, double minY, double maxX, double maxY) {
+        List<Object> result = new ArrayList<>();
+        var sim = simController.getSimulation();
+        if (sim == null) return result;
+
+        var graph = sim.getGraph();
+        if (graph != null) {
+            for (Node node : graph.getNodes()) {
+                if (node.getX() >= minX && node.getX() <= maxX
+                        && node.getY() >= minY && node.getY() <= maxY)
+                    result.add(node);
+            }
+            for (Edge edge : graph.getEdges()) {
+                // Skip edges whose removal is already implied by a selected endpoint node
+                if (result.contains(edge.getStart()) || result.contains(edge.getEnd()))
+                    continue;
+                double midX = (edge.getStart().getX() + edge.getEnd().getX()) / 2.0;
+                double midY = (edge.getStart().getY() + edge.getEnd().getY()) / 2.0;
+                if (midX >= minX && midX <= maxX && midY >= minY && midY <= maxY)
+                    result.add(edge);
+            }
+        }
+
+        if (sim.getAgentManager() != null) {
+            for (Agent agent : sim.getAgentManager().getAgentsToEvacuate()) {
+                double ax, ay;
+                if (agent.isOnNode() && agent.getCurrentNode() != null) {
+                    ax = agent.getCurrentNode().getX();
+                    ay = agent.getCurrentNode().getY();
+                } else if (agent.getPreviousOrCurrentEdge() != null) {
+                    Edge e = agent.getPreviousOrCurrentEdge();
+                    double p = agent.getCurrentEdgeProgress();
+                    ax = e.getStart().getX() + p * (e.getEnd().getX() - e.getStart().getX());
+                    ay = e.getStart().getY() + p * (e.getEnd().getY() - e.getStart().getY());
+                } else continue;
+                if (ax >= minX && ax <= maxX && ay >= minY && ay <= maxY)
+                    result.add(agent);
+            }
+        }
+        return result;
     }
 
     /**
