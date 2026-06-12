@@ -51,14 +51,14 @@ public class AgentSettings implements Serializable {
         // Initialize decision-making factors for each decision type
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_CROWD, 2.0);
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_LESS_CROWDED_PATH, 0.1);
-        defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_RECOMMENDED_PATH, 1.5);
+        defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_RECOMMENDED_PATH, 200000.0);
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_SHORTEST_PATH, 0.05);
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.NICEST_PATH, 0.2);
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.RANDOM, 0.5);
-        defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.CONTINUE_LAST_ACTION, 2.5);
+        defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.CONTINUE_LAST_ACTION, 2.0);
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.WAIT, 1.0);
 
-        defaultEdgeDecisionMakingFactors.put(AgentPossibleEdgeDecision.CONTINUE, 5.0); //prefer continuing on the current edge
+        defaultEdgeDecisionMakingFactors.put(AgentPossibleEdgeDecision.CONTINUE, 2.0); //prefer continuing on the current edge
         defaultEdgeDecisionMakingFactors.put(AgentPossibleEdgeDecision.BACKTRACK, 1.0);
         defaultEdgeDecisionMakingFactors.put(AgentPossibleEdgeDecision.WAIT_BEFORE_ACTION, 0.05);
     }

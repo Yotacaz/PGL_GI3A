@@ -92,8 +92,10 @@ public class Graph implements Serializable {
         // Update heavy congestion penalty trackers for all active elements
         for (Node node : nodes)
             node.updateCongestionDelays();
-        for (Edge edge : edges)
+        for (Edge edge : edges){
             edge.updateCongestionDelays();
+            edge.updateSegments(); //update edge segments for congestion model
+        }
 
         double tickDuration = SimulationSettings.getInstance().getTickDuration();
         updateStressInducedByElements(tickDuration);
