@@ -814,14 +814,14 @@ public class Agent implements StressInducing, Serializable {
      *         on an edge
      */
     public Edge getCurrentEdge() {
-        return isOnNode() ? null : getPreviousOrCurrentEdge();
+        return isOnEdge() ? getPreviousOrCurrentEdge() : null;
     }
 
     /**
      * @return the current edge the agent is on, or the next edge if the agent is
      *         not on an edge
      *         This method can return null if the agent has no ongoing action and is
-     *         on a node
+     *         on a node or if the agent is waiting before something else.
      */
     public Edge getCurrentEdgeOrNextEdgeIfOnNode() {
         if (currentAction == null) {

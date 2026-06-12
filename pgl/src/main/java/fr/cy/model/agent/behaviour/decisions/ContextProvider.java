@@ -14,6 +14,7 @@ import fr.cy.model.agent.exceptions.AgentStateException;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.graph.element.Edge;
+import fr.cy.model.pathfinding.GraphPath;
 import fr.cy.model.pathfinding.PathFinder;
 
 /**
@@ -135,36 +136,21 @@ public class ContextProvider implements Serializable {
         Map<Edge, Integer> nearbyOutgoingAgents = new HashMap<>();
         Map<Edge, Double> spaceOccupiedAtEdgesEntrance = new HashMap<>();
         for (Edge edge : allEdges) {
-            boolean isForward = edge.getStart().equals(currentNode);
-            double agentWidth = AgentSettings.getInstance().getMedianSurfaceAreaTakenByAgent();
-            double startDistance = isForward ? 0 : edge.getLength() - agentWidth;
-            double endDistance = isForward ? agentWidth : edge.getLength();
-            assert startDistance >= 0 && endDistance <= edge.getLength() : "Invalid distance window for edge entrance";
-            double occupiedSurface = edge.getAreaOccupiedByAgentsBetween(startDistance, endDistance, isForward);
-            occupiedSurface += edge.getAreaOccupiedByAgentsBetween(startDistance, endDistance, !isForward);
+            double occupiedSurface = edge.getTotalAreaOccupiedByAgentsAtEntrance(node);
             spaceOccupiedAtEdgesEntrance.put(edge, occupiedSurface);
-            int numAgentsEnteringEdge = edge.getNumberOfAgentsBetween(startDistance, endDistance, isForward)
-                    + edge.getNumberOfAgentsBetween(startDistance, endDistance, !isForward);
+            int numAgentsEnteringEdge = edge.getNumberOfAgentsEnteringFromNode(node);
             if (numAgentsEnteringEdge < 0) {
                 throw new IllegalStateException("Number of agents entering edge cannot be negative");
             }
             nearbyOutgoingAgents.put(edge, numAgentsEnteringEdge);
             
         }
-        // account for agents that are currently on the node and planning to take an
-        // outgoing edge
-        for (Agent nearbyAgent : currentNode.getAgents()) {
-            Edge targetOutgoinEdge = nearbyAgent.getCurrentEdgeOrNextEdgeIfOnNode();
-            if (targetOutgoinEdge != null) {
-                nearbyOutgoingAgents.put(targetOutgoinEdge, nearbyOutgoingAgents.getOrDefault(targetOutgoinEdge, 0) + 1);
-                double pendingSurface = spaceOccupiedAtEdgesEntrance.getOrDefault(targetOutgoinEdge, 0.0)
-                        + nearbyAgent.getSurfaceAreaTakenByAgent();
-                spaceOccupiedAtEdgesEntrance.put(targetOutgoinEdge, pendingSurface);
-            }
-        }
 
+        //get the recommended and the shortest path to exit for the node context
+        GraphPath recommendedPath = pathFinder.shortestPath(node);
+        // GraphPath shortestPathToExit = pathFinder.shortestPathToExit(node);
         List<Edge> outgoingEdges = currentNode.getOutgoingEdges();
-        return new NodeContext(currentNode, null, null, outgoingEdges, nearbyOutgoingAgents, spaceOccupiedAtEdgesEntrance);
+        return new NodeContext(currentNode, recommendedPath, null, outgoingEdges, nearbyOutgoingAgents, spaceOccupiedAtEdgesEntrance);
     }
 
     private EdgeContext constructEdgeContext(Edge edge) {

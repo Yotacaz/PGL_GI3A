@@ -23,6 +23,8 @@ public class PathFinder {
     private final DijkstraAlgorithm dijkstra;
     private final MapfAlgorithm mapf;
     
+
+
     /**
      * Constructs a new Pathfinder for the given graph.
      * 
@@ -113,13 +115,7 @@ public class PathFinder {
      * @return A list of all nodes marked as exits
      */
     private List<Node> getExitNodes() {
-        List<Node> exitNodes = new ArrayList<>();
-        for (Node node : graph.getNodes()) {
-            if (node.isExit()) {
-                exitNodes.add(node);
-            }
-        }
-        return exitNodes;
+        return graph.getExits();
     }
     
     /**

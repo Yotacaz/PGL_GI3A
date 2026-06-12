@@ -191,36 +191,6 @@ public class Edge extends GraphElement {
         return width * length;
     }
 
-    //TODO Remove
-    // /**
-    //  * Counts agents currently on this edge that entered from the start node.
-    //  * 
-    //  * @return Number of agents moving from start to end.
-    //  */
-    // public int countAgentsGoingFromStartToEnd() {
-    //     int nb = 0;
-    //     for (Agent agent : getAgents()) {
-    //         Node prev = agent.getPreviousOrCurrentNode();
-    //         if (prev != null && prev.equals(start))
-    //             nb++;
-    //     }
-    //     return nb;
-    // }
-
-    // /**
-    //  * Counts agents currently on this edge that entered from the end node.
-    //  * 
-    //  * @return Number of agents moving from end to start.
-    //  */
-    // public int countAgentsGoingFromEndToStart() {
-    //     int nb = 0;
-    //     for (EdgeSegment segment : segments) {
-    //         nb += segment.getAgents(false).size();
-    //     }
-    //     return nb;
-    // }
-
-
     /**
      * Evaluates the attractiveness of this edge for an agent going to a specific
      * node.
@@ -234,8 +204,16 @@ public class Edge extends GraphElement {
     }
 
     // =============
-    // LOCAL CONGESTION MODEL (segment discretization) 
+    // LOCAL CONGESTION MODEL (segment discretization)
     // =============
+
+    public void updateSegments() {
+        // update segment occupancy for congestion model
+        clearSegments();
+        for (Agent agent : getAgents()) {
+            assignAgentToSegment(agent);
+        }
+    }
 
     /**
      * Returns the number of discretization segments this edge is split into.
@@ -254,7 +232,7 @@ public class Edge extends GraphElement {
         derived = Math.min(GraphConfig.MAX_SEGMENTS_PER_EDGE, derived);
         return derived;
     }
- 
+
     /**
      * Lazily (re)allocates the segment array so that it matches the current
      * {@link #getSegmentCount()}. Existing segments are reused when the count is
@@ -269,9 +247,10 @@ public class Edge extends GraphElement {
             }
         }
     }
- 
+
     /**
-     * Empties every segment while keeping the array allocated. Used at the beginning of each tick
+     * Empties every segment while keeping the array allocated. Used at the
+     * beginning of each tick
      */
     public void clearSegments() {
         ensureSegments();
@@ -279,7 +258,7 @@ public class Edge extends GraphElement {
             segment.clear();
         }
     }
- 
+
     /**
      * Determines whether an agent travels in the forward direction (from the edge
      * {@code start} node towards the {@code end} node).
@@ -295,7 +274,7 @@ public class Edge extends GraphElement {
         Node target = Objects.requireNonNull(agent.getCurrentNodeOrNextNodeIfOnEdge());
         return target.equals(end);
     }
- 
+
     /**
      * Converts an agent state into its normalized position measured from the edge
      * {@code start} node, in {@code [0, 1]}.
@@ -315,7 +294,7 @@ public class Edge extends GraphElement {
         }
         return forward ? progress : 1.0 - progress;
     }
- 
+
     /**
      * Maps a position measured from the start node to a segment index.
      *
@@ -327,11 +306,11 @@ public class Edge extends GraphElement {
         if (progressFromStart < 0.0 || progressFromStart > 1.0) {
             throw new IllegalArgumentException("Progress must be in [0, 1]");
         }
-        
+
         int n = getSegmentCount();
-        return Math.min((int)(progressFromStart * n), n - 1);
+        return Math.min((int) (progressFromStart * n), n - 1);
     }
- 
+
     /**
      * Inserts an agent into the segment matching its current position, in the list
      * matching its travel direction. The per-direction occupied-surface sums are
@@ -348,13 +327,16 @@ public class Edge extends GraphElement {
     }
 
     /**
-     * Returns the total surface occupied by agents travelling in a given direction in
+     * Returns the total surface occupied by agents travelling in a given direction
+     * in
      * a window of segments.
      *
-     * @param low inclusive index of the first segment in the window
-     * @param high inclusive index of the last segment in the window
-     * @param forwardDirection {@code true} for agents moving from start to end, {@code false} for agents moving from end to start
-     * @return the total occupied surface in that window and direction, or 0.0 if the indices are out of bounds
+     * @param low              inclusive index of the first segment in the window
+     * @param high             inclusive index of the last segment in the window
+     * @param forwardDirection {@code true} for agents moving from start to end,
+     *                         {@code false} for agents moving from end to start
+     * @return the total occupied surface in that window and direction, or 0.0 if
+     *         the indices are out of bounds
      */
     public double getAreaOccupiedByAgentsBetween(int low, int high, boolean forwardDirection) {
         ensureSegments();
@@ -369,12 +351,17 @@ public class Edge extends GraphElement {
     }
 
     /**
-     * Overload of {@link #getAreaOccupiedByAgentsBetween(int, int, boolean)} that accepts position in meters instead of segment indices.
+     * Overload of {@link #getAreaOccupiedByAgentsBetween(int, int, boolean)} that
+     * accepts position in meters instead of segment indices.
      *
-     * @param startDistance distance from the start node to the beginning of the window (in meters)
-     * @param endDistance distance from the start node to the end of the window (in meters)
-     * @param forwardDirection {@code true} for agents moving from start to end, {@code false} for agents moving from end to start
-     * @return the total occupied surface in that window and direction, or 0.0 if the distances are out of bounds
+     * @param startDistance    distance from the start node to the beginning of the
+     *                         window (in meters)
+     * @param endDistance      distance from the start node to the end of the window
+     *                         (in meters)
+     * @param forwardDirection {@code true} for agents moving from start to end,
+     *                         {@code false} for agents moving from end to start
+     * @return the total occupied surface in that window and direction, or 0.0 if
+     *         the distances are out of bounds
      */
     public double getAreaOccupiedByAgentsBetween(double startDistance, double endDistance, boolean forwardDirection) {
         ensureSegments();
@@ -384,6 +371,56 @@ public class Edge extends GraphElement {
         int low = segmentIndexForProgressFromStart(startDistance / length);
         int high = segmentIndexForProgressFromStart(endDistance / length);
         return getAreaOccupiedByAgentsBetween(low, high, forwardDirection);
+    }
+
+    /**
+     * Returns the total surface occupied by agents at the entrance of the edge.
+     *
+     * @param entranceNode the node at which to calculate the occupied surface
+     * @return the total occupied surface at the entrance, or 0.0 if the node is not
+     *         an endpoint of the edge
+     */
+    public double getTotalAreaOccupiedByAgentsAtEntrance(Node entranceNode) {
+        boolean forwardDirection = entranceNode.equals(start);
+        double agentWidth = AgentSettings.getInstance().getMedianSurfaceAreaTakenByAgent();
+        double startDistance = forwardDirection ? 0 : length - agentWidth;
+        double endDistance = forwardDirection ? agentWidth : length;
+        assert startDistance >= 0 && endDistance <= length : "Invalid distance window for edge entrance";
+        return getAreaOccupiedByAgentsBetween(startDistance, endDistance, forwardDirection)
+                + getAreaOccupiedByAgentsBetween(startDistance, endDistance, !forwardDirection);
+    }
+
+    /**
+     * Returns the number of agents at the entrance of the edge, regardless of their
+     * direction.
+     *
+     * @param entranceNode the node at which to count the agents
+     * @return the number of agents at the entrance, or 0 if the node is not an
+     *         endpoint of the edge
+     */
+    public int getNumberOfAgentsEnteringFromNode(Node entranceNode) {
+        boolean forwardDirection = entranceNode.equals(start);
+        double agentWidth = AgentSettings.getInstance().getMedianSurfaceAreaTakenByAgent();
+        double startDistance = forwardDirection ? 0 : length - agentWidth;
+        double endDistance = forwardDirection ? agentWidth : length;
+        assert startDistance >= 0 && endDistance <= length : "Invalid distance window for edge entrance";
+        return getNumberOfAgentsBetween(startDistance, endDistance, forwardDirection);
+        // only count agents moving in the direction of the entrance
+    }
+
+    /**
+     * Checks if there is space left at the entrance of the edge for a new agent.
+     *
+     * @param entranceNode the node at which to check for space
+     * @return {@code true} if there is space left at the entrance, {@code false}
+     *         otherwise
+     */
+    public boolean hasSpaceLeftAtEntrance(Node entranceNode) {
+        double occupiedSurface = getTotalAreaOccupiedByAgentsAtEntrance(entranceNode);
+        double maxAgentSurface = AgentSettings.getInstance().getMAX_SURFACE_AREA_TAKEN_BY_AGENT();
+        return occupiedSurface + maxAgentSurface <= width * maxAgentSurface;
+        // allow up to 1.5 median agents worth of surface at the entrance to account for
+        // variability in agent size and imperfect packing
     }
 
     public int getNumberOfAgentsBetween(double startDistance, double endDistance, boolean forwardDirection) {
@@ -406,18 +443,22 @@ public class Edge extends GraphElement {
 
     /**
      * Returns the total available surface for agents travelling in
-     * a window of segments. The available surface is the physical surface of the window
-     * (window length * edge width), regardless of the current congestion level, because
-     * the local density model accounts for congestion through the speed reduction factor.
+     * a window of segments. The available surface is the physical surface of the
+     * window
+     * (window length * edge width), regardless of the current congestion level,
+     * because
+     * the local density model accounts for congestion through the speed reduction
+     * factor.
      *
-     * @param low inclusive index of the first segment in the window
+     * @param low  inclusive index of the first segment in the window
      * @param high inclusive index of the last segment in the window
-     * @return the total available surface in that window and direction, or 0.0 if the indices are out of bounds
+     * @return the total available surface in that window and direction, or 0.0 if
+     *         the indices are out of bounds
      */
     public double getAvailableSurfaceBetween(int low, int high) {
         ensureSegments();
         double segmentLength = length / segments.length;
-        double windowLength = (high - low+1) * segmentLength;
+        double windowLength = (high - low + 1) * segmentLength;
         return windowLength * width;
     }
 
@@ -442,26 +483,27 @@ public class Edge extends GraphElement {
         ensureSegments();
         int n = segments.length;
         int center = segmentIndexForProgressFromStart(progressFromStart);
-        double radiusInFront = GraphConfig.DENSITY_WINDOW_IN_FRONT; //meters in front
+        double radiusInFront = GraphConfig.DENSITY_WINDOW_IN_FRONT; // meters in front
         double radiusPercent = radiusInFront / length;
         int radiusInSegmentInFront = segmentIndexForProgressFromStart(radiusPercent);
-        double radiusBehind = GraphConfig.DENSITY_WINDOW_BEHIND; //meters behind
+        double radiusBehind = GraphConfig.DENSITY_WINDOW_BEHIND; // meters behind
         double radiusBehindPercent = radiusBehind / length;
         int radiusBehindInSegments = segmentIndexForProgressFromStart(radiusBehindPercent);
-        System.out.println("center=" + center + ", radiusInSegmentInFront=" + radiusInSegmentInFront + ", radiusBehindInSegments="
-                + radiusBehindInSegments);
+        // System.out.println("center=" + center + ", radiusInSegmentInFront=" +
+        // radiusInSegmentInFront + ", radiusBehindInSegments="
+        // + radiusBehindInSegments);
         int low = Math.max(0, center - radiusBehindInSegments);
         int high = Math.min(n - 1, center + radiusInSegmentInFront);
- 
-       double occupiedSurface = getAreaOccupiedByAgentsBetween(low, high, forwardDirection);
- 
+
+        double occupiedSurface = getAreaOccupiedByAgentsBetween(low, high, forwardDirection);
+
         double availableSurface = getAvailableSurfaceBetween(low, high);
         if (availableSurface <= 0.0) {
             return 0.0;
         }
         return occupiedSurface / availableSurface;
     }
- 
+
     /**
      * Free-flow maximum speed of the edge, i.e. the speed an agent would reach
      * with no local congestion. Unlike {@link #getMaxAgentSpeed()}, it does not
@@ -474,7 +516,7 @@ public class Edge extends GraphElement {
         double base = AgentSettings.getInstance().getMAX_RUNNING_SPEED();
         return isOnFire() ? base * 1.5 : base;
     }
- 
+
     /**
      * Local, position-dependent maximum speed for an agent on this edge.
      * <p>
@@ -494,20 +536,20 @@ public class Edge extends GraphElement {
         ensureSegments();
         boolean forward = isAgentMovingForward(agent);
         double position = progressFromStart(agent, forward);
- 
+
         double sameDensity = getLocalDensity(position, forward);
         double oppositeDensity = getLocalDensity(position, !forward);
- 
+
         AgentSettings settings = AgentSettings.getInstance();
         double alpha = settings.getCONGESTION_ALPHA();
         double beta = settings.getCONGESTION_BETA();
         double factor = Math.exp(-alpha * sameDensity - beta * oppositeDensity);
-        System.out.println("factor = " + factor + " (sameDensity=" + sameDensity + ", oppositeDensity=" + oppositeDensity + ")");
- 
+        // System.out.println("factor = " + factor + " (sameDensity=" + sameDensity + ",
+        // oppositeDensity=" + oppositeDensity + ")");
+
         double speed = getFreeFlowMaxAgentSpeed() * factor;
         return Math.max(speed, 0.1);
     }
- 
 
     @Override
     public List<GraphElement> getNeighbors() {
