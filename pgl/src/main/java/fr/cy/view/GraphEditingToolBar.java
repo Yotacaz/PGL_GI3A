@@ -9,6 +9,7 @@ import fr.cy.controller.SimulationController;
 import fr.cy.model.simulation.Simulation;
 import fr.cy.model.simulation.SimulationSettings;
 import fr.cy.util.FileManager;
+import fr.cy.util.ScenarioBuilder;
 import javafx.geometry.Insets;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -118,16 +119,19 @@ public class GraphEditingToolBar extends ToolBar {
         // ── File management buttons (right side) ─────────────────────────────────
         Button newBtn    = new Button("📄 New");
         Button loadBtn   = new Button("📂 Load");
+        Button demoBtn   = new Button("🎬 Demo");
         Button saveBtn   = new Button("💾 Save");
         Button saveAsBtn = new Button("💾 Save As");
 
         newBtn.getStyleClass().addAll("action-btn", "file-btn");
         loadBtn.getStyleClass().addAll("action-btn", "file-btn");
+        demoBtn.getStyleClass().addAll("action-btn", "file-btn");
         saveBtn.getStyleClass().addAll("action-btn", "file-btn");
         saveAsBtn.getStyleClass().addAll("action-btn", "file-btn");
 
         newBtn.setOnAction(e    -> showNewSimulationDialog());
         loadBtn.setOnAction(e   -> showLoadSimulationDialog());
+        demoBtn.setOnAction(e   -> showLoadDemoDialog());
         saveBtn.setOnAction(e   -> showSaveSimulationDialog());
         saveAsBtn.setOnAction(e -> showSaveAsSimulationDialog());
 
@@ -137,7 +141,7 @@ public class GraphEditingToolBar extends ToolBar {
                 randomGenBtn, randomAgentsBtn,
                 spacer,
                 new Separator(),
-                newBtn, loadBtn, saveBtn, saveAsBtn);
+                newBtn, loadBtn, demoBtn, saveBtn, saveAsBtn);
     }
 
     // ── File-management dialogs ───────────────────────────────────────────────
@@ -240,6 +244,33 @@ public class GraphEditingToolBar extends ToolBar {
             } catch (Exception ex) {
                 showAlert("Erreur", "Erreur de création", "Impossible de créer la simulation : " + ex.getMessage());
                 ex.printStackTrace();
+            }
+        });
+    }
+
+    private void showLoadDemoDialog() {
+        List<String> demos = List.of(
+                "Labyrinthe en Flammes",
+                "Test Ligne Droite",
+                "Test Minimaliste 1 Arête",
+                "Test Contournement",
+                "Test Dilemme : Feu vs Congestion");
+
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(demos.get(0), demos);
+        dialog.setTitle("Charger une démo");
+        dialog.setHeaderText("Sélectionnez un scénario de démonstration");
+        dialog.setContentText("Scénarios disponibles :");
+        dialog.showAndWait().ifPresent(choice -> {
+            Simulation demo = switch (choice) {
+                case "Labyrinthe en Flammes"              -> ScenarioBuilder.buildComplexScenario();
+                case "Test Ligne Droite"                  -> ScenarioBuilder.setupSimplePipelineTest();
+                case "Test Minimaliste 1 Arête"           -> ScenarioBuilder.setupMinimalistTest();
+                case "Test Contournement"                 -> ScenarioBuilder.setupBypassTest();
+                case "Test Dilemme : Feu vs Congestion"   -> ScenarioBuilder.setupFireDilemmaTest();
+                default -> null;
+            };
+            if (demo != null) {
+                simController.loadSimulation(demo);
             }
         });
     }
