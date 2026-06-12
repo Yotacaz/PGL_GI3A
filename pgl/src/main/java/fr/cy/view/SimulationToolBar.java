@@ -1,7 +1,9 @@
 package fr.cy.view;
 
 import fr.cy.controller.SimulationController;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.control.ToolBar;
@@ -45,17 +47,46 @@ public class SimulationToolBar extends ToolBar {
      * and constructs the popups for advanced controls.
      */
     private void initToolBar() {
-        Button playBtn = new Button("▶ Play");
-        Button pauseBtn = new Button("⏸ Pause");
+        Button playPauseBtn = new Button("▶ Play");
         Button resetBtn = new Button("🔄 Reset");
 
-        playBtn.getStyleClass().addAll("action-btn", "play-btn");
-        pauseBtn.getStyleClass().addAll("action-btn", "pause-btn");
+        playPauseBtn.getStyleClass().addAll("action-btn", "play-btn");
         resetBtn.getStyleClass().addAll("action-btn", "danger-btn");
 
-        playBtn.setOnAction(e -> simController.play());
-        pauseBtn.setOnAction(e -> simController.pause());
-        resetBtn.setOnAction(e -> simController.reset());
+        playPauseBtn.setOnAction(e -> {
+            if (simController.isRunning()) {
+                simController.pause();
+                playPauseBtn.setText("▶ Play");
+                playPauseBtn.getStyleClass().removeAll("pause-btn");
+                playPauseBtn.getStyleClass().add("play-btn");
+            } else {
+                boolean hasExits = !simController.getSimulation().getGraph().getExits().isEmpty();
+                if (!hasExits) {
+                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                    alert.setTitle("Aucune sortie définie");
+                    alert.setHeaderText("La simulation n'a aucun nœud de sortie.");
+                    alert.setContentText("Les agents ne pourront pas s'évacuer. Voulez-vous quand même lancer la simulation ?");
+                    alert.showAndWait().filter(r -> r == ButtonType.OK).ifPresent(r -> {
+                        simController.play();
+                        playPauseBtn.setText("⏸ Pause");
+                        playPauseBtn.getStyleClass().removeAll("play-btn");
+                        playPauseBtn.getStyleClass().add("pause-btn");
+                    });
+                } else {
+                    simController.play();
+                    playPauseBtn.setText("⏸ Pause");
+                    playPauseBtn.getStyleClass().removeAll("play-btn");
+                    playPauseBtn.getStyleClass().add("pause-btn");
+                }
+            }
+        });
+
+        resetBtn.setOnAction(e -> {
+            simController.reset();
+            playPauseBtn.setText("▶ Play");
+            playPauseBtn.getStyleClass().removeAll("pause-btn");
+            playPauseBtn.getStyleClass().add("play-btn");
+        });
 
         Separator sep1 = new Separator();
 
@@ -143,7 +174,7 @@ public class SimulationToolBar extends ToolBar {
         });
 
         this.getItems().addAll(
-                playBtn, pauseBtn, resetBtn, sep1,
+                playPauseBtn, resetBtn, sep1,
                 stepBtn, stepCountValue,
                 decreaseSpeedBtn, speedLabel, increaseSpeedBtn);
     }
