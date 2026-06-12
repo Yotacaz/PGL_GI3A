@@ -412,16 +412,17 @@ public class Edge extends GraphElement {
      * Checks if there is space left at the entrance of the edge for a new agent.
      *
      * @param entranceNode the node at which to check for space
-     * @return {@code true} if there is space left at the entrance, {@code false}
+     * @return {@code true} if there is space left at the entrance for the largest possible agent, {@code false}
      *         otherwise
      */
     public boolean hasSpaceLeftAtEntrance(Node entranceNode) {
         double occupiedSurface = getTotalAreaOccupiedByAgentsAtEntrance(entranceNode);
         double maxAgentSurface = AgentSettings.getInstance().getMAX_SURFACE_AREA_TAKEN_BY_AGENT();
-        return occupiedSurface + maxAgentSurface <= width * maxAgentSurface;
-        // allow up to 1.5 median agents worth of surface at the entrance to account for
-        // variability in agent size and imperfect packing
+        double medianAgentSurface = AgentSettings.getInstance().getMedianSurfaceAreaTakenByAgent();
+        return occupiedSurface + maxAgentSurface <= width * medianAgentSurface; 
     }
+
+
 
     public int getNumberOfAgentsBetween(double startDistance, double endDistance, boolean forwardDirection) {
         ensureSegments();
