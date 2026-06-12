@@ -5,6 +5,7 @@ import fr.cy.model.graph.element.Node;
 import fr.cy.model.graph.element.Edge;
 
 import java.util.*;
+import java.io.Serializable;
 
 /**
  * Multi-Agent Path Finding (MAPF) Algorithm implementation.
@@ -19,7 +20,7 @@ import java.util.*;
  * @author GI3A
  * @version 1.0
  */
-public class MapfAlgorithm {
+public class MapfAlgorithm implements Serializable{
     
     private final Graph graph;
     

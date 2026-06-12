@@ -5,6 +5,7 @@ import fr.cy.model.graph.element.Node;
 import fr.cy.model.graph.element.Edge;
 
 import java.util.*;
+import java.io.Serializable;
 
 /**
  * Implementation of Dijkstra's shortest path algorithm.
@@ -17,7 +18,7 @@ import java.util.*;
  * @author GI3A
  * @version 1.0
  */
-public class DijkstraAlgorithm {
+public class DijkstraAlgorithm implements Serializable {
     
     private final Graph graph;
     
