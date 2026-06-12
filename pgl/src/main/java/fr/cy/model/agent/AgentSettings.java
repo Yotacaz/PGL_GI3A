@@ -109,7 +109,7 @@ public class AgentSettings implements Serializable {
     private double stressDecreaseRate = 0.03;
 
     /** Multiplier for backtracking edge scores */
-    private double backtrackingEdgeScoreMultiplier = 0.1;
+    private double backtrackingEdgeScoreMultiplier = 0.05;
 
     /** Time step between edge decisions */
     private double timeStepBetweenEdgeDecisions = 0.1; // in seconds

@@ -1,9 +1,10 @@
 package fr.cy.model.graph.element;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.io.Serializable;
 import java.io.*;
 
 import fr.cy.model.agent.Agent;
@@ -26,21 +27,28 @@ import fr.cy.model.stress.StressInducing;
 public abstract class GraphElement implements StressInducing, Serializable {
     private static final long serialVersionUID = 1L;
 
+    // Identity
     private final int id;
-    private List<Agent> agents;
+
+    // Agents & Capacity
     private double capacity;
-    private boolean isForcedCongested = false;
-    private int forcedCongestionTicks = 0;
+    private List<Agent> agents;
+
+    /**
+     * * Transient map tracking the mandatory wait cycles (ticks) for each agent
+     * stuck during a heavy congestion state. Not serialized.
+     */
+    private transient Map<Agent, Integer> congestionWaitTimes = new HashMap<>();
+
+    // Fire state
+    private Fire fire;
     private Fire initialFire;
 
-    /** Cached total stress including neighbors. */
+    // Stress (Cache)
     private double cachedTotalStressInducedIncludingNeighbors = 0;
-    /** Cached stress induced by this element alone. */
     private double cachedTotalStressInducedByThisElement = 0;
 
-    private Fire fire;
-
-    // Statistics
+    // Global Statistics
     private int totalAgentsCount = 0;
     private int timesFull = 0;
     private double maxCongestion = 0;
@@ -48,10 +56,10 @@ public abstract class GraphElement implements StressInducing, Serializable {
     private int congestionMeasureCount = 0;
 
     /**
-     * Constructs a graph element with a unique ID and capacity.
-     * * @param id Unique identifier.
-     * 
-     * @param capacity Maximum capacity in m².
+     * Constructs a graph element with a unique ID and physical capacity.
+     *
+     * @param id       The unique identifier for this element.
+     * @param capacity The maximum safe capacity in square meters (m²).
      */
     protected GraphElement(int id, double capacity) {
         this.id = id;
@@ -61,10 +69,16 @@ public abstract class GraphElement implements StressInducing, Serializable {
     }
 
     /**
-     * Retrieves the list of neighboring elements.
-     * * @return List of neighboring {@link GraphElement}s.
+     * Retrieves the list of structurally connected neighboring elements.
+     *
+     * @return A list of neighboring {@link GraphElement} instances.
      */
     public abstract List<GraphElement> getNeighbors();
+
+    /** @return The unique identifier of this element. */
+    public int getId() {
+        return id;
+    }
 
     @Override
     public int hashCode() {
@@ -81,12 +95,190 @@ public abstract class GraphElement implements StressInducing, Serializable {
         return getId() == element.getId();
     }
 
-    /** @return The unique identifier of this element. */
-    public int getId() {
-        return id;
+    // =========================================================================
+    // 4. AGENT MANAGEMENT (ENTRY / EXIT)
+    // =========================================================================
+
+    /** @return The list of agents currently located on this element. */
+    public List<Agent> getAgents() {
+        return agents;
     }
 
-    /** @return True if the element is on fire. */
+    /**
+     * Internal helper to handle the common logic of adding an agent and updating
+     * statistics.
+     *
+     * @param a The agent entering the element.
+     */
+    private void registerAgentAddition(Agent a) {
+        agents.add(a);
+        incrementTotalAgentsCount();
+        recordCongestionMeasure();
+        if (isFull()) {
+            incrementTimesFull();
+        }
+    }
+
+    /**
+     * Safely attempts to add an agent to this element if the physical capacity
+     * permits.
+     *
+     * @param a The agent attempting to enter.
+     * @return {@code true} if the agent was successfully added, {@code false} if
+     *         the element is full.
+     */
+    public boolean addAgent(Agent a) {
+        if (!isFull()) {
+            registerAgentAddition(a);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Forces the addition of an agent into this element regardless of the maximum
+     * capacity limit.
+     * <p>
+     * This method is exclusively used during emergency graph modifications (e.g.,
+     * node deletions)
+     * where agents must be relocated immediately. Using this may trigger a "Heavy
+     * Congestion" state.
+     * </p>
+     *
+     * @param a The agent to forcefully inject into the element.
+     * @return Always returns {@code true}.
+     */
+    public boolean forceAddAgent(Agent a) {
+        registerAgentAddition(a);
+        return true;
+    }
+
+    /**
+     * Removes an agent from this element and cleans up any active congestion
+     * penalties linked to them.
+     *
+     * @param a The agent to remove.
+     */
+    public void removeAgent(Agent a) {
+        if (agents.remove(a)) {
+            recordCongestionMeasure();
+            if (congestionWaitTimes != null) {
+                congestionWaitTimes.remove(a);
+            }
+        }
+    }
+
+    // =========================================================================
+    // 5. CAPACITY & CONGESTION LOGIC
+    // =========================================================================
+
+    public double getCapacity() {
+        return capacity;
+    }
+
+    public void setCapacity(double capacity) {
+        this.capacity = Math.max(0.1, capacity);
+    }
+
+    /**
+     * @return The total sum of surface areas occupied by all agents currently on
+     *         this element.
+     */
+    public double getOccupiedSpace() {
+        double occupied = 0;
+        for (Agent agent : agents) {
+            occupied += agent.getSurfaceAreaTakenByAgent();
+        }
+        return occupied;
+    }
+
+    /**
+     * * Returns the current congestion ratio.
+     * Note: This value can exceed 1.0 if the element is heavily congested.
+     *
+     * @return The ratio of occupied space over total capacity.
+     */
+    public double getCongestion() {
+        return Math.min(getOccupiedSpace() / getCapacity(), 1);
+    }
+
+    /**
+     * @return {@code true} if the element's capacity limit has been reached or
+     *         exceeded.
+     */
+    public boolean isFull() {
+        return getOccupiedSpace() >= capacity;
+    }
+
+    /** @return {@code true} if the current spatial congestion exceeds 70%. */
+    public boolean isCongested() {
+        return getCongestion() > 0.7;
+    }
+
+    /**
+     * Determines if the element is in a state of "Heavy Congestion".
+     * <p>
+     * This crisis state occurs when emergency relocations force the local agent
+     * population to strictly exceed the infrastructure's maximum physical capacity.
+     * </p>
+     *
+     * @return {@code true} if the currently occupied space is strictly greater than
+     *         the capacity.
+     */
+    public boolean isHeavilyCongested() {
+        return getOccupiedSpace() > capacity;
+    }
+
+    /**
+     * Updates the penalty wait counters for all agents present on this element.
+     * <p>
+     * If the element is heavily congested, this method increments the wait timer
+     * for every agent. If the congestion resolves (falls back below capacity),
+     * the penalty trackers are entirely cleared. This should be called every
+     * simulation tick.
+     * </p>
+     */
+    public void updateCongestionDelays() {
+        if (congestionWaitTimes == null) {
+            congestionWaitTimes = new HashMap<>();
+        }
+
+        if (isHeavilyCongested()) {
+            for (Agent a : agents) {
+                congestionWaitTimes.put(a, congestionWaitTimes.getOrDefault(a, 0) + 1);
+            }
+        } else {
+            congestionWaitTimes.clear();
+        }
+    }
+
+
+    /**
+     * Verifies if a specific agent is authorized to leave this element based on
+     * congestion rules.
+     * <p>
+     * If the element is heavily congested, agents suffer a movement penalty and
+     * must wait
+     * for a minimum of 2 simulation cycles before they are allowed to transition to
+     * another element.
+     * </p>
+     *
+     * @param a The agent attempting to leave.
+     * @return {@code true} if the agent can leave, {@code false} if they are
+     *         blocked by congestion penalties.
+     */
+    public boolean canAgentLeave(Agent a) {
+        if (isHeavilyCongested()) {
+            return congestionWaitTimes.getOrDefault(a, 0) >= 2;
+        }
+        return true;
+    }
+
+    // =========================================================================
+    // 6. FIRE MECHANICS
+    // =========================================================================
+
+    /** @return {@code true} if the element is currently affected by fire. */
     public boolean isOnFire() {
         return fire != null;
     }
@@ -103,53 +295,16 @@ public abstract class GraphElement implements StressInducing, Serializable {
         this.fire = null;
     }
 
-    /** @return The list of agents currently located on this element. */
-    public List<Agent> getAgents() {
-        return agents;
-    }
-
-    /**
-     * Adds an agent if capacity permits.
-     * @param a The agent to add.
-     * 
-     * @return True if successful, false if the element is at full capacity.
-     */
-    public boolean addAgent(Agent a) {
-        if (!isFull()) {
-            agents.add(a);
-            incrementTotalAgentsCount();
-            recordCongestionMeasure();
-            if (isFull())
-                incrementTimesFull();
-            return true;
-        }
-        return false;
-    }
-
-    /** @return True if current congestion exceeds 70%. */
-    public boolean isCongested() {
-        return getCongestion() > 0.7;
-    }
-
-    //FIXME : proper integration of this method for forced congestion + code duplication with addAgent 
-    public boolean forceAddAgent(Agent a) { 
-        if (isFull())
-            setForcedCongestion(true);
-        agents.add(a);  
-        incrementTotalAgentsCount();
-        recordCongestionMeasure();  
-        if (isFull())
-            incrementTimesFull();
-        return true;
-    }
-
+    // =========================================================================
+    // 7. STRESS SYSTEM & DECISIONS
+    // =========================================================================
 
     /**
      * Calculates an attractiveness multiplier for an agent based on local
      * conditions.
-     * * @param agentState Agent decision properties.
-     * 
-     * @return Score multiplier (values < 1 decrease attractiveness).
+     *
+     * @param agentState Agent decision properties.
+     * @return Score multiplier (values 1 decrease attractiveness).
      */
     public double getScoreMultiplierForAgent(AgentDecisionalProperties agentState) {
         double scoreMult = 1.0;
@@ -170,30 +325,29 @@ public abstract class GraphElement implements StressInducing, Serializable {
 
     /**
      * Computes and caches stress generated by this element alone.
-     * * @param tickDuration The duration of the simulation step in seconds.
-     * 
+     *
+     * @param tickDuration The duration of the simulation step in seconds.
      * @return Cached stress value.
      */
     public double updateStressGeneratedByThisElement(double tickDuration) {
         double stress = 0;
         double congestion = getCongestion();
         stress += congestion * congestion * 0.4;
+
         double meanStressFromAgents = getAgentsTotalStress() / Math.max(1, getAgents().size());
         stress += meanStressFromAgents * meanStressFromAgents * 0.4;
-        if (isOnFire())
+
+        if (isOnFire()) {
             stress += 0.2 * getFire().getIntensity();
+        }
 
         cachedTotalStressInducedByThisElement = Math.min(stress, 1.0) * tickDuration / 0.016;
         return cachedTotalStressInducedByThisElement;
     }
 
-    public double getCachedTotalStressInducedByThisElement() {
-        return cachedTotalStressInducedByThisElement;
-    }
-
     /**
      * Computes and caches stress including neighborhood impact.
-     * 
+     *
      * @return The total stress value.
      */
     public double updateCachedTotalStressInducedIncludingNeighbors() {
@@ -210,8 +364,9 @@ public abstract class GraphElement implements StressInducing, Serializable {
     /** @return Sum of stress levels for all agents on this element. */
     public double getAgentsTotalStress() {
         double totalStress = 0;
-        for (Agent agent : agents)
+        for (Agent agent : agents) {
             totalStress += agent.getStressLevel();
+        }
         return totalStress;
     }
 
@@ -220,43 +375,38 @@ public abstract class GraphElement implements StressInducing, Serializable {
         return getCachedTotalStressInducedIncludingNeighbors();
     }
 
-    /** @param a Agent to remove. */
-    public void removeAgent(Agent a) {
-        if (agents.remove(a))
-            recordCongestionMeasure();
-    }
-
-    public double getCapacity() {
-        return capacity;
-    }
-
-    public void setCapacity(double capacity) {
-        this.capacity = Math.max(0.1, capacity);
-    }
-
-    /** @return Sum of surface areas occupied by agents. */
-    public double getOccupiedSpace() {
-        double occupied = 0;
-        for (Agent agent : agents)
-            occupied += agent.getSurfaceAreaTakenByAgent();
-        return occupied;
-    }
-
-    /** @return Congestion level (0.0 to 1.0). */
-    public double getCongestion() {
-        return Math.min(getOccupiedSpace() / getCapacity(), 1);
-    }
-
-    /** @return True if element capacity is reached. */
-    public boolean isFull() {
-        return getOccupiedSpace() >= capacity;
+    public double getCachedTotalStressInducedByThisElement() {
+        return cachedTotalStressInducedByThisElement;
     }
 
     public double getCachedTotalStressInducedIncludingNeighbors() {
         return cachedTotalStressInducedIncludingNeighbors;
     }
 
-    // Statistics methods
+    public double getDamageForAgent(Agent agent) {
+        return getDamageForAgent(agent, SimulationSettings.getInstance().getTickDuration());
+    }
+
+    public double getDamageForAgent(Agent agent, double duration) {
+        double damage = (getCongestion() > 1 ? 1 : 0) * duration;
+        if (isOnFire()) {
+            return damage + getFire().getDamageForAgent(duration);
+        }
+        return damage;
+    }
+
+    public double getMaxAgentSpeed() {
+        // Capped effective congestion for speed calculation to prevent negative speeds
+        double effectiveCongestion = Math.min(getCongestion(), 0.9);
+        double congestionFactor = 1.0 - effectiveCongestion;
+        double calculatedSpeed = AgentSettings.getInstance().getMAX_RUNNING_SPEED() * congestionFactor;
+        return isOnFire() ? calculatedSpeed * 1.5 : Math.max(calculatedSpeed, 0.1);
+    }
+
+    // =========================================================================
+    // 8. STATISTICS & LIFECYCLE
+    // =========================================================================
+
     public void incrementTotalAgentsCount() {
         this.totalAgentsCount++;
     }
@@ -277,8 +427,9 @@ public abstract class GraphElement implements StressInducing, Serializable {
         double currentCongestion = getCongestion();
         sumCongestion += currentCongestion;
         congestionMeasureCount++;
-        if (currentCongestion > maxCongestion)
+        if (currentCongestion > maxCongestion) {
             maxCongestion = currentCongestion;
+        }
     }
 
     public double getMaxCongestion() {
@@ -291,24 +442,6 @@ public abstract class GraphElement implements StressInducing, Serializable {
 
     public int getCongestionMeasureCount() {
         return congestionMeasureCount;
-    }
-
-    public double getDamageForAgent(Agent agent) {
-        return getDamageForAgent(agent, SimulationSettings.getInstance().getTickDuration());
-    }
-
-    public double getDamageForAgent(Agent agent, double duration) {
-        double damage = (getCongestion() > 1 ? 1 : 0) * duration;
-        if (isOnFire())
-            return damage + getFire().getDamageForAgent(duration);
-        return damage;
-    }
-
-    public double getMaxAgentSpeed() {
-        double effectiveCongestion = Math.min(getCongestion(), 0.9);
-        double congestionFactor = 1.0 - effectiveCongestion;
-        double calculatedSpeed = AgentSettings.getInstance().getMAX_RUNNING_SPEED() * congestionFactor;
-        return isOnFire() ? calculatedSpeed * 1.5 : Math.max(calculatedSpeed, 0.1);
     }
 
     public void setInitialState() {
@@ -327,29 +460,15 @@ public abstract class GraphElement implements StressInducing, Serializable {
         cachedTotalStressInducedIncludingNeighbors = 0;
     }
 
-    public void setForcedCongestion(boolean congested) {
-        this.isForcedCongested = congested;
-        if (congested)
-            this.forcedCongestionTicks = 0;
-    }
-
-    public boolean isForcedCongested() {
-        return isForcedCongested;
-    }
-
-    public void updateForcedCongestion() {
-        if (isForcedCongested) {
-            forcedCongestionTicks++;
-            if (forcedCongestionTicks >= 2) {
-                isForcedCongested = false;
-                forcedCongestionTicks = 0;
-            }
-        }
-    }
+    // =========================================================================
+    // 9. SERIALIZATION
+    // =========================================================================
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         if (agents == null)
             agents = new ArrayList<>();
+        if (congestionWaitTimes == null)
+            congestionWaitTimes = new HashMap<>();
     }
 }
