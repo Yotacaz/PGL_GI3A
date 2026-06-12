@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.io.Serializable;
-import fr.cy.model.agent.Agent;
-import fr.cy.model.agent.exceptions.AgentStateException;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.simulation.SimulationSettings;
@@ -94,8 +92,10 @@ public class Graph implements Serializable {
         // Update heavy congestion penalty trackers for all active elements
         for (Node node : nodes)
             node.updateCongestionDelays();
-        for (Edge edge : edges)
+        for (Edge edge : edges){
             edge.updateCongestionDelays();
+            edge.updateSegments(); //update edge segments for congestion model
+        }
 
         double tickDuration = SimulationSettings.getInstance().getTickDuration();
         updateStressInducedByElements(tickDuration);

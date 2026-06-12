@@ -1,6 +1,5 @@
 package fr.cy.model.agent.behaviour.decisions;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -30,16 +29,10 @@ public class NodeContext extends AbstractGraphElementContext<Edge> {
     private GraphPath shortestPathToExit;
     
     /**
-     * Map of edges to the agents currently taking or planning to take that edge.
-     * This represents agents approaching the node from connected edges.
-     */
-    private Map<Edge, List<Agent>> incomingNearbyAgents;
-    
-    /**
-     * Map of edges to the agents currently on or planning to use that edge.
+     * Map of edges to the number of agents currently on or planning to use that edge.
      * This represents agents leaving the node via connected edges.
      */
-    private Map<Edge, List<Agent>> outgoingNearbyAgents;
+    private Map<Edge, Integer> outgoingNearbyAgentsEnteringEdge;
     
     /**
      * Map of edges to the amount of space occupied by agents entering that edge.
@@ -60,23 +53,15 @@ public class NodeContext extends AbstractGraphElementContext<Edge> {
      */
     NodeContext(Node sourceNode, GraphPath recommendedPath, GraphPath shortestPathToExit,
             List<Edge> outgoingEdges,
-            Map<Edge, List<Agent>> incomingNearbyAgents,
-            Map<Edge, List<Agent>> outgoingNearbyAgents, Map<Edge, Double> spaceOccupiedAgentEnteringEdge) {
+            Map<Edge, Integer> outgoingNearbyAgents, Map<Edge, Double> spaceOccupiedAgentEnteringEdge) {
         super(outgoingEdges);
         this.sourceNode = sourceNode;
         this.recommendedPath = recommendedPath;
         this.shortestPathToExit = shortestPathToExit;
-        this.incomingNearbyAgents = incomingNearbyAgents;
-        this.outgoingNearbyAgents = outgoingNearbyAgents;
+        this.outgoingNearbyAgentsEnteringEdge = outgoingNearbyAgents;
         this.spaceOccupiedAgentEnteringEdge = spaceOccupiedAgentEnteringEdge;
         
     }
-
-    // public void clear() {
-    // incomingNearbyAgents.clear();
-    // outgoingNearbyAgents.clear();
-    // outgoingEdges.clear();
-    // }
 
     /**
      * Gets the list of edges leaving this node.
@@ -106,33 +91,13 @@ public class NodeContext extends AbstractGraphElementContext<Edge> {
     }
 
     /**
-     * Returns the modifiable map of nearby agents on incoming edges and nodes. The
-     * keys are the graph elements (edges or nodes) that are adjacent to the source
-     * node, and the values are lists of agents that are currently on those elements
-     * or planning to move onto them.
-     * This method should stays package-private to prevent external modification of
-     * the map structure, but allows modification of the lists of agents for each
-     * graph element.
-     * 
-     * @return the map of nearby agents on incoming edges and nodes
+     * Gets the number of agents entering the specified edge.
+     *
+     * @param edge the edge for which to count entering agents
+     * @return the number of agents entering the edge
      */
-    Map<Edge, List<Agent>> getIncomingNearbyAgents() {
-        return incomingNearbyAgents;
-    }
-
-    /**
-     * Returns the modifiable map of nearby agents on outgoing edges and nodes. The
-     * keys are the graph elements (edges or nodes) that are adjacent to the source
-     * node, and the values are lists of agents that are currently on those elements
-     * or planning to move onto them.
-     * This method should stays package-private to prevent external modification of
-     * the map structure, but allows modification of the lists of agents for each
-     * graph element.
-     * 
-     * @return the map of nearby agents on outgoing edges and nodes
-     */
-    Map<Edge, List<Agent>> getOutgoingNearbyAgents() {
-        return outgoingNearbyAgents;
+    public int getNumAgentsEnteringEdge(Edge edge) {
+        return outgoingNearbyAgentsEnteringEdge.getOrDefault(edge, 0);
     }
 
     
@@ -149,11 +114,13 @@ public class NodeContext extends AbstractGraphElementContext<Edge> {
             return false;
         }
 
-        List<Agent> agents = outgoingNearbyAgents.computeIfAbsent(edge, k -> new ArrayList<>());
-        if (!agents.contains(agent)) {
-            agents.add(agent);
-            spaceOccupiedAgentEnteringEdge.put(edge, futureOccupiedSpace);
+        int numAgents = outgoingNearbyAgentsEnteringEdge.getOrDefault(edge, 0);
+        if (numAgents > 0) {
+            outgoingNearbyAgentsEnteringEdge.put(edge, numAgents + 1);
+        } else {
+            outgoingNearbyAgentsEnteringEdge.put(edge, 1);
         }
+        spaceOccupiedAgentEnteringEdge.put(edge, futureOccupiedSpace);
         return true;
     }
 

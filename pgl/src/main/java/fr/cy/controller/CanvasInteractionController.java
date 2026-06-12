@@ -228,7 +228,7 @@ public class CanvasInteractionController {
         });
 
         canvas.setOnScroll(event -> {
-            double zoomFactor = event.getDeltaY() < 0 ? 0.95 : 1.05;
+            double zoomFactor = event.getDeltaY() < 0 ? 0.9 : 1.05;
             double oldZoom = canvas.getZoom();
             double newZoom = Math.max(0.2, Math.min(oldZoom * zoomFactor, 5.0));
             double f = (newZoom / oldZoom) - 1;
