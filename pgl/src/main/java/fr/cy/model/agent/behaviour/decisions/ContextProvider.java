@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Objects;
 
 import fr.cy.model.agent.Agent;
-import fr.cy.model.agent.AgentSettings;
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.agent.exceptions.AgentStateException;
 import fr.cy.model.graph.Graph;
