@@ -28,6 +28,8 @@ public class MapfAlgorithm implements Serializable{
     private static final double FIRE_PENALTY = 1000.0;       // Heavy penalty for fire
     private static final double CONGESTION_FACTOR = 0.5;     // Weight factor for congestion
     private static final double BASE_DISTANCE_FACTOR = 1.0;  // Weight factor for distance
+    private static final double SIZE_PENALTY = 5000.0;       // Penalty for edges too narrow for max-sized agents
+    private static final double CONGESTION_SIZE_PENALTY = 500.0; // Penalty when no space at entrance for max-sized agents
     
     /**
      * Constructs a new MapfAlgorithm for the given graph.
@@ -96,7 +98,7 @@ public class MapfAlgorithm implements Serializable{
                     
                     if (neighbor != null && !visited.contains(neighbor)) {
                         // Calculate weighted cost considering congestion and fire
-                        double edgeCost = calculateWeightedCost(edge, neighbor);
+                        double edgeCost = calculateWeightedCost(edge, current, neighbor);
                         double newCost = currentCost + edgeCost;
                         double oldCost = costs.get(neighbor);
                         
@@ -132,20 +134,20 @@ public class MapfAlgorithm implements Serializable{
      * @param destinationNode The destination node of the edge
      * @return The calculated weighted cost
      */
-    private double calculateWeightedCost(Edge edge, Node destinationNode) {
+    private double calculateWeightedCost(Edge edge, Node sourceNode, Node destinationNode) {
         double baseCost = 0;
-        
+
         // 1. Base distance cost
         baseCost += calculateEuclideanDistance(edge) * BASE_DISTANCE_FACTOR;
-        
+
         // 2. Congestion penalty on edge
         double edgeCongestion = edge.getCongestion();
         baseCost += edgeCongestion * CONGESTION_FACTOR;
-        
+
         // 3. Congestion penalty on destination node
         double nodeCongestion = destinationNode.getCongestion();
         baseCost += nodeCongestion * CONGESTION_FACTOR;
-        
+
         // 4. Fire hazard penalties
         if (edge.isOnFire()) {
             baseCost += FIRE_PENALTY;
@@ -153,7 +155,14 @@ public class MapfAlgorithm implements Serializable{
         if (destinationNode.isOnFire()) {
             baseCost += FIRE_PENALTY;
         }
-        
+
+        // 5. Size penalties - avoid edges too narrow for max-sized agents
+        if (!edge.canMaxSizedAgentFitAtEntranceWhenEdgeIsEmpty(sourceNode)) {
+            baseCost += SIZE_PENALTY;
+        } else if (!edge.hasSpaceLeftAtEntranceForMaxSizedAgent(sourceNode)) {
+            baseCost += CONGESTION_SIZE_PENALTY;
+        }
+
         return baseCost;
     }
     
