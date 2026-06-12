@@ -84,7 +84,7 @@ public class WaitBeforeOtherAction extends WaitAction {
 
     @Override
     public Edge getClosestTargetEdge() {
-        return nextAction.getClosestTargetEdge();
+        return agent.getCurrentEdge();    //return the current edge (or null if on node)
     }
 
     @Override

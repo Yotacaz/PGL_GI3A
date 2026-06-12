@@ -54,6 +54,26 @@ public class DetailsSidePanel extends ScrollPane {
     private Button deleteAgentBtn;
     private Button killAgentBtn;
 
+    // Editable controls — Node
+    private VBox editNodeBox;
+    private Spinner<Double> capacitySpinner;
+    private CheckBox exitCheckBox;
+
+    // Editable controls — Edge
+    private VBox editEdgeBox;
+    private Spinner<Double> widthSpinner;
+    private Spinner<Double> lengthSpinner;
+    private CheckBox directedCheckBox;
+    private Button reverseDirectionBtn;
+
+    // Edit callbacks
+    private Consumer<Double> onNodeCapacityChanged;
+    private Consumer<Boolean> onNodeExitChanged;
+    private Consumer<Double> onEdgeWidthChanged;
+    private Consumer<Double> onEdgeLengthChanged;
+    private Consumer<Boolean> onEdgeDirectedChanged;
+    private Runnable onReverseEdgeDirectionRequested;
+
     // Interaction triggers and state variables
     private Object currentEntity;
     private Consumer<GraphElement> onToggleFireRequested;
@@ -62,6 +82,7 @@ public class DetailsSidePanel extends ScrollPane {
     private Consumer<Agent> onKillAgentRequested;
 
     private boolean isPanelVisible = false;
+    private boolean updatingUI = false;
     private Timeline animationTimeline;
 
     /**
@@ -94,6 +115,7 @@ public class DetailsSidePanel extends ScrollPane {
         panelTitle.getStyleClass().add("panel-title");
 
         initializeLabelsAndProgressBars();
+        buildEditControls();
         buildLayoutStructure();
         setupActionListeners();
 
@@ -143,7 +165,7 @@ public class DetailsSidePanel extends ScrollPane {
         congestionBar = createProgressBar("congestion-bar");
         stressBar = createProgressBar("stress-bar");
         fireBar = createProgressBar("fire-bar");
-        healthBar = createProgressBar("health-bar"); // Add .health-bar to your CSS (e.g., green/red)
+        healthBar = createProgressBar("health-bar");
 
         // Infrastructure action buttons
         toggleFireBtn = new Button("🔥 Trigger Fire");
@@ -162,6 +184,49 @@ public class DetailsSidePanel extends ScrollPane {
         killAgentBtn = new Button("💀 Kill Agent");
         killAgentBtn.setMaxWidth(Double.MAX_VALUE);
         killAgentBtn.getStyleClass().addAll("action-btn", "danger-btn");
+    }
+
+    /**
+     * Creates spinners and checkboxes used for inline editing of graph element properties.
+     */
+    private void buildEditControls() {
+        capacitySpinner = new Spinner<>(new SpinnerValueFactory.DoubleSpinnerValueFactory(0.1, 1_000_000.0, 50.0, 10.0));
+        capacitySpinner.setEditable(true);
+        capacitySpinner.setMaxWidth(Double.MAX_VALUE);
+        commitSpinnerOnBlur(capacitySpinner);
+
+        exitCheckBox = new CheckBox("Exit node");
+
+        widthSpinner = new Spinner<>(new SpinnerValueFactory.DoubleSpinnerValueFactory(0.1, 1_000.0, 2.0, 0.5));
+        widthSpinner.setEditable(true);
+        widthSpinner.setMaxWidth(Double.MAX_VALUE);
+        commitSpinnerOnBlur(widthSpinner);
+
+        lengthSpinner = new Spinner<>(new SpinnerValueFactory.DoubleSpinnerValueFactory(0.1, 100_000.0, 10.0, 5.0));
+        lengthSpinner.setEditable(true);
+        lengthSpinner.setMaxWidth(Double.MAX_VALUE);
+        commitSpinnerOnBlur(lengthSpinner);
+
+        directedCheckBox = new CheckBox("One-way (directed)");
+
+        reverseDirectionBtn = new Button("↔ Invert Direction");
+        reverseDirectionBtn.setMaxWidth(Double.MAX_VALUE);
+        reverseDirectionBtn.getStyleClass().add("action-btn");
+    }
+
+    /** Commits the spinner editor text on focus loss so the value stays consistent. */
+    private void commitSpinnerOnBlur(Spinner<Double> spinner) {
+        spinner.focusedProperty().addListener((obs, was, isNow) -> {
+            if (!isNow) {
+                try {
+                    double v = Double.parseDouble(spinner.getEditor().getText().trim().replace(',', '.'));
+                    ((SpinnerValueFactory.DoubleSpinnerValueFactory) spinner.getValueFactory()).setValue(v);
+                } catch (NumberFormatException ignored) {
+                    // restore the last valid value
+                    spinner.getEditor().setText(spinner.getValue().toString());
+                }
+            }
+        });
     }
 
     /**
@@ -199,6 +264,18 @@ public class DetailsSidePanel extends ScrollPane {
                 new String[] { "Total passed", "Max Congestion", "Avg Congestion" },
                 histTotalValue, histMaxCongValue, histAvgCongValue);
 
+        // Node edit section
+        Label nodeEditHeader = new Label("EDIT NODE");
+        nodeEditHeader.getStyleClass().add("section-header");
+        editNodeBox = new VBox(10, nodeEditHeader, buildNodeEditCard());
+        VBox.setMargin(editNodeBox, new javafx.geometry.Insets(15, 0, 0, 0));
+
+        // Edge edit section
+        Label edgeEditHeader = new Label("EDIT EDGE");
+        edgeEditHeader.getStyleClass().add("section-header");
+        editEdgeBox = new VBox(10, edgeEditHeader, buildEdgeEditCard());
+        VBox.setMargin(editEdgeBox, new javafx.geometry.Insets(15, 0, 0, 0));
+
         // Actions Section
         Label actionsHeader = new Label("ACTIONS");
         actionsHeader.getStyleClass().add("section-header");
@@ -213,7 +290,53 @@ public class DetailsSidePanel extends ScrollPane {
                 nodeInfoBox, healthBox, speedBox, capacityBox, congestionBox, stressBox, fireBox, agentsBox,
                 widthBox, lengthBox,
                 agentStatsBox, historyBox,
+                editNodeBox, editEdgeBox,
                 new Separator(), actionsBox, structuralSpacer);
+    }
+
+    /** Builds the editable card for node properties (capacity + exit checkbox). */
+    private VBox buildNodeEditCard() {
+        VBox card = new VBox(10);
+        card.getStyleClass().add("stat-card");
+
+        Label capLabel = new Label("Capacity (m²)");
+        capLabel.getStyleClass().add("stat-title");
+        javafx.scene.layout.HBox capRow = new javafx.scene.layout.HBox(10);
+        capRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
+        javafx.scene.layout.HBox.setHgrow(spacer, Priority.ALWAYS);
+        capacitySpinner.setPrefWidth(115);
+        capRow.getChildren().addAll(capLabel, spacer, capacitySpinner);
+
+        card.getChildren().addAll(capRow, exitCheckBox);
+        return card;
+    }
+
+    /** Builds the editable card for edge properties (width, length, directed). */
+    private VBox buildEdgeEditCard() {
+        VBox card = new VBox(10);
+        card.getStyleClass().add("stat-card");
+
+        Label wLabel = new Label("Width (m)");
+        wLabel.getStyleClass().add("stat-title");
+        javafx.scene.layout.HBox wRow = new javafx.scene.layout.HBox(10);
+        wRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        javafx.scene.layout.Region sp1 = new javafx.scene.layout.Region();
+        javafx.scene.layout.HBox.setHgrow(sp1, Priority.ALWAYS);
+        widthSpinner.setPrefWidth(115);
+        wRow.getChildren().addAll(wLabel, sp1, widthSpinner);
+
+        Label lLabel = new Label("Length (m)");
+        lLabel.getStyleClass().add("stat-title");
+        javafx.scene.layout.HBox lRow = new javafx.scene.layout.HBox(10);
+        lRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        javafx.scene.layout.Region sp2 = new javafx.scene.layout.Region();
+        javafx.scene.layout.HBox.setHgrow(sp2, Priority.ALWAYS);
+        lengthSpinner.setPrefWidth(115);
+        lRow.getChildren().addAll(lLabel, sp2, lengthSpinner);
+
+        card.getChildren().addAll(wRow, lRow, directedCheckBox, reverseDirectionBtn);
+        return card;
     }
 
     /**
@@ -280,7 +403,7 @@ public class DetailsSidePanel extends ScrollPane {
     }
 
     /**
-     * Binds controller callback actions directly onto layout buttons.
+     * Binds controller callback actions directly onto layout buttons and edit controls.
      */
     private void setupActionListeners() {
         toggleFireBtn.setOnAction(e -> {
@@ -308,6 +431,39 @@ public class DetailsSidePanel extends ScrollPane {
                 onKillAgentRequested.accept(agent);
                 hidePanel();
             }
+        });
+
+        // Node edit listeners
+        capacitySpinner.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (!updatingUI && newVal != null && onNodeCapacityChanged != null)
+                onNodeCapacityChanged.accept(newVal);
+        });
+
+        exitCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            if (!updatingUI && onNodeExitChanged != null)
+                onNodeExitChanged.accept(newVal);
+        });
+
+        // Edge edit listeners
+        widthSpinner.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (!updatingUI && newVal != null && onEdgeWidthChanged != null)
+                onEdgeWidthChanged.accept(newVal);
+        });
+
+        lengthSpinner.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (!updatingUI && newVal != null && onEdgeLengthChanged != null)
+                onEdgeLengthChanged.accept(newVal);
+        });
+
+        directedCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            if (!updatingUI && onEdgeDirectedChanged != null)
+                onEdgeDirectedChanged.accept(newVal);
+            setElementVisible(reverseDirectionBtn, newVal);
+        });
+
+        reverseDirectionBtn.setOnAction(e -> {
+            if (onReverseEdgeDirectionRequested != null)
+                onReverseEdgeDirectionRequested.run();
         });
     }
 
@@ -343,7 +499,7 @@ public class DetailsSidePanel extends ScrollPane {
         agentsTitle.setText(agents);
     }
 
-    // --- Callbacks ---
+    // --- Callbacks (display) ---
 
     public void setOnToggleFireRequested(Consumer<GraphElement> listener) {
         this.onToggleFireRequested = listener;
@@ -359,6 +515,32 @@ public class DetailsSidePanel extends ScrollPane {
 
     public void setOnKillAgentRequested(Consumer<Agent> listener) {
         this.onKillAgentRequested = listener;
+    }
+
+    // --- Callbacks (edit) ---
+
+    public void setOnNodeCapacityChanged(Consumer<Double> listener) {
+        this.onNodeCapacityChanged = listener;
+    }
+
+    public void setOnNodeExitChanged(Consumer<Boolean> listener) {
+        this.onNodeExitChanged = listener;
+    }
+
+    public void setOnEdgeWidthChanged(Consumer<Double> listener) {
+        this.onEdgeWidthChanged = listener;
+    }
+
+    public void setOnEdgeLengthChanged(Consumer<Double> listener) {
+        this.onEdgeLengthChanged = listener;
+    }
+
+    public void setOnEdgeDirectedChanged(Consumer<Boolean> listener) {
+        this.onEdgeDirectedChanged = listener;
+    }
+
+    public void setOnReverseEdgeDirectionRequested(Runnable listener) {
+        this.onReverseEdgeDirectionRequested = listener;
     }
 
     // --- Animations ---
@@ -428,7 +610,7 @@ public class DetailsSidePanel extends ScrollPane {
 
         // Reset visibility of all modular blocks
         VBox[] modularBoxes = { widthBox, lengthBox, nodeInfoBox, agentStatsBox, historyBox, speedBox, healthBox,
-                actionsBox };
+                actionsBox, editNodeBox, editEdgeBox };
         for (VBox box : modularBoxes) {
             setBoxVisible(box, false);
         }
@@ -539,11 +721,31 @@ public class DetailsSidePanel extends ScrollPane {
         if (element instanceof Node node) {
             nodeInfoValue.setText(String.format("(%.0f, %.0f)", node.getX(), node.getY()));
             setBoxVisible(nodeInfoBox, true);
+
+            // Populate editable node controls
+            updatingUI = true;
+            ((SpinnerValueFactory.DoubleSpinnerValueFactory) capacitySpinner.getValueFactory())
+                    .setValue(node.getCapacity());
+            exitCheckBox.setSelected(node.isExit());
+            updatingUI = false;
+            setBoxVisible(editNodeBox, true);
+
         } else if (element instanceof Edge edge) {
             widthValue.setText(String.format("%.2f m", edge.getWidth()));
             lengthValue.setText(String.format("%.2f m", edge.getLength()));
             setBoxVisible(widthBox, true);
             setBoxVisible(lengthBox, true);
+
+            // Populate editable edge controls
+            updatingUI = true;
+            ((SpinnerValueFactory.DoubleSpinnerValueFactory) widthSpinner.getValueFactory())
+                    .setValue(edge.getWidth());
+            ((SpinnerValueFactory.DoubleSpinnerValueFactory) lengthSpinner.getValueFactory())
+                    .setValue(edge.getLength());
+            directedCheckBox.setSelected(edge.isDirected());
+            updatingUI = false;
+            setElementVisible(reverseDirectionBtn, edge.isDirected());
+            setBoxVisible(editEdgeBox, true);
         }
 
         // Compute group metrics if agents populate the workspace

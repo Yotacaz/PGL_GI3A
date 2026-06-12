@@ -1,7 +1,6 @@
 package fr.cy;
 
 import fr.cy.controller.MainController;
-import fr.cy.model.graph.Graph;
 import fr.cy.model.simulation.Simulation;
 import fr.cy.util.ScenarioBuilder;
 import javafx.application.Application;
@@ -47,6 +46,7 @@ public class App extends Application {
         primaryStage.setScene(scene);
         primaryStage.setMinWidth(800);
         primaryStage.setMinHeight(600);
+        primaryStage.setMaximized(true);
         primaryStage.show();
     }
 

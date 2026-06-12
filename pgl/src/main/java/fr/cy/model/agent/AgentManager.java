@@ -15,12 +15,11 @@ import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 import fr.cy.model.agent.behaviour.properties.AgentPhysicalProperties;
 import fr.cy.model.agent.exceptions.AgentStateException;
 import fr.cy.model.graph.element.Edge;
-import fr.cy.model.graph.element.GraphElement;
 import fr.cy.model.graph.element.Node;
-import fr.cy.model.agent.behaviour.decisions.AgentPossibleEdgeDecision;
 import fr.cy.model.agent.behaviour.decisions.ContextProvider;
 import fr.cy.model.agent.behaviour.decisions.EdgeContext;
 import fr.cy.model.simulation.SimulationSettings;
+
 
 /**
  * Manager responsible for higher-level operations on {@link Agent} instances.
@@ -71,7 +70,7 @@ public class AgentManager implements Serializable {
 
     /**
      * The time elapsed since the last edge decision was made, used to prompt edge
-     * decisions TODO
+     * decisions 
      */
     private double timeSinceLastEdgeDecision = 0.0;
 
@@ -250,7 +249,26 @@ public class AgentManager implements Serializable {
     private void moveAgents(double tickDuration) {
         decisionContextProvider.clearCache();
         sortAgentsByOwnDecisionMakingFactor();
+        // rebuildEdgeSegments();
+        makeAgentsDecisions(tickDuration);
 
+        //move agents
+        for (Agent agent : agentsToEvacuate) {
+
+            AgentAction currentAction = agent.getCurrentAction();
+            if (currentAction == null) {
+                continue;
+            }
+
+            double consumed = agent.performCurrentAction(agentSettings, tickDuration);
+            if (consumed <= 1E-32) {
+                continue;
+            }
+        }
+
+    }
+
+    private void makeAgentsDecisions(double tickDuration) {
         // generate and register decisions for all agents before performing any action,
         // to ensure that all agents have the same information when making their
         // decisions
@@ -265,9 +283,10 @@ public class AgentManager implements Serializable {
             if (agent.isOnNode()) {
 
                 // HEAVY CONGESTION PENALTY
-                if (!agent.getCurrentNode().canAgentLeave(agent)) {
-                    continue; // Penality 2 cycles
-                }
+                // if (!agent.getCurrentNode().canAgentLeave(agent)) {
+                //     continue; // Penality 2 cycles
+                // }
+                
 
                 NodeContext decisionContext = decisionContextProvider.getNodeContext(agent.getCurrentNode());
                 if (decisionContext == null) {
@@ -279,7 +298,12 @@ public class AgentManager implements Serializable {
                     continue;
                 } else if (!registered) {
                     agent.setCurrentAction(new WaitBeforeOtherAction(agent, tickDuration, action));
+                    // System.out.println("Agent " + agent.getName() + " decided to "+agent.getLastSelectedDecision()+" but could not register the action " + action + " and will wait before performing it. Decision factors: "
+                    //     + agent.getCurrentOwnDecisionMakingFactor());
                 }
+                // System.out.println("Agent " + agent.getName() + " decided to "+agent.getLastSelectedDecision()+" and perform " + agent.getCurrentAction() + " with decision factors: "
+                //     + agent.getCurrentOwnDecisionMakingFactor());
+
             } else if (agent.isOnEdge()) {
                 EdgeContext decisionContext = decisionContextProvider.getEdgeContext(agent.getCurrentEdge());
                 if (decisionContext == null) {
@@ -305,20 +329,6 @@ public class AgentManager implements Serializable {
                         + " is neither on a node nor on an edge but on the list of agents to evacuate");
             }
         }
-
-        for (Agent agent : agentsToEvacuate) {
-
-            AgentAction currentAction = agent.getCurrentAction();
-            if (currentAction == null) {
-                continue;
-            }
-
-            double consumed = agent.performCurrentAction(agentSettings, tickDuration);
-            if (consumed <= 1E-32) {
-                continue;
-            }
-        }
-
     }
 
     /** @return the unmodifiable list of agents that are still to evacuate */
@@ -356,13 +366,12 @@ public class AgentManager implements Serializable {
      * but does not release its ID or add it to the list of dead agents.
      *
      * @param agent the agent to remove
-     * @return the removed agent
+     * @return the removed agent or null if the agent was not found in the list of agents to evacuate
      */
     public Agent removeAgentFromGraph(Agent agent) {
         if (!agentsToEvacuate.remove(agent)) {
             if (deadAgents.remove(agent) != true && evacuatedAgents.remove(agent) != true) {
-                throw new IllegalArgumentException(
-                        "Agent not found in either agents, deadAgents or evacuatedAgents list");
+                return null; // Agent not found in any list, nothing to remove
             }
         }
         agent.removeFromGraph();
