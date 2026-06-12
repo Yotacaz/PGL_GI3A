@@ -304,7 +304,7 @@ public abstract class GraphElement implements StressInducing, Serializable {
      * conditions.
      *
      * @param agentState Agent decision properties.
-     * @return Score multiplier (values 1 decrease attractiveness).
+     * @return Score multiplier (values < 1 decrease attractiveness).
      */
     public double getScoreMultiplierForAgent(AgentDecisionalProperties agentState) {
         double scoreMult = 1.0;

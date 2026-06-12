@@ -520,8 +520,7 @@ public class Agent implements StressInducing, Serializable {
             assert previousOrCurrentNode != null || previousOrCurrentEdge == null
                     : "Agent on edge should have a previous or current node";
             maxElemSpeed = previousOrCurrentEdge == null ? Double.MAX_VALUE
-                    : previousOrCurrentEdge.getMaxAgentSpeedInDirection(previousOrCurrentNode);
-        }
+                    : previousOrCurrentEdge.getLocalMaxAgentSpeedInDirection(this);        }
         double agentMaxSpeed = getEffectiveSpeedOutsideOfGraph();
         double effectiveSpeed = Math.min(agentMaxSpeed, maxElemSpeed);
         assert effectiveSpeed >= 0 : "Effective max speed should be non-negative";
@@ -815,14 +814,14 @@ public class Agent implements StressInducing, Serializable {
      *         on an edge
      */
     public Edge getCurrentEdge() {
-        return isOnNode() ? null : getPreviousOrCurrentEdge();
+        return isOnEdge() ? getPreviousOrCurrentEdge() : null;
     }
 
     /**
      * @return the current edge the agent is on, or the next edge if the agent is
      *         not on an edge
      *         This method can return null if the agent has no ongoing action and is
-     *         on a node
+     *         on a node or if the agent is waiting before something else.
      */
     public Edge getCurrentEdgeOrNextEdgeIfOnNode() {
         if (currentAction == null) {

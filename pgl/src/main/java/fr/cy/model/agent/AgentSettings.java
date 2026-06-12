@@ -51,14 +51,14 @@ public class AgentSettings implements Serializable {
         // Initialize decision-making factors for each decision type
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_CROWD, 2.0);
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_LESS_CROWDED_PATH, 0.1);
-        defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_RECOMMENDED_PATH, 1.5);
+        defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_RECOMMENDED_PATH, 200000.0);
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_SHORTEST_PATH, 0.05);
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.NICEST_PATH, 0.2);
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.RANDOM, 0.5);
-        defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.CONTINUE_LAST_ACTION, 2.5);
+        defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.CONTINUE_LAST_ACTION, 2.0);
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.WAIT, 1.0);
 
-        defaultEdgeDecisionMakingFactors.put(AgentPossibleEdgeDecision.CONTINUE, 5.0); //prefer continuing on the current edge
+        defaultEdgeDecisionMakingFactors.put(AgentPossibleEdgeDecision.CONTINUE, 2.0); //prefer continuing on the current edge
         defaultEdgeDecisionMakingFactors.put(AgentPossibleEdgeDecision.BACKTRACK, 1.0);
         defaultEdgeDecisionMakingFactors.put(AgentPossibleEdgeDecision.WAIT_BEFORE_ACTION, 0.05);
     }
@@ -97,7 +97,7 @@ public class AgentSettings implements Serializable {
     /** Maximum health for every agent */
     private int MAX_HEALTH = 100;
     /** Minimum surface area taken by an agent on a node or edge */
-    private double MIN_SURFACE_AREA_TAKEN_BY_AGENT = 0.5;
+    private double MIN_SURFACE_AREA_TAKEN_BY_AGENT = 0.3;
     /** Maximum surface area taken by an agent on a node or edge */
     private double MAX_SURFACE_AREA_TAKEN_BY_AGENT = 1.5;
 
@@ -113,6 +113,21 @@ public class AgentSettings implements Serializable {
 
     /** Time step between edge decisions */
     private double timeStepBetweenEdgeDecisions = 0.1; // in seconds
+
+    /**
+     * Sensitivity of the local speed model to the local density of agents moving
+     * in the <b>same</b> direction (see {@code v = v_max * exp(-alpha*rho_same -
+     * beta*rho_opposite)}). Higher values mean a stronger slowdown when the lane
+     * fills up with agents going the same way.
+     */
+    private double CONGESTION_ALPHA = 2.0;
+    /**
+     * Sensitivity of the local speed model to the local density of agents moving
+     * in the <b>opposite</b> direction (counter-flow). It is intentionally larger
+     * than {@link #CONGESTION_ALPHA} because facing a counter-flow is more
+     * disruptive than following the crowd.
+     */
+    private double CONGESTION_BETA = 6.0;
 
     /**
      * Gets an immutable view of the default decision-making factors for node decisions.
@@ -350,6 +365,18 @@ public class AgentSettings implements Serializable {
         return MAX_SURFACE_AREA_TAKEN_BY_AGENT;
     }
 
+    /**
+     * Returns the median surface area taken by an agent, calculated as the average of the minimum and maximum surface area values. This can be used as a default or typical value for the space an agent occupies in the environment.
+     * @return the median surface area taken by an agent
+     */
+    public double getMedianSurfaceAreaTakenByAgent() {
+        return (MIN_SURFACE_AREA_TAKEN_BY_AGENT + MAX_SURFACE_AREA_TAKEN_BY_AGENT) / 2.0;
+    }
+
+     /**
+     * Returns the multiplier for stress calculation, which influences how quickly agents become stressed in response to stress-inducing factors in their environment.
+     * @return the stress multiplier
+     */
     @Deprecated
     public double getSTRESS_MULTIPLIER() {
         return STRESS_MULTIPLIER;
@@ -415,6 +442,50 @@ public class AgentSettings implements Serializable {
      */
     public double getTimeStepBetweenEdgeDecisions() {
         return timeStepBetweenEdgeDecisions;
+    }
+
+        /**
+     * Returns the sensitivity of the local speed model to same-direction density.
+     *
+     * @return the {@code alpha} coefficient of the local congestion speed model
+     */
+    public double getCONGESTION_ALPHA() {
+        return CONGESTION_ALPHA;
+    }
+ 
+    /**
+     * Sets the sensitivity of the local speed model to same-direction density.
+     *
+     * @param congestionAlpha the new {@code alpha} coefficient (must be &ge; 0)
+     * @throws IllegalArgumentException if {@code congestionAlpha} is negative
+     */
+    public void setCONGESTION_ALPHA(double congestionAlpha) {
+        if (congestionAlpha < 0) {
+            throw new IllegalArgumentException("CONGESTION_ALPHA must be non-negative");
+        }
+        this.CONGESTION_ALPHA = congestionAlpha;
+    }
+ 
+    /**
+     * Returns the sensitivity of the local speed model to counter-flow density.
+     *
+     * @return the {@code beta} coefficient of the local congestion speed model
+     */
+    public double getCONGESTION_BETA() {
+        return CONGESTION_BETA;
+    }
+ 
+    /**
+     * Sets the sensitivity of the local speed model to counter-flow density.
+     *
+     * @param congestionBeta the new {@code beta} coefficient (must be &ge; 0)
+     * @throws IllegalArgumentException if {@code congestionBeta} is negative
+     */
+    public void setCONGESTION_BETA(double congestionBeta) {
+        if (congestionBeta < 0) {
+            throw new IllegalArgumentException("CONGESTION_BETA must be non-negative");
+        }
+        this.CONGESTION_BETA = congestionBeta;
     }
 
     /**
