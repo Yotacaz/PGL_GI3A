@@ -1,7 +1,9 @@
-package fr.cy.model.agent;
+package fr.cy.model.agent.properties;
 
 import java.util.Map;
 import java.util.WeakHashMap;
+
+import fr.cy.model.agent.Agent;
 
 /**
  * Lightweight registry that associates {@link Agent} instances to

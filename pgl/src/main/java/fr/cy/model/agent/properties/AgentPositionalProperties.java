@@ -1,4 +1,4 @@
-package fr.cy.model.agent.behaviour.properties;
+package fr.cy.model.agent.properties;
 
 /**
  * Represents the positional and spatial properties of an agent.

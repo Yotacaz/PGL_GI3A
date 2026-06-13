@@ -14,12 +14,12 @@ import fr.cy.model.agent.behaviour.agentActions.FollowSingleEdgeAction;
 import fr.cy.model.agent.behaviour.decisions.AgentPossibleNodeDecisionScore;
 import fr.cy.model.agent.behaviour.decisions.AgentPossibleEdgeDecision;
 import fr.cy.model.agent.behaviour.decisions.AgentPossibleNodeDecision;
-import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
-import fr.cy.model.agent.behaviour.properties.AgentPhysicalProperties;
-import fr.cy.model.agent.behaviour.properties.EmotionalState;
 import fr.cy.model.agent.context.EdgeContext;
 import fr.cy.model.agent.context.NodeContext;
 import fr.cy.model.agent.exceptions.AgentStateException;
+import fr.cy.model.agent.properties.AgentDecisionalProperties;
+import fr.cy.model.agent.properties.AgentPhysicalProperties;
+import fr.cy.model.agent.properties.EmotionalState;
 import fr.cy.model.graph.GraphException;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.GraphElement;
@@ -59,7 +59,12 @@ public class Agent implements StressInducing, Serializable {
     /**
      * Number of nodes visited by the agent, used for statistics
      */
-    private int nOfNodeVisited;
+    private int nOfNodeVisited = 0;
+
+    /**
+     * Number of simulation ticks the agent has been alive, used for statistics
+     */
+    private int nOfTickAliveUntilExited = 0;
 
     /**
      * Map to store the scores of different possible decisions for the agent, used
@@ -584,6 +589,9 @@ public class Agent implements StressInducing, Serializable {
      */
     public void updateState(double tickDuration) {
         // System.out.println(currentEdgeProgress);
+        if (isAlive() && isOnGraph()) {
+            nOfTickAliveUntilExited++;
+        }
         updateStressLevel(tickDuration);
         behavioralState.updateEmotionnalState();
         updateHealth(tickDuration);
@@ -655,6 +663,30 @@ public class Agent implements StressInducing, Serializable {
      */
     public int getnOfNodeVisited() {
         return nOfNodeVisited;
+    }
+
+    void setnOfNodeVisited(int nOfNodeVisited) {
+        this.nOfNodeVisited = nOfNodeVisited;
+    }
+
+    /**
+     * Gets the number of simulation ticks the agent has been alive until it exited
+     * the graph.
+     * 
+     * @return the number of ticks the agent has been alive until it exited
+     */
+    public int getnOfTickAliveUntilExited() {
+        return nOfTickAliveUntilExited;
+    }
+
+    /**
+     * Sets the number of simulation ticks the agent has been alive until it exited
+     * the graph.
+     * 
+     * @param nOfTickAliveUntilExited the number of ticks to set
+     */
+    void setnOfTickAliveUntilExited(int nOfTickAliveUntilExited) {
+        this.nOfTickAliveUntilExited = nOfTickAliveUntilExited;
     }
 
     /**

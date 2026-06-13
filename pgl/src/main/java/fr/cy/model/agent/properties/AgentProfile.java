@@ -1,4 +1,4 @@
-package fr.cy.model.agent;
+package fr.cy.model.agent.properties;
 
 /**
  * Defines visual/semantic profiles for agents used by the UI and generation

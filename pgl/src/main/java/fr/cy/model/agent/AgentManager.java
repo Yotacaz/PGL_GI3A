@@ -9,12 +9,14 @@ import java.util.Objects;
 
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.agent.behaviour.agentActions.WaitBeforeOtherAction;
-import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
-import fr.cy.model.agent.behaviour.properties.AgentPhysicalProperties;
 import fr.cy.model.agent.context.ContextProvider;
 import fr.cy.model.agent.context.EdgeContext;
 import fr.cy.model.agent.context.NodeContext;
 import fr.cy.model.agent.exceptions.AgentStateException;
+import fr.cy.model.agent.properties.AgentDecisionalProperties;
+import fr.cy.model.agent.properties.AgentPhysicalProperties;
+import fr.cy.model.agent.properties.AgentProfile;
+import fr.cy.model.agent.properties.AgentProfileRegistry;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.simulation.SimulationSettings;
@@ -578,6 +580,17 @@ public class AgentManager implements Serializable {
         }
     }
 
+    public double getAverageNumberOfTicksToExitForEvacuatedAgents() {
+        if (evacuatedAgents.isEmpty()) {
+            return 0.0;
+        }
+        double totalTicks = 0.0;
+        for (Agent agent : evacuatedAgents) {
+            totalTicks += agent.getnOfTickAliveUntilExited();
+        }
+        return totalTicks / evacuatedAgents.size();
+    }
+
     /**
      * Inner class to capture and store the state of an agent at a point in time.
      * This allows agents to be restored to a previous state, including their
@@ -608,7 +621,7 @@ public class AgentManager implements Serializable {
         private final Edge currentOrPreviousEdge;
         private final boolean isOnNode;
         private final int nOfNodeVisited;
-
+        private final int nOfTickAliveUntilExited;
         // Action and related state
         private final AgentAction currentAction;
 
@@ -638,6 +651,7 @@ public class AgentManager implements Serializable {
             this.currentOrPreviousEdge = agent.getPreviousOrCurrentEdge();
             this.isOnNode = agent.isOnNode();
             this.nOfNodeVisited = agent.getnOfNodeVisited();
+            this.nOfTickAliveUntilExited = agent.getnOfTickAliveUntilExited();
             this.currentEdgeProgress = agent.getCurrentEdgeProgress();
 
             // Current action (will be serialized as-is)
@@ -677,9 +691,10 @@ public class AgentManager implements Serializable {
             agent.setCongestionTolerance(this.crowdingTolerance);
 
             // Restore number of nodes visited
-            for (int i = 0; i < this.nOfNodeVisited; i++) {
-                agent.incrementNodeVisited();
-            }
+            agent.setnOfNodeVisited(this.nOfNodeVisited);
+
+            // Restore number of ticks alive until exited
+            agent.setnOfTickAliveUntilExited(this.nOfTickAliveUntilExited);
 
             // Restore position
             if (!this.isOnNode && this.currentOrPreviousEdge != null) {
