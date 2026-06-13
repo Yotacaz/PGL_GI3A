@@ -23,12 +23,12 @@ public class GraphConfig implements Serializable {
     /**
      * Distance in front of an agent to look when computing the local density 
      */
-    public static final double DENSITY_WINDOW_IN_FRONT = 1.75;
+    public static final double DENSITY_WINDOW_IN_FRONT = 2.0;
 
     /**
      * Distance behind an agent to look when computing the local density
      * Negative values are used to indicate that the window ends behind the agent's current position
      * Positive values are used to indicate that the window ends in front of the agent's current position 
      */
-    public static final double DENSITY_WINDOW_BEHIND = 0.3;
+    public static final double DENSITY_WINDOW_BEHIND = 0.5;
 }

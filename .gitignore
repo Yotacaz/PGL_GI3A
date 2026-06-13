@@ -7,4 +7,5 @@ bin/
 .settings
 .project
 .classpath
+.github
 simulations
