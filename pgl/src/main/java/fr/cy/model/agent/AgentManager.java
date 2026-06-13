@@ -17,10 +17,10 @@ import fr.cy.model.agent.properties.AgentDecisionalProperties;
 import fr.cy.model.agent.properties.AgentPhysicalProperties;
 import fr.cy.model.agent.properties.AgentProfile;
 import fr.cy.model.agent.properties.AgentProfileRegistry;
+import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 import fr.cy.model.simulation.SimulationSettings;
-
 
 /**
  * Manager responsible for higher-level operations on {@link Agent} instances.
@@ -68,10 +68,10 @@ public class AgentManager implements Serializable {
     private List<AgentSnapshot> initialAgentSnapshots = null;
 
     // /**
-    //  * The time elapsed since the last edge decision was made, used to prompt edge
-    //  * decisions 
-    //  */
-    // private double timeSinceLastEdgeDecision = 0.0; 
+    // * The time elapsed since the last edge decision was made, used to prompt edge
+    // * decisions
+    // */
+    // private double timeSinceLastEdgeDecision = 0.0;
 
     /**
      * Creates a new AgentManager with the specified lists of agents and
@@ -278,7 +278,7 @@ public class AgentManager implements Serializable {
         // rebuildEdgeSegments();
         makeAgentsDecisions(tickDuration);
 
-        //move agents
+        // move agents
         for (Agent agent : agentsToEvacuate) {
 
             AgentAction currentAction = agent.getCurrentAction();
@@ -312,7 +312,6 @@ public class AgentManager implements Serializable {
                 if (!agent.getCurrentNode().canAgentLeave(agent)) {
                     continue; // Penality 2 cycles
                 }
-                
 
                 NodeContext decisionContext = decisionContextProvider.getNodeContext(agent.getCurrentNode());
                 if (decisionContext == null) {
@@ -383,7 +382,8 @@ public class AgentManager implements Serializable {
      * but does not release its ID or add it to the list of dead agents.
      *
      * @param agent the agent to remove
-     * @return the removed agent or null if the agent was not found in the list of agents to evacuate
+     * @return the removed agent or null if the agent was not found in the list of
+     *         agents to evacuate
      */
     public Agent removeAgentFromGraph(Agent agent) {
         if (!agentsToEvacuate.remove(agent)) {
@@ -492,7 +492,7 @@ public class AgentManager implements Serializable {
      * - Recreating agents from snapshots with restored state
      *
      */
-    public void reset() {
+    public void reset(Graph graph) {
         if (this.initialAgentSnapshots == null) {
             return; // No initial state set, nothing to reset to
         }
@@ -502,10 +502,20 @@ public class AgentManager implements Serializable {
         clearDeadAgents();
         this.agentsToEvacuate.clear();
 
-        // Recreate agents from snapshots
+        // Recreate agents from snapshots and validate their existence
         for (AgentSnapshot snapshot : this.initialAgentSnapshots) {
             Agent restoredAgent = snapshot.restoreToAgent();
-            this.agentsToEvacuate.add(restoredAgent);
+            boolean isPositionValid = false;
+
+            if (restoredAgent.isOnNode() && restoredAgent.getCurrentNode() != null) {
+                isPositionValid = graph.getNodes().contains(restoredAgent.getCurrentNode());
+            } else if (restoredAgent.isOnEdge() && restoredAgent.getPreviousOrCurrentEdge() != null) {
+                isPositionValid = graph.getEdges().contains(restoredAgent.getPreviousOrCurrentEdge());
+            }
+
+            if (isPositionValid) {
+                this.agentsToEvacuate.add(restoredAgent);
+            }
         }
     }
 
@@ -544,6 +554,8 @@ public class AgentManager implements Serializable {
 
             if (safeDestination != null) {
                 agent.tpToNode(safeDestination);
+
+                agent.setCurrentAction(null);
             } else {
                 throw new IllegalStateException("Failed to determine safe destination for agent: " + agent.getName());
             }
@@ -577,6 +589,8 @@ public class AgentManager implements Serializable {
         for (int i = agentsToMove.size() - 1; i >= 0; i--) {
             Agent agent = agentsToMove.get(i);
             agent.tpToNode(targetNodeForRelocation);
+            agent.setCurrentAction(null);
+
         }
     }
 
