@@ -3,7 +3,7 @@ package fr.cy.model.simulation;
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentGenerator;
 import fr.cy.model.agent.AgentManager;
-import fr.cy.model.agent.behaviour.decisions.ContextProvider;
+import fr.cy.model.agent.context.ContextProvider;
 import fr.cy.model.fire.FireService;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.pathfinding.PathFinder;

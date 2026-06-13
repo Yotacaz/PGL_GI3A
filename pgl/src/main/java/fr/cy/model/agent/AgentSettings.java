@@ -51,7 +51,7 @@ public class AgentSettings implements Serializable {
         // Initialize decision-making factors for each decision type
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_CROWD, 2.0);
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_LESS_CROWDED_PATH, 0.1);
-        defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_RECOMMENDED_PATH, 200000.0);
+        defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_RECOMMENDED_PATH, 20.0);
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_SHORTEST_PATH, 0.05);
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.NICEST_PATH, 0.2);
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.RANDOM, 0.5);

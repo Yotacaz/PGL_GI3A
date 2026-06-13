@@ -6,20 +6,17 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Random;
 
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.agent.behaviour.agentActions.WaitBeforeOtherAction;
-import fr.cy.model.agent.behaviour.decisions.NodeContext;
 import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 import fr.cy.model.agent.behaviour.properties.AgentPhysicalProperties;
+import fr.cy.model.agent.context.ContextProvider;
+import fr.cy.model.agent.context.EdgeContext;
+import fr.cy.model.agent.context.NodeContext;
 import fr.cy.model.agent.exceptions.AgentStateException;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
-import fr.cy.model.agent.behaviour.decisions.ContextProvider;
-import fr.cy.model.agent.AgentProfile;
-import fr.cy.model.agent.AgentProfileRegistry;
-import fr.cy.model.agent.behaviour.decisions.EdgeContext;
 import fr.cy.model.simulation.SimulationSettings;
 
 
@@ -41,8 +38,6 @@ import fr.cy.model.simulation.SimulationSettings;
 public class AgentManager implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    private static final Random RNG = new Random();
 
     /** Indicates whether the current tick is the first one */
     private boolean isFirstTick = true;
@@ -70,11 +65,11 @@ public class AgentManager implements Serializable {
     /** For storing initial snapshots of agents (for reset functionality) */
     private List<AgentSnapshot> initialAgentSnapshots = null;
 
-    /**
-     * The time elapsed since the last edge decision was made, used to prompt edge
-     * decisions 
-     */
-    private double timeSinceLastEdgeDecision = 0.0;
+    // /**
+    //  * The time elapsed since the last edge decision was made, used to prompt edge
+    //  * decisions 
+    //  */
+    // private double timeSinceLastEdgeDecision = 0.0; 
 
     /**
      * Creates a new AgentManager with the specified lists of agents and
@@ -327,11 +322,7 @@ public class AgentManager implements Serializable {
                     continue;
                 } else if (!registered) {
                     agent.setCurrentAction(new WaitBeforeOtherAction(agent, tickDuration, action));
-                    // System.out.println("Agent " + agent.getName() + " decided to "+agent.getLastSelectedDecision()+" but could not register the action " + action + " and will wait before performing it. Decision factors: "
-                    //     + agent.getCurrentOwnDecisionMakingFactor());
                 }
-                // System.out.println("Agent " + agent.getName() + " decided to "+agent.getLastSelectedDecision()+" and perform " + agent.getCurrentAction() + " with decision factors: "
-                //     + agent.getCurrentOwnDecisionMakingFactor());
 
             } else if (agent.isOnEdge()) {
                 EdgeContext decisionContext = decisionContextProvider.getEdgeContext(agent.getCurrentEdge());
@@ -339,12 +330,7 @@ public class AgentManager implements Serializable {
                     continue;
                 }
                 AgentAction action = agent.makeEdgeDecision(decisionContext, agentSettings);
-                // if (agent.getLastSelectedEdgeDecision() ==
-                // AgentPossibleEdgeDecision.BACKTRACK) {
-                // System.out.println(
-                // "Agent " + agent.getName() + " is backtracking from edge " +
-                // agent.getCurrentEdge());
-                // }
+
                 boolean registered = decisionContextProvider.registerChosenAction(agent, action);
                 if (action == null) {
                     throw new AgentStateException("Agent " + agent.getName() + " is on edge " + agent.getCurrentEdge()

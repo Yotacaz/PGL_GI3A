@@ -11,14 +11,14 @@ import java.util.function.ToDoubleFunction;
 
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.agent.behaviour.agentActions.FollowSingleEdgeAction;
-import fr.cy.model.agent.behaviour.decisions.AgentNodeDecisionScore;
+import fr.cy.model.agent.behaviour.decisions.AgentPossibleNodeDecisionScore;
 import fr.cy.model.agent.behaviour.decisions.AgentPossibleEdgeDecision;
 import fr.cy.model.agent.behaviour.decisions.AgentPossibleNodeDecision;
-import fr.cy.model.agent.behaviour.decisions.EdgeContext;
-import fr.cy.model.agent.behaviour.decisions.NodeContext;
 import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 import fr.cy.model.agent.behaviour.properties.AgentPhysicalProperties;
 import fr.cy.model.agent.behaviour.properties.EmotionalState;
+import fr.cy.model.agent.context.EdgeContext;
+import fr.cy.model.agent.context.NodeContext;
 import fr.cy.model.agent.exceptions.AgentStateException;
 import fr.cy.model.graph.GraphException;
 import fr.cy.model.graph.element.Edge;
@@ -66,7 +66,7 @@ public class Agent implements StressInducing, Serializable {
      * in decision-making. This is a class attribute in order to avoid creating a
      * new map for each agent at each decision step
      */
-    private final Map<AgentPossibleNodeDecision, AgentNodeDecisionScore> decisionsScore = new HashMap<>();
+    private final Map<AgentPossibleNodeDecision, AgentPossibleNodeDecisionScore> decisionsScore = new HashMap<>();
 
     /**
      * Map to store the scores of different possible edge decisions for the agent
@@ -251,7 +251,7 @@ public class Agent implements StressInducing, Serializable {
         }
         double totalScore = computeNodeDecisionsScore(agentSettings, decisionContext);
         return makeDecision(totalScore, decisionsScore, AgentPossibleNodeDecision.WAIT,
-                AgentNodeDecisionScore::getScore,
+                AgentPossibleNodeDecisionScore::getScore,
                 (selectedDecision, decisionScore) -> {
                     setLastSelectedDecision(selectedDecision);
                     return setActionFromNodeDecision(selectedDecision, decisionContext, decisionScore);
@@ -328,7 +328,7 @@ public class Agent implements StressInducing, Serializable {
      *         the action cannot be created
      */
     private AgentAction setActionFromNodeDecision(AgentPossibleNodeDecision decision, NodeContext decisionContext,
-            AgentNodeDecisionScore decisionScore) {
+            AgentPossibleNodeDecisionScore decisionScore) {
         AgentAction action = decision.toAgentAction(decisionContext, this, decisionScore);
         nOfTimesNodeDecisionWasSelected.put(decision, nOfTimesNodeDecisionWasSelected.getOrDefault(decision, 0L) + 1);
         setCurrentAction(action);
@@ -372,7 +372,7 @@ public class Agent implements StressInducing, Serializable {
         double totalScore = 0.0;
         for (AgentPossibleNodeDecision possibleDecision : AgentPossibleNodeDecision.values()) {
             double factor = agentSettings.getDecisionMakingFactor(possibleDecision);
-            AgentNodeDecisionScore decisionScore = possibleDecision.computeScore(decisionContext, this,
+            AgentPossibleNodeDecisionScore decisionScore = possibleDecision.computeScore(decisionContext, this,
                     factor,
                     lastSelectedDecision, currentAction, edgeScoreMultipliers);
             decisionsScore.put(possibleDecision, decisionScore);
@@ -428,6 +428,14 @@ public class Agent implements StressInducing, Serializable {
 
             double multiplier = edge.getScoreMultiplierForAgentGoingToNode(behavioralState,
                     edge.getOppositeNode(sourceNode));
+            double spaceOccupiedAtEdgeEntrance = decisionContext.getSpaceOccupiedAtEdgeEntrance(edge);
+            double agentMedianSurfaceArea = AgentSettings.getInstance().getMedianSurfaceAreaTakenByAgent();
+            double availableSpace = Math.max(0.0, edge.getWidth()*agentMedianSurfaceArea - spaceOccupiedAtEdgeEntrance);
+            double availableSpaceAfterEntering = availableSpace - getSurfaceAreaTakenByAgent();
+            if (availableSpaceAfterEntering < 0) {
+                multiplier *= 0.05; // Strong penalty if the edge entrance is physically blocked
+            }
+            
             if (edge.equals(previousEdge)) {
                 multiplier *= agentSettings.getBacktrackingEdgeScoreMultiplier();
             }

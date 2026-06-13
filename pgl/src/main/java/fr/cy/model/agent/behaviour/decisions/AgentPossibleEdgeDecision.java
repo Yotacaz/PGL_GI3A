@@ -12,7 +12,7 @@ import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 
-public enum AgentPossibleEdgeDecision {
+public enum AgentPossibleEdgeDecision implements AgentDecision {
     /** Agent decides to go back to the node it came from. */
     BACKTRACK {
         @Override

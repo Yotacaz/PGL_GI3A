@@ -1,4 +1,4 @@
-package fr.cy.model.agent.behaviour.decisions;
+package fr.cy.model.agent.context;
 
 import java.security.InvalidParameterException;
 import java.util.List;

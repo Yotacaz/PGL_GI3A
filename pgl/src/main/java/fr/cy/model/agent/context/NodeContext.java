@@ -1,4 +1,4 @@
-package fr.cy.model.agent.behaviour.decisions;
+package fr.cy.model.agent.context;
 
 import java.util.List;
 import java.util.Map;
@@ -100,6 +100,9 @@ public class NodeContext extends AbstractGraphElementContext<Edge> {
         return outgoingNearbyAgentsEnteringEdge.getOrDefault(edge, 0);
     }
 
+    public double getSpaceOccupiedAtEdgeEntrance(Edge edge) {
+        return spaceOccupiedAgentEnteringEdge.getOrDefault(edge, 0.0);
+    }
     
     @Override
     boolean registerOutgoingIntent(Edge edge, Agent agent) {
