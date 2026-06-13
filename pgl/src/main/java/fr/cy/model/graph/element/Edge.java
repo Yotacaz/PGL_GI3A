@@ -42,6 +42,15 @@ public final class Edge extends GraphElement {
      */
     private EdgeSegment[] segments;
 
+    /** Number of agents moving in the forward direction (from start to end). */
+    private int agentCountForward = 0;
+    /** Number of agents moving in the backward direction (from end to start). */
+    private int agentCountBackward = 0;
+    /** Total surface occupied by agents moving in the forward direction. */
+    private double totalOccupiedSurfaceForward = 0.0;
+    /** Total surface occupied by agents moving in the backward direction. */
+    private double totalOccupiedSurfaceBackward = 0.0;
+
     /** Fire propagation status. */
     private boolean burningFromStart = false;
     private boolean burningFromEnd = false;
@@ -257,6 +266,10 @@ public final class Edge extends GraphElement {
      */
     public void clearSegments() {
         ensureSegments();
+        this.agentCountForward = 0;
+        this.agentCountBackward = 0;
+        this.totalOccupiedSurfaceForward = 0.0;
+        this.totalOccupiedSurfaceBackward = 0.0;
         for (EdgeSegment segment : segments) {
             segment.clear();
         }
@@ -270,7 +283,7 @@ public final class Edge extends GraphElement {
      * @return {@code true} if the agent moves from start to end, {@code false}
      *         otherwise
      */
-    private boolean isAgentMovingForward(Agent agent) {
+    private boolean isAgentOnEdgeMovingForward(Agent agent) {
         if (!this.equals(agent.getPreviousOrCurrentEdge())) {
             throw new AgentStateException("Agent is not on this edge");
         }
@@ -323,7 +336,7 @@ public final class Edge extends GraphElement {
      */
     public void assignAgentToSegment(Agent agent) {
         ensureSegments();
-        boolean forward = isAgentMovingForward(agent);
+        boolean forward = isAgentOnEdgeMovingForward(agent);
         double position = progressFromStart(agent, forward);
         int index = segmentIndexForProgressFromStart(position);
         segments[index].addAgent(agent, forward);
@@ -536,7 +549,7 @@ public final class Edge extends GraphElement {
      */
     public double getLocalMaxAgentSpeedInDirection(Agent agent) {
         ensureSegments();
-        boolean forward = isAgentMovingForward(agent);
+        boolean forward = isAgentOnEdgeMovingForward(agent);
         double position = progressFromStart(agent, forward);
 
         double sameDensity = getLocalDensity(position, forward);
@@ -546,11 +559,68 @@ public final class Edge extends GraphElement {
         double alpha = settings.getCONGESTION_ALPHA();
         double beta = settings.getCONGESTION_BETA();
         double factor = Math.exp(-alpha * sameDensity - beta * oppositeDensity);
-        // System.out.println("factor = " + factor + " (sameDensity=" + sameDensity + ",
-        // oppositeDensity=" + oppositeDensity + ")");
 
         double speed = getFreeFlowMaxAgentSpeed() * factor;
         return Math.max(speed, 0.1);
+    }
+
+    /**
+     * Returns the total surface occupied by agents moving in the backward
+     * direction.
+     *
+     * @return the total occupied surface for backward-moving agents
+     */
+    public double getTotalOccupiedSurfaceBackward() {
+        return totalOccupiedSurfaceBackward;
+    }
+
+    /**
+     * Returns the total surface occupied by agents moving in the forward direction.
+     *
+     * @return the total occupied surface for forward-moving agents
+     */
+    public double getTotalOccupiedSurfaceForward() {
+        return totalOccupiedSurfaceForward;
+    }
+
+    public double getDirectionalContributionToCongestion(boolean forwardDirection) {
+        double total = getCapacity();
+        return total > 0 ? (forwardDirection ? totalOccupiedSurfaceForward : totalOccupiedSurfaceBackward) / total : 0.0;
+    }
+
+    /**
+     * Returns the ratio of the total surface occupied by agents moving in the
+     * forward direction to the total surface occupied by all agents on the edge.
+     *
+     * @return the forward occupied surface ratio, or 0.0 if there are no agents on
+     *         the edge
+     */
+    public double getOccupiedSurfaceRatioInDirection(boolean forwardDirection) {
+        double total = totalOccupiedSurfaceForward + totalOccupiedSurfaceBackward;
+        return total > 0 ? (forwardDirection ? totalOccupiedSurfaceForward : totalOccupiedSurfaceBackward) / total : 0.0;
+    }
+
+    /**
+     * Returns the count of agents moving in the backward direction.
+     *
+     * @return the count of backward-moving agents
+     */
+    public int getAgentCountBackward() {
+        return agentCountBackward;
+    }
+
+    /**
+     * Returns the count of agents moving in the forward direction.
+     *
+     * @return the count of forward-moving agents
+     */
+    public int getAgentCountForward() {
+        return agentCountForward;
+    }
+
+    @Override
+    public double getOccupiedSpace() {
+        return totalOccupiedSurfaceForward + totalOccupiedSurfaceBackward;
     }
 
     /**
@@ -564,6 +634,60 @@ public final class Edge extends GraphElement {
     public boolean canMaxSizedAgentFitAtEntranceWhenEdgeIsEmpty(Node entranceNode) {
         double maxAgentSurface = AgentSettings.getInstance().getMAX_SURFACE_AREA_TAKEN_BY_AGENT();
         return maxAgentSurface <= width;
+    }
+
+    public boolean isMovingForward(Agent agent) {
+        if (agent.isOnEdge()){
+            return isAgentOnEdgeMovingForward(agent);
+        }
+        return start.equals(Objects.requireNonNull(agent.getCurrentNode()));
+    }
+
+    /**
+     * Registers the addition of an agent to the edge and updates the corresponding
+     * counts and occupied surfaces.
+     *
+     * @param agent the agent to add
+     */
+    @Override
+    protected void registerAgentAddition(Agent agent) {
+        super.registerAgentAddition(agent);
+        boolean forward = isMovingForward(agent);
+        if (forward) {
+            this.agentCountForward++;
+            this.totalOccupiedSurfaceForward += agent.getSurfaceAreaTakenByAgent();
+        } else {
+            this.agentCountBackward++;
+            this.totalOccupiedSurfaceBackward += agent.getSurfaceAreaTakenByAgent();
+        }
+    }
+
+    /**
+     * Removes an agent from the edge and updates the corresponding counts and
+     * occupied surfaces.
+     *
+     * @param agent the agent to remove
+     * @return {@code true} if the agent was successfully removed, {@code false}
+     *         otherwise
+     */
+    @Override
+    public boolean removeAgent(Agent agent) {
+        boolean removed = super.removeAgent(agent);
+        if (removed) {
+            boolean forward = isMovingForward(agent);
+            if (forward) {
+                this.agentCountForward--;
+                this.totalOccupiedSurfaceForward -= agent.getSurfaceAreaTakenByAgent();
+            } else {
+                this.agentCountBackward--;
+                this.totalOccupiedSurfaceBackward -= agent.getSurfaceAreaTakenByAgent();
+            }
+        }
+        this.agentCountBackward = Math.max(0, this.agentCountBackward); //dirty fix
+        this.agentCountForward = Math.max(0, this.agentCountForward);
+        this.totalOccupiedSurfaceBackward = Math.max(0.0, this.totalOccupiedSurfaceBackward);
+        this.totalOccupiedSurfaceForward = Math.max(0.0, this.totalOccupiedSurfaceForward);
+        return removed;
     }
 
     @Override

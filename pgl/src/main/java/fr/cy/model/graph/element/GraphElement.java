@@ -111,7 +111,7 @@ public sealed abstract class GraphElement implements StressInducing, Serializabl
      *
      * @param a The agent entering the element.
      */
-    private void registerAgentAddition(Agent a) {
+    protected void registerAgentAddition(Agent a) {
         agents.add(a);
         incrementTotalAgentsCount();
         recordCongestionMeasure();
@@ -160,13 +160,15 @@ public sealed abstract class GraphElement implements StressInducing, Serializabl
      *
      * @param a The agent to remove.
      */
-    public void removeAgent(Agent a) {
+    public boolean removeAgent(Agent a) {
         if (agents.remove(a)) {
             recordCongestionMeasure();
             if (congestionWaitTimes != null) {
                 congestionWaitTimes.remove(a);
             }
+            return true;
         }
+        return false;
     }
 
     // =========================================================================

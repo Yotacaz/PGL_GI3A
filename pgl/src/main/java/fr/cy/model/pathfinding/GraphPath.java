@@ -107,6 +107,10 @@ public class GraphPath implements Serializable {
         return nodes.isEmpty() ? null : nodes.get(0);
     }
     
+    public Edge getStartEdge() {
+        return edges.isEmpty() ? null : edges.get(0);
+    }
+
     /**
      * Gets the destination (end) node of the path.
      * 

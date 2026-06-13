@@ -1,6 +1,5 @@
 package fr.cy.model.agent.context;
 
-import java.util.List;
 import java.util.Map;
 
 import fr.cy.model.agent.Agent;
@@ -16,7 +15,7 @@ import fr.cy.model.pathfinding.GraphPath;
  * making decisions at a node, including available edges, nearby agents, recommended
  * paths, and congestion information.</p>
  */
-public class NodeContext extends AbstractGraphElementContext<Edge> {
+public class NodeContext extends AbstractGraphElementContext<Edge>  {
     private static final long serialVersionUID = 1L;
     
     /** The node from which the decision is made */
@@ -53,7 +52,7 @@ public class NodeContext extends AbstractGraphElementContext<Edge> {
      */
     NodeContext(Node sourceNode, GraphPath recommendedPath, GraphPath shortestPathToExit,
             Map<Edge, Integer> outgoingNearbyAgents, Map<Edge, Double> spaceOccupiedAgentEnteringEdge) {
-        super(sourceNode.getNeighbors());
+        super(CongestionStats.computeCongestionStatsForEdge(sourceNode.getEdges(), sourceNode));
         this.sourceNode = sourceNode;
         this.recommendedPath = recommendedPath;
         this.shortestPathToExit = shortestPathToExit;
@@ -69,15 +68,6 @@ public class NodeContext extends AbstractGraphElementContext<Edge> {
      */
     public CongestionStats<Edge> getCongestionStatsForOutgoingEdges() {
         return getCongestionStatsForAccessibleElements();
-    }
-
-    /**
-     * Gets the outgoing edges sorted by congestion level.
-     * 
-     * @return the list of outgoing edges sorted from least to most congested
-     */
-    public List<Edge> getSortedOutgoingEdgesByCongestion() {
-        return getSortedAccessibleElementsByCongestion();
     }
 
     /**

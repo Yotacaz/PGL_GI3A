@@ -131,9 +131,6 @@ public abstract class AgentAction implements Serializable {
 	 */
 	public abstract Node getClosestTargetNode();
 
-	//TODO
-	/** @return the final destination graph element of this action, or null if none. For visualization purposes.*/
-	// public abstract GraphElement getCurrentTargetGraphElement();
 
 	/**
 	 * Computes the hash code for this action.
