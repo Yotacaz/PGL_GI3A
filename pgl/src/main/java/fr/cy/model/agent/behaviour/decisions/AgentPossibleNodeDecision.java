@@ -122,9 +122,11 @@ public enum AgentPossibleNodeDecision implements AgentDecision {
             AgentDecisionalProperties agentState = agent.getBehavioralState();
             Node sourceNode = context.getSourceNode();
             int firstEdgeIndex = -1;
-            if (context.getRecommendedPath() != null) {
+            if (context.getRecommendedPath() != null && context.getRecommendedPath().getEdges() != null
+                    && !context.getRecommendedPath().getEdges().isEmpty()) {
                 GraphPath recommendedPath = context.getRecommendedPath();
-                Edge startEdge = Objects.requireNonNull(recommendedPath.getStartEdge());
+                Edge startEdge = recommendedPath.getStartEdge();
+                
                 totalScoreForPreferredNeighboringEdges = computeEdgesScore(sourceNode.getOutgoingEdges(),
                         edge -> edge.equals(startEdge) ? 1.0 : 0.0,
                         preferredNeighboringEdges, edgeScoreMultipliers);
@@ -229,10 +231,11 @@ public enum AgentPossibleNodeDecision implements AgentDecision {
             Node sourceNode = context.getSourceNode();
             Map<Edge, Double> preferredNeighboringEdges = new HashMap<>();
             double totalScoreForPreferredNeighboringEdges = 0.0;
-            boolean hasRecommendedPath = context.getRecommendedPath() != null;
+            boolean hasRecommendedPath = context.getShortestPathToExit() != null;
             int firstEdgeIndex = -1;
-            if (hasRecommendedPath) {
-                List<Edge> recommendedPathEdges = context.getRecommendedPath().getEdges();
+            if (hasRecommendedPath && context.getShortestPathToExit().getEdges() != null
+                    && !context.getShortestPathToExit().getEdges().isEmpty()) {
+                List<Edge> recommendedPathEdges = context.getShortestPathToExit().getEdges();
                 firstEdgeIndex = sourceNode.getOutgoingEdges().indexOf(recommendedPathEdges.get(0));
                 totalScoreForPreferredNeighboringEdges = computeEdgesScore(sourceNode.getOutgoingEdges(),
                         edge -> recommendedPathEdges.contains(edge) ? 1.0 : 0.0,
@@ -255,7 +258,7 @@ public enum AgentPossibleNodeDecision implements AgentDecision {
                 AgentPossibleNodeDecisionScore decisionScore) {
             Map<Edge, Double> preferredEdges = decisionScore.getPreferredNeighboringEdges();
             double totalScore = decisionScore.getTotalScoreForPreferredNeighboringEdges();
-            Edge chosenEdge = selectEdgeBasedOnScores(preferredEdges, totalScore); // FIXME: temporary solution, should
+            Edge chosenEdge = selectEdgeBasedOnScores(preferredEdges, totalScore); // temporary solution, should
                                                                                    // directly follow the recommended
                                                                                    // path without random selection
             Node targetNode = Objects.requireNonNull(chosenEdge.getOppositeNode(agent.getCurrentNode()));
