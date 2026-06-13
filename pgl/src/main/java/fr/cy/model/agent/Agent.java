@@ -101,7 +101,7 @@ public class Agent implements StressInducing, Serializable {
      * Current behavioral state of the agent, used to influence decision-making and
      * stress levels
      */
-    private AgentDecisionalProperties behavioralState;
+    private final AgentDecisionalProperties behavioralState;
 
     /**
      * Current progress along the edge, between 0 and 1
@@ -235,7 +235,10 @@ public class Agent implements StressInducing, Serializable {
      *                          above which the agent starts panicking
      * @param crowdingTolerance the crowding tolerance of the agent, between 0 and
      *                          1, above which the agent starts panicking
-     * <p>Should not be multithreaded, as it uses a static {@code IdManager}.</p>
+     *                          <p>
+     *                          Should not be multithreaded, as it uses a static
+     *                          {@code IdManager}.
+     *                          </p>
      */
     @Deprecated
     public Agent(String name, double maxSpeed, double stressTolerance, double crowdingTolerance) {
@@ -251,7 +254,8 @@ public class Agent implements StressInducing, Serializable {
      * @return the AgentAction to be performed based on the decision
      */
     AgentAction makeNodeDecision(NodeContext decisionContext, AgentSettings agentSettings) {
-        if (decisionContext.getAccessibleElements().isEmpty()) {
+        Node sourceNode = decisionContext.getSourceNode();
+        if (sourceNode.getOutgoingEdges().isEmpty()) {
             return getCurrentAction(); // No accessible elements, cannot make a decision
         }
         double totalScore = computeNodeDecisionsScore(agentSettings, decisionContext);
@@ -272,9 +276,6 @@ public class Agent implements StressInducing, Serializable {
      * @return the AgentAction to be performed based on the decision
      */
     AgentAction makeEdgeDecision(EdgeContext decisionContext, AgentSettings agentSettings) {
-        if (decisionContext.getAccessibleElements().isEmpty()) {
-            return getCurrentAction(); // No accessible elements, cannot make a decision
-        }
         double totalScore = computeAgentEdgeDecisionsScore(agentSettings, decisionContext);
         return makeDecision(totalScore, edgeDecisionsScore, AgentPossibleEdgeDecision.CONTINUE,
                 Double::doubleValue,
@@ -398,9 +399,17 @@ public class Agent implements StressInducing, Serializable {
     private double computeAgentEdgeDecisionsScore(AgentSettings agentSettings, EdgeContext decisionContext) {
         if (!isOnEdge())
             throw new AgentStateException("cannot make an edge decision when not on edge");
-        Map<Node, Double> nodeScoreMultipliers = computeNodeScoreMultipliersForEdgeDecision(decisionContext);
+        Map<Node, Double> nodeScoreMultipliers = Objects
+                .requireNonNull(computeNodeScoreMultipliersForEdgeDecision(decisionContext));
         Node currentTargetNode = Objects.requireNonNull(getCurrentNodeOrNextNodeIfOnEdge());
         double totalScore = 0.0;
+        Edge sourceEdge = Objects.requireNonNull(decisionContext.getSourceEdge());
+        if (!sourceEdge.equals(getCurrentEdge())) {
+            throw new AgentStateException("Current edge does not match the source edge in the decision context");
+        }
+        if (!currentTargetNode.equals(sourceEdge.getStart()) && !currentTargetNode.equals(sourceEdge.getEnd())) {
+            throw new AgentStateException("Current target node is not an endpoint of the current edge");
+        }
         for (AgentPossibleEdgeDecision possibleDecision : AgentPossibleEdgeDecision.values()) {
             double factor = agentSettings.getDecisionMakingFactor(possibleDecision);
             double decisionScore = possibleDecision.computeScore(currentTargetNode, behavioralState,
@@ -421,7 +430,7 @@ public class Agent implements StressInducing, Serializable {
      * @return a list of score multipliers in the same order as the outgoing edges
      */
     private List<Double> computeEdgeScoreMultipliersForNodeDecision(NodeContext decisionContext) {
-        List<Edge> outgoingEdges = decisionContext.getOutgoingEdges();
+        List<Edge> outgoingEdges = decisionContext.getSourceNode().getOutgoingEdges();
         List<Double> multipliers = new ArrayList<>(outgoingEdges.size());
         Node sourceNode = decisionContext.getSourceNode();
         if (!isOnNode()) {
@@ -429,20 +438,26 @@ public class Agent implements StressInducing, Serializable {
         }
         Edge previousEdge = getPreviousOrCurrentEdge();
         AgentSettings agentSettings = AgentSettings.getInstance();
-        for (Edge edge : decisionContext.getOutgoingEdges()) {
+        double edgeDirectionDisrespectMult = agentSettings.getEDGE_DIRECTION_DISRESPECT();
+        for (Edge edge : outgoingEdges) {
 
-            double multiplier = edge.getScoreMultiplierForAgentGoingToNode(behavioralState,
+            double multiplier = edge.getScoreMultiplierForAgentGoingToNode(behavioralState, physicalProperties,
                     edge.getOppositeNode(sourceNode));
             double spaceOccupiedAtEdgeEntrance = decisionContext.getSpaceOccupiedAtEdgeEntrance(edge);
             double agentMedianSurfaceArea = AgentSettings.getInstance().getMedianSurfaceAreaTakenByAgent();
-            double availableSpace = Math.max(0.0, edge.getWidth()*agentMedianSurfaceArea - spaceOccupiedAtEdgeEntrance);
+            double availableSpace = Math.max(0.0,
+                    edge.getWidth() * agentMedianSurfaceArea - spaceOccupiedAtEdgeEntrance);
             double availableSpaceAfterEntering = availableSpace - getSurfaceAreaTakenByAgent();
             if (availableSpaceAfterEntering < 0) {
                 multiplier *= 0.05; // Strong penalty if the edge entrance is physically blocked
             }
-            
+
             if (edge.equals(previousEdge)) {
                 multiplier *= agentSettings.getBacktrackingEdgeScoreMultiplier();
+            }
+            if (edge.isDirected() && edge.getStart().equals(sourceNode)) { // bad direction
+                multiplier *= Math.pow(edgeDirectionDisrespectMult,
+                        getEmotionalState().getNumberOfEdgeDirectionDisrespectApplications());
             }
             multipliers.add(multiplier);
         }
@@ -460,23 +475,48 @@ public class Agent implements StressInducing, Serializable {
         if (!isOnEdge()) {
             throw new AgentStateException("Agent should be on a node to compute edge score multipliers");
         }
-        List<Node> accessibleNodes = decisionContext.getAccessibleNodes();
-        Map<Node, Double> multipliers = new HashMap<>(accessibleNodes.size());
+        Map<Node, Double> multipliers = new HashMap<>(2);// there are always 2 nodes at each end of an edge
         double backtrackingMult = AgentSettings.getInstance().getBacktrackingEdgeScoreMultiplier();
-        if (this.getCurrentNodeOrNextNodeIfOnEdge() == null) {
-            this.getCurrentNodeOrNextNodeIfOnEdge();
-        }
+        double edgeDirectionDisrespectMult = AgentSettings.getInstance().getEDGE_DIRECTION_DISRESPECT();
         Node targetNode = Objects.requireNonNull(this.getCurrentNodeOrNextNodeIfOnEdge());
         Edge currentEdge = Objects.requireNonNull(getCurrentEdge());
         Node previousTargetNode = Objects.requireNonNull(currentEdge.getOppositeNode(targetNode));
-        for (Node node : accessibleNodes) {
-            double multiplier = node.getScoreMultiplierForAgent(behavioralState);
-            if (node.equals(previousTargetNode)) {
-                multiplier *= backtrackingMult;
-            }
-            multipliers.put(node, multiplier);
-        }
+        Node startNode = Objects.requireNonNull(currentEdge.getStart());
+        Node endNode = Objects.requireNonNull(currentEdge.getEnd());
+        double startNodeScoreMultiplier = computeSingleNodeScoreForEdgeDecision(startNode, currentEdge,
+                previousTargetNode, backtrackingMult, edgeDirectionDisrespectMult);
+        double endNodeScoreMultiplier = computeSingleNodeScoreForEdgeDecision(endNode, currentEdge, previousTargetNode,
+                backtrackingMult, edgeDirectionDisrespectMult);
+        multipliers.put(startNode, startNodeScoreMultiplier);
+        multipliers.put(endNode, endNodeScoreMultiplier);
+
         return multipliers;
+    }
+
+    /**
+     * Computes the score for a single node when making an edge decision.
+     *
+     * @param node                        the node for which to compute the score
+     * @param edge                        the edge from which the decision is being
+     *                                    made
+     * @param behavioralState             the agent's behavioral state
+     * @param previousTargetNode          the node that was previously targeted
+     * @param backtrackingMult            the multiplier for backtracking decisions
+     * @param edgeDirectionDisrespectMult the multiplier for disrespected edge
+     *                                    directions
+     * @return the computed score for the node
+     */
+    private double computeSingleNodeScoreForEdgeDecision(Node node, Edge edge, Node previousTargetNode,
+            double backtrackingMult, double edgeDirectionDisrespectMult) {
+        double multiplier = node.getScoreMultiplierForAgent(behavioralState, physicalProperties);
+        if (edge.isDirected() && edge.getStart().equals(node)) { // bad direction
+            multiplier *= Math.pow(edgeDirectionDisrespectMult,
+                    getEmotionalState().getNumberOfEdgeDirectionDisrespectApplications());
+        }
+        if (node.equals(previousTargetNode)) {
+            multiplier *= backtrackingMult;
+        }
+        return multiplier;
     }
 
     /**
@@ -533,7 +573,8 @@ public class Agent implements StressInducing, Serializable {
             assert previousOrCurrentNode != null || previousOrCurrentEdge == null
                     : "Agent on edge should have a previous or current node";
             maxElemSpeed = previousOrCurrentEdge == null ? Double.MAX_VALUE
-                    : previousOrCurrentEdge.getLocalMaxAgentSpeedInDirection(this);        }
+                    : previousOrCurrentEdge.getLocalMaxAgentSpeedInDirection(this);
+        }
         double agentMaxSpeed = getEffectiveSpeedOutsideOfGraph();
         double effectiveSpeed = Math.min(agentMaxSpeed, maxElemSpeed);
         assert effectiveSpeed >= 0 : "Effective max speed should be non-negative";
@@ -1173,13 +1214,13 @@ public class Agent implements StressInducing, Serializable {
     /**
      * Checks if the agent is alive (health > 0).
      * 
-     * @return true if the agent is alive, false if the agent is dead (health is 0 or less).
-
+     * @return true if the agent is alive, false if the agent is dead (health is 0
+     *         or less).
+     * 
      */
     public boolean isAlive() {
         return physicalProperties.isAlive();
     }
-
 
     /**
      * @return the physical properties of the agent

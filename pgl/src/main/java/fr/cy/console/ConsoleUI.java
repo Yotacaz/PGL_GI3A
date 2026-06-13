@@ -1,7 +1,7 @@
 package fr.cy.console;
 
 import fr.cy.model.agent.Agent;
-import fr.cy.model.agent.behaviour.properties.EmotionalState;
+import fr.cy.model.agent.properties.EmotionalState;
 import fr.cy.model.fire.Fire;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.GraphElement;

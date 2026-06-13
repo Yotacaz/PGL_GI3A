@@ -1,7 +1,6 @@
 package fr.cy.model.agent.context;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,24 +105,6 @@ public class ContextProvider implements Serializable {
             throw new AgentStateException(
                     "Agent is not on a node or an edge, cannot register chosen action in context");
         }
-
-        // Edge currentEdge = agent.getCurrentEdge();
-        // Node previousNode = agent.getPreviousOrCurrentNode();
-        // if (currentEdge == null || previousNode == null) {
-        //     return false;
-        // }
-
-        // EdgeContext context = cachedEdgesContexts.get(currentEdge);
-        // if (context == null) {
-        //     return false;
-        // }
-
-        // Edge targetEdge = action.getClosestTargetEdge();
-        // if (targetEdge == null || !targetEdge.equals(currentEdge)) {
-        //     return true;
-        // }
-        // Node targetNode = currentEdge.getOppositeNode(previousNode);
-        // return context.registerOutgoingIntent(targetNode, agent);
     }
 
     private NodeContext constructNodeContext(Node node) {
@@ -148,8 +129,7 @@ public class ContextProvider implements Serializable {
         //get the recommended and the shortest path to exit for the node context
         GraphPath recommendedPath = pathFinder.shortestPath(node);
         // GraphPath shortestPathToExit = pathFinder.shortestPathToExit(node);
-        List<Edge> outgoingEdges = currentNode.getOutgoingEdges();
-        return new NodeContext(currentNode, recommendedPath, null, outgoingEdges, nearbyOutgoingAgents, spaceOccupiedAtEdgesEntrance);
+        return new NodeContext(currentNode, recommendedPath, null, nearbyOutgoingAgents, spaceOccupiedAtEdgesEntrance);
     }
 
     private EdgeContext constructEdgeContext(Edge edge) {
@@ -157,13 +137,9 @@ public class ContextProvider implements Serializable {
         // agent.getDestinationNode());
         Edge currentEdge = Objects.requireNonNull(edge,
                 "Edge must be valid to construct decision context");
-        List<Node> accessiblesNodes = new ArrayList<>();
-        accessiblesNodes.add(currentEdge.getStart());
-        if (!currentEdge.isDirected()) {
-            accessiblesNodes.add(currentEdge.getEnd());
-        }
+        
 
-        return new EdgeContext(currentEdge, accessiblesNodes);
+        return new EdgeContext(currentEdge);
     }
 
     @Override

@@ -2,7 +2,7 @@ package fr.cy.view;
 
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentSettings;
-import fr.cy.model.agent.behaviour.properties.EmotionalState;
+import fr.cy.model.agent.properties.EmotionalState;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.GraphElement;
 import fr.cy.model.graph.element.Node;

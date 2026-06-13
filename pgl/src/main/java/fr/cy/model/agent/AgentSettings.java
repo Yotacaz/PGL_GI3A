@@ -35,54 +35,76 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Immutable map of default decision-making factors for each possible agent decision type.
-     * These factors influence how likely an agent is to choose each type of decision.
+     * Immutable map of default decision-making factors for each possible agent
+     * decision type.
+     * These factors influence how likely an agent is to choose each type of
+     * decision.
      */
     private final Map<AgentPossibleNodeDecision, Double> defaultNodeDecisionMakingFactors = new EnumMap<>(
             AgentPossibleNodeDecision.class);
 
     /**
-     * Immutable map of default decision-making factors for each possible edge decision type.
-     * These factors influence how likely an agent is to choose each type of edge decision.
+     * Immutable map of default decision-making factors for each possible edge
+     * decision type.
+     * These factors influence how likely an agent is to choose each type of edge
+     * decision.
      */
     private final Map<AgentPossibleEdgeDecision, Double> defaultEdgeDecisionMakingFactors = new EnumMap<>(
             AgentPossibleEdgeDecision.class);
     {
         // Initialize decision-making factors for each decision type
-        defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_CROWD, 2.0);
+        defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_CROWD, 4.0);
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_LESS_CROWDED_PATH, 0.1);
-        defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_RECOMMENDED_PATH, 20.0);
+        defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_RECOMMENDED_PATH, 2.0);
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_SHORTEST_PATH, 0.05);
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.NICEST_PATH, 0.2);
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.RANDOM, 0.5);
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.CONTINUE_LAST_ACTION, 2.0);
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.WAIT, 1.0);
 
-        defaultEdgeDecisionMakingFactors.put(AgentPossibleEdgeDecision.CONTINUE, 2.0); //prefer continuing on the current edge
+        defaultEdgeDecisionMakingFactors.put(AgentPossibleEdgeDecision.CONTINUE, 2.0); // prefer continuing on the
+                                                                                       // current edge
         defaultEdgeDecisionMakingFactors.put(AgentPossibleEdgeDecision.BACKTRACK, 1.0);
         defaultEdgeDecisionMakingFactors.put(AgentPossibleEdgeDecision.WAIT_BEFORE_ACTION, 0.05);
     }
 
-    /* Default speeds and tolerances for agents, can be overridden by individual agents  */
+    /*
+     * Default speeds and tolerances for agents, can be overridden by individual
+     * agents
+     */
     /** Walking speed for agents in m/s */
     private double WALKING_SPEED = 1.5;
     /** Running speed for agents in m/s */
     private double RUNNING_SPEED = 3.0;
     /** Maximum running speed for agents, derived from RUNNING_SPEED in m/s */
     private double MAX_RUNNING_SPEED = RUNNING_SPEED * 1.5;
-    /** Reduction factor applied to speed when walking instead of running, derived from WALKING_SPEED and RUNNING_SPEED */
+    /**
+     * Reduction factor applied to speed when walking instead of running, derived
+     * from WALKING_SPEED and RUNNING_SPEED
+     */
     private double WALK_SPEED_REDUCTION_FACTOR = WALKING_SPEED / RUNNING_SPEED;
 
-    /** Minimum max speed for every agent in m/s (ie: minimum speed at which an agent goes when running)*/
+    /**
+     * Factor that influences how much agents respect the direction of edges,
+     * between 0 and 1 the factor is applied a number of time depending on the
+     * emotional state of the agent (three times for calm agents, once for selfish
+     * agents, none for panicked agents)
+     */
+    private double EDGE_DIRECTION_DISRESPECT = 0.9;
+
+    /**
+     * Minimum max speed for every agent in m/s (ie: minimum speed at which an agent
+     * goes when running)
+     */
     private double MIN_AGENT_MAX_SPEED = 1.0;
 
-    /** Minimum stress tolerance for every agent between 0 and 1*/
+    /** Minimum stress tolerance for every agent between 0 and 1 */
     private double MIN_STRESS_TOLERANCE = 0.0;
-    /** Maximum stress tolerance for every agent between 0 and 1*/
+    /** Maximum stress tolerance for every agent between 0 and 1 */
     private double MAX_STRESS_TOLERANCE = 1.0;
-    /** Minimum crowding tolerance for every agent between 0 and 1*/
+    /** Minimum crowding tolerance for every agent between 0 and 1 */
     private double MIN_CROWDING_TOLERANCE = 0.0;
-    /** Maximum crowding tolerance for every agent between 0 and 1*/
+    /** Maximum crowding tolerance for every agent between 0 and 1 */
     private double MAX_CROWDING_TOLERANCE = 1.0;
     /** Minimum tendency to repeat the last decision */
     private double MIN_REPEAT_LAST_DECISION_TENDENCY = 0.875;
@@ -127,11 +149,14 @@ public class AgentSettings implements Serializable {
      * than {@link #CONGESTION_ALPHA} because facing a counter-flow is more
      * disruptive than following the crowd.
      */
-    private double CONGESTION_BETA = 6.0;
+    private double CONGESTION_BETA = 5.0;
 
     /**
-     * Gets an immutable view of the default decision-making factors for node decisions.
-     * @return an unmodifiable map of default decision-making factors for node decisions
+     * Gets an immutable view of the default decision-making factors for node
+     * decisions.
+     * 
+     * @return an unmodifiable map of default decision-making factors for node
+     *         decisions
      */
     public Map<AgentPossibleNodeDecision, Double> getImmutableDecisionMakingFactors() {
         return Collections.unmodifiableMap(defaultNodeDecisionMakingFactors);
@@ -141,7 +166,8 @@ public class AgentSettings implements Serializable {
      * Retrieves the decision-making factor for a given agent decision type.
      *
      * @param decision The type of agent decision to retrieve the factor for
-     * @return The decision-making factor associated with the specified decision type
+     * @return The decision-making factor associated with the specified decision
+     *         type
      */
     public double getDecisionMakingFactor(AgentPossibleNodeDecision decision) {
         return defaultNodeDecisionMakingFactors.get(decision);
@@ -149,22 +175,27 @@ public class AgentSettings implements Serializable {
 
     /**
      * Retrieves the decision-making factor for a given edge decision type.
+     * 
      * @param decision The type of edge decision to retrieve the factor for
-     * @return The decision-making factor associated with the specified edge decision type
+     * @return The decision-making factor associated with the specified edge
+     *         decision type
      */
     public double getDecisionMakingFactor(AgentPossibleEdgeDecision decision) {
         return defaultEdgeDecisionMakingFactors.get(decision);
     }
 
     /**
-     * Updates the walking speed reduction factor based on the current walking and running speeds.
+     * Updates the walking speed reduction factor based on the current walking and
+     * running speeds.
      */
     private void updateWALK_SPEED_REDUCTION_FACTOR() {
         this.WALK_SPEED_REDUCTION_FACTOR = WALKING_SPEED / RUNNING_SPEED;
     }
 
     /**
-     * Validates the coherence of walking and running speeds, ensuring that they are positive and that running speed is not less than walking speed.
+     * Validates the coherence of walking and running speeds, ensuring that they are
+     * positive and that running speed is not less than walking speed.
+     * 
      * @param walkingSpeed the walking speed to validate
      * @param runningSpeed the running speed to validate
      */
@@ -181,9 +212,12 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Validates the coherence of agent maximum speeds, ensuring that they are positive and that the maximum running speed is not less than the minimum agent max speed.
+     * Validates the coherence of agent maximum speeds, ensuring that they are
+     * positive and that the maximum running speed is not less than the minimum
+     * agent max speed.
+     * 
      * @param minAgentMaxSpeed the minimum agent max speed to validate
-     * @param maxRunningSpeed the maximum running speed to validate
+     * @param maxRunningSpeed  the maximum running speed to validate
      */
     private void validateAgentMaxSpeedCoherence(double minAgentMaxSpeed, double maxRunningSpeed) {
         if (minAgentMaxSpeed <= 0) {
@@ -196,8 +230,12 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Sets the running speed for agents and updates related parameters to maintain coherence. The walking speed reduction factor and maximum running speed are updated based on the new running speed.
-     * @param runningSpeed the new running speed to set for agents, must be greater than zero and not less than the current walking speed
+     * Sets the running speed for agents and updates related parameters to maintain
+     * coherence. The walking speed reduction factor and maximum running speed are
+     * updated based on the new running speed.
+     * 
+     * @param runningSpeed the new running speed to set for agents, must be greater
+     *                     than zero and not less than the current walking speed
      */
     public void setRUNNING_SPEED(double runningSpeed) {
         validateSpeedCoherence(WALKING_SPEED, runningSpeed);
@@ -209,10 +247,14 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Sets the maximum running speed for agents, ensuring it is coherent 
-     * with the minimum agent max speed. The running speed is not directly set by this method,
-     *  but it ensures that the maximum running speed is not less than the minimum agent max speed.
-     * @param walkingSpeed the new walking speed to set for agents, must be greater than zero and not greater than the current running speed
+     * Sets the maximum running speed for agents, ensuring it is coherent
+     * with the minimum agent max speed. The running speed is not directly set by
+     * this method,
+     * but it ensures that the maximum running speed is not less than the minimum
+     * agent max speed.
+     * 
+     * @param walkingSpeed the new walking speed to set for agents, must be greater
+     *                     than zero and not greater than the current running speed
      */
     public void setWALKING_SPEED(double walkingSpeed) {
         validateSpeedCoherence(walkingSpeed, RUNNING_SPEED);
@@ -221,8 +263,12 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Sets the minimum agent maximum speed, ensuring it is coherent with the maximum running speed.
-     * @param minAgentMaxSpeed the new minimum agent maximum speed to set, must be greater than zero and not greater than the current maximum running speed
+     * Sets the minimum agent maximum speed, ensuring it is coherent with the
+     * maximum running speed.
+     * 
+     * @param minAgentMaxSpeed the new minimum agent maximum speed to set, must be
+     *                         greater than zero and not greater than the current
+     *                         maximum running speed
      */
     public void setMIN_AGENT_MAX_SPEED(double minAgentMaxSpeed) {
         validateAgentMaxSpeedCoherence(minAgentMaxSpeed, MAX_RUNNING_SPEED);
@@ -231,6 +277,7 @@ public class AgentSettings implements Serializable {
 
     /**
      * Returns the current running speed for agents.
+     * 
      * @return the running speed
      */
     public double getRUNNING_SPEED() {
@@ -239,6 +286,7 @@ public class AgentSettings implements Serializable {
 
     /**
      * Returns the current max running speed for agents.
+     * 
      * @return the running speed
      */
     public double getMAX_RUNNING_SPEED() {
@@ -247,6 +295,7 @@ public class AgentSettings implements Serializable {
 
     /**
      * Returns the current walking speed for agents.
+     * 
      * @return the walking speed
      */
     public double getMIN_AGENT_MAX_SPEED() {
@@ -255,6 +304,7 @@ public class AgentSettings implements Serializable {
 
     /**
      * Returns the current walking speed reduction factor for agents.
+     * 
      * @return the walking speed reduction factor
      */
     public double getWALKING_SPEED() {
@@ -262,7 +312,9 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Returns the current walking speed reduction factor for agents, which is derived from the walking and running speeds.
+     * Returns the current walking speed reduction factor for agents, which is
+     * derived from the walking and running speeds.
+     * 
      * @return the walking speed reduction factor
      */
     public double getWALK_SPEED_REDUCTION_FACTOR() {
@@ -270,7 +322,22 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Returns the minimum stress tolerance for agents, which is a value between 0 and 1 that influences how agents react to stress in their environment.
+     * Returns the factor that influences how much agents respect the direction of
+     * edges. This factor is applied a number of times depending on the emotional
+     * state of the agent (three times for calm agents, once for selfish agents,
+     * none for
+     * panicked agents).
+     * 
+     * @return the edge direction disrespect factor
+     */
+    public double getEDGE_DIRECTION_DISRESPECT() {
+        return EDGE_DIRECTION_DISRESPECT;
+    }
+
+    /**
+     * Returns the minimum stress tolerance for agents, which is a value between 0
+     * and 1 that influences how agents react to stress in their environment.
+     * 
      * @return the minimum stress tolerance
      */
     public double getMIN_STRESS_TOLERANCE() {
@@ -278,7 +345,9 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Returns the maximum stress tolerance for agents, which is a value between 0 and 1 that influences how agents react to stress in their environment.
+     * Returns the maximum stress tolerance for agents, which is a value between 0
+     * and 1 that influences how agents react to stress in their environment.
+     * 
      * @return the maximum stress tolerance
      */
     public double getMAX_STRESS_TOLERANCE() {
@@ -286,7 +355,9 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Returns the minimum crowding tolerance for agents, which is a value between 0 and 1 that influences how agents react to crowding in their environment.
+     * Returns the minimum crowding tolerance for agents, which is a value between 0
+     * and 1 that influences how agents react to crowding in their environment.
+     * 
      * @return the minimum crowding tolerance
      */
     public double getMIN_CROWDING_TOLERANCE() {
@@ -294,7 +365,9 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Returns the maximum crowding tolerance for agents, which is a value between 0 and 1 that influences how agents react to crowding in their environment.
+     * Returns the maximum crowding tolerance for agents, which is a value between 0
+     * and 1 that influences how agents react to crowding in their environment.
+     * 
      * @return the maximum crowding tolerance
      */
     public double getMAX_CROWDING_TOLERANCE() {
@@ -302,7 +375,10 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Returns the minimum repeat last decision tendency for agents, which is a value between 0 and 1 that influences how agents react to repeating their last decision.
+     * Returns the minimum repeat last decision tendency for agents, which is a
+     * value between 0 and 1 that influences how agents react to repeating their
+     * last decision.
+     * 
      * @return the minimum repeat last decision tendency
      */
     public double getMIN_REPEAT_LAST_DECISION_TENDENCY() {
@@ -310,7 +386,10 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Returns the maximum repeat last decision tendency for agents, which is a value between 0 and 1 that influences how agents react to repeating their last decision.
+     * Returns the maximum repeat last decision tendency for agents, which is a
+     * value between 0 and 1 that influences how agents react to repeating their
+     * last decision.
+     * 
      * @return the maximum repeat last decision tendency
      */
     public double getMAX_REPEAT_LAST_DECISION_TENDENCY() {
@@ -318,7 +397,9 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Returns the minimum base own decision making factor for agents, which is a value between 0 and 1 that influences how agents make decisions.
+     * Returns the minimum base own decision making factor for agents, which is a
+     * value between 0 and 1 that influences how agents make decisions.
+     * 
      * @return the minimum base own decision making factor
      */
     public double getMIN_BASE_OWN_DECISION_MAKING_FACTOR() {
@@ -326,7 +407,9 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Returns the maximum base own decision making factor for agents, which is a value between 0 and 1 that influences how agents make decisions.
+     * Returns the maximum base own decision making factor for agents, which is a
+     * value between 0 and 1 that influences how agents make decisions.
+     * 
      * @return the maximum base own decision making factor
      */
     public double getMAX_BASE_OWN_DECISION_MAKING_FACTOR() {
@@ -334,7 +417,9 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Returns the minimum health for agents, a value that can influence how agents react to damage or stress in their environment.
+     * Returns the minimum health for agents, a value that can influence how agents
+     * react to damage or stress in their environment.
+     * 
      * @return the minimum health
      */
     public int getMIN_HEALTH() {
@@ -342,7 +427,9 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Returns the maximum health for agents, a value that can influence how agents react to damage or stress in their environment.
+     * Returns the maximum health for agents, a value that can influence how agents
+     * react to damage or stress in their environment.
+     * 
      * @return the maximum health
      */
     public int getMAX_HEALTH() {
@@ -350,7 +437,9 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Returns the minimum surface area taken by an agent on a node or edge, which can influence how agents interact with their environment and with each other.
+     * Returns the minimum surface area taken by an agent on a node or edge, which
+     * can influence how agents interact with their environment and with each other.
+     * 
      * @return the minimum surface area taken by an agent
      */
     public double getMIN_SURFACE_AREA_TAKEN_BY_AGENT() {
@@ -358,7 +447,9 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Returns the maximum surface area taken by an agent on a node or edge, which can influence how agents interact with their environment and with each other.
+     * Returns the maximum surface area taken by an agent on a node or edge, which
+     * can influence how agents interact with their environment and with each other.
+     * 
      * @return the maximum surface area taken by an agent
      */
     public double getMAX_SURFACE_AREA_TAKEN_BY_AGENT() {
@@ -366,15 +457,21 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Returns the median surface area taken by an agent, calculated as the average of the minimum and maximum surface area values. This can be used as a default or typical value for the space an agent occupies in the environment.
+     * Returns the median surface area taken by an agent, calculated as the average
+     * of the minimum and maximum surface area values. This can be used as a default
+     * or typical value for the space an agent occupies in the environment.
+     * 
      * @return the median surface area taken by an agent
      */
     public double getMedianSurfaceAreaTakenByAgent() {
         return (MIN_SURFACE_AREA_TAKEN_BY_AGENT + MAX_SURFACE_AREA_TAKEN_BY_AGENT) / 2.0;
     }
 
-     /**
-     * Returns the multiplier for stress calculation, which influences how quickly agents become stressed in response to stress-inducing factors in their environment.
+    /**
+     * Returns the multiplier for stress calculation, which influences how quickly
+     * agents become stressed in response to stress-inducing factors in their
+     * environment.
+     * 
      * @return the stress multiplier
      */
     @Deprecated
@@ -388,7 +485,9 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Returns the multiplier for backtracking edge scores, which influences how agents evaluate the option of backtracking on an edge when making decisions.
+     * Returns the multiplier for backtracking edge scores, which influences how
+     * agents evaluate the option of backtracking on an edge when making decisions.
+     * 
      * @return the backtracking edge score multiplier
      */
     public double getBacktrackingEdgeScoreMultiplier() {
@@ -396,15 +495,21 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Sets the multiplier for backtracking edge scores, which influences how agents evaluate the option of backtracking on an edge when making decisions.
-     * @param backtrackingEdgeScoreMultiplier the backtracking edge score multiplier to set
+     * Sets the multiplier for backtracking edge scores, which influences how agents
+     * evaluate the option of backtracking on an edge when making decisions.
+     * 
+     * @param backtrackingEdgeScoreMultiplier the backtracking edge score multiplier
+     *                                        to set
      */
     public void setBacktrackingEdgeScoreMultiplier(double backtrackingEdgeScoreMultiplier) {
         this.backtrackingEdgeScoreMultiplier = backtrackingEdgeScoreMultiplier;
     }
 
     /**
-     * Returns the time step between edge decisions, which determines how frequently agents evaluate their options for edge traversal and make decisions while on edges.
+     * Returns the time step between edge decisions, which determines how frequently
+     * agents evaluate their options for edge traversal and make decisions while on
+     * edges.
+     * 
      * @return the time step between edge decisions in seconds
      */
     public double getStressDecreaseRate() {
@@ -412,7 +517,10 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Returns the rate at which stress increases for agents, which influences how quickly agents become stressed in response to stress-inducing factors in their environment.
+     * Returns the rate at which stress increases for agents, which influences how
+     * quickly agents become stressed in response to stress-inducing factors in
+     * their environment.
+     * 
      * @return the stress increase rate
      */
     public double getStressIncreaseRate() {
@@ -420,7 +528,9 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Sets the rate at which stress decreases for agents, which influences how quickly agents recover from stress.
+     * Sets the rate at which stress decreases for agents, which influences how
+     * quickly agents recover from stress.
+     * 
      * @param stressDecreaseRate the stress decrease rate to set
      */
     public void setStressDecreaseRate(double stressDecreaseRate) {
@@ -428,7 +538,10 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Sets the rate at which stress increases for agents, which influences how quickly agents become stressed in response to stress-inducing factors in their environment.
+     * Sets the rate at which stress increases for agents, which influences how
+     * quickly agents become stressed in response to stress-inducing factors in
+     * their environment.
+     * 
      * @param stressIncreaseRate the stress increase rate to set
      */
     public void setStressIncreaseRate(double stressIncreaseRate) {
@@ -436,15 +549,17 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Returns the time step between edge decisions, which determines how frequently agents evaluate 
+     * Returns the time step between edge decisions, which determines how frequently
+     * agents evaluate
      * their options for edge traversal and make decisions while on edges.
+     * 
      * @return the time step between edge decisions in seconds
      */
     public double getTimeStepBetweenEdgeDecisions() {
         return timeStepBetweenEdgeDecisions;
     }
 
-        /**
+    /**
      * Returns the sensitivity of the local speed model to same-direction density.
      *
      * @return the {@code alpha} coefficient of the local congestion speed model
@@ -452,7 +567,7 @@ public class AgentSettings implements Serializable {
     public double getCONGESTION_ALPHA() {
         return CONGESTION_ALPHA;
     }
- 
+
     /**
      * Sets the sensitivity of the local speed model to same-direction density.
      *
@@ -465,7 +580,7 @@ public class AgentSettings implements Serializable {
         }
         this.CONGESTION_ALPHA = congestionAlpha;
     }
- 
+
     /**
      * Returns the sensitivity of the local speed model to counter-flow density.
      *
@@ -474,7 +589,7 @@ public class AgentSettings implements Serializable {
     public double getCONGESTION_BETA() {
         return CONGESTION_BETA;
     }
- 
+
     /**
      * Sets the sensitivity of the local speed model to counter-flow density.
      *
@@ -490,6 +605,7 @@ public class AgentSettings implements Serializable {
 
     /**
      * Generates a random speed for an agent within the defined bounds.
+     * 
      * @param random the random number generator
      * @return a random speed value
      */
@@ -499,6 +615,7 @@ public class AgentSettings implements Serializable {
 
     /**
      * Generates a random stress tolerance for an agent within the defined bounds.
+     * 
      * @param random the random number generator
      * @return a random stress tolerance value
      */
@@ -508,6 +625,7 @@ public class AgentSettings implements Serializable {
 
     /**
      * Generates a random crowding tolerance for an agent within the defined bounds.
+     * 
      * @param random the random number generator
      * @return a random crowding tolerance value
      */
@@ -516,7 +634,9 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Generates a random tendency to repeat the last decision for an agent within the defined bounds.
+     * Generates a random tendency to repeat the last decision for an agent within
+     * the defined bounds.
+     * 
      * @param random the random number generator
      * @return a random repeat last decision tendency value
      */
@@ -525,7 +645,9 @@ public class AgentSettings implements Serializable {
     }
 
     /**
-     * Generates a random base own decision making factor for an agent within the defined bounds.
+     * Generates a random base own decision making factor for an agent within the
+     * defined bounds.
+     * 
      * @param random the random number generator
      * @return a random base own decision making factor value
      */
@@ -535,6 +657,7 @@ public class AgentSettings implements Serializable {
 
     /**
      * Generates a random health value for an agent within the defined bounds.
+     * 
      * @param random the random number generator
      * @return a random health value
      */
@@ -544,6 +667,7 @@ public class AgentSettings implements Serializable {
 
     /**
      * Generates a random surface area taken by an agent within the defined bounds.
+     * 
      * @param random the random number generator
      * @return a random surface area taken by an agent value
      */
@@ -553,9 +677,10 @@ public class AgentSettings implements Serializable {
 
     /**
      * Generates a random double value within the specified bounds.
+     * 
      * @param random the random number generator
-     * @param min the minimum value
-     * @param max the maximum value
+     * @param min    the minimum value
+     * @param max    the maximum value
      * @return a random double value
      */
     private double randomDoubleBetween(Random random, double min, double max) {
@@ -567,9 +692,10 @@ public class AgentSettings implements Serializable {
 
     /**
      * Generates a random integer value within the specified bounds.
+     * 
      * @param random the random number generator
-     * @param min the minimum value
-     * @param max the maximum value
+     * @param min    the minimum value
+     * @param max    the maximum value
      * @return a random integer value
      */
     private int randomIntBetween(Random random, int min, int max) {

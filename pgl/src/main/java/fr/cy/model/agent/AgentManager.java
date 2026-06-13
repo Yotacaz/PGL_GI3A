@@ -309,9 +309,9 @@ public class AgentManager implements Serializable {
             if (agent.isOnNode()) {
 
                 // HEAVY CONGESTION PENALTY
-                // if (!agent.getCurrentNode().canAgentLeave(agent)) {
-                //     continue; // Penality 2 cycles
-                // }
+                if (!agent.getCurrentNode().canAgentLeave(agent)) {
+                    continue; // Penality 2 cycles
+                }
                 
 
                 NodeContext decisionContext = decisionContextProvider.getNodeContext(agent.getCurrentNode());

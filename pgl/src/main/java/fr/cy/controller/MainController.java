@@ -4,10 +4,10 @@ import java.util.List;
 import java.util.Random;
 
 import fr.cy.model.agent.Agent;
-import fr.cy.model.agent.AgentProfile;
 import fr.cy.model.agent.AgentManager;
 import fr.cy.model.agent.AgentSettings;
-import fr.cy.model.agent.behaviour.properties.EmotionalState;
+import fr.cy.model.agent.properties.AgentProfile;
+import fr.cy.model.agent.properties.EmotionalState;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;

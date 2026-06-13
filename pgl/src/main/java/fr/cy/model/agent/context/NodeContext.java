@@ -52,24 +52,14 @@ public class NodeContext extends AbstractGraphElementContext<Edge> {
      * @param spaceOccupiedAgentEnteringEdge space occupation data for each outgoing edge
      */
     NodeContext(Node sourceNode, GraphPath recommendedPath, GraphPath shortestPathToExit,
-            List<Edge> outgoingEdges,
             Map<Edge, Integer> outgoingNearbyAgents, Map<Edge, Double> spaceOccupiedAgentEnteringEdge) {
-        super(outgoingEdges);
+        super(sourceNode.getNeighbors());
         this.sourceNode = sourceNode;
         this.recommendedPath = recommendedPath;
         this.shortestPathToExit = shortestPathToExit;
         this.outgoingNearbyAgentsEnteringEdge = outgoingNearbyAgents;
         this.spaceOccupiedAgentEnteringEdge = spaceOccupiedAgentEnteringEdge;
         
-    }
-
-    /**
-     * Gets the list of edges leaving this node.
-     * 
-     * @return the list of outgoing edges from the source node
-     */
-    public List<Edge> getOutgoingEdges() {
-        return getAccessibleElements();
     }
 
     /**
@@ -160,7 +150,10 @@ public class NodeContext extends AbstractGraphElementContext<Edge> {
     public String toString() {
         return "DecisionNodeContext{" +
                 "sourceNode=" + (sourceNode == null ? "null" : sourceNode.toString()) +
-                ", outgoingEdges=" + getOutgoingEdges().size() +
+                ",\n recommendedPath=" + (recommendedPath == null ? "null" : recommendedPath.toString()) +
+                ",\n shortestPathToExit=" + (shortestPathToExit == null ? "null" : shortestPathToExit.toString()) +
+                ",\n outgoingNearbyAgentsEnteringEdge=" + (outgoingNearbyAgentsEnteringEdge == null ? "null" : outgoingNearbyAgentsEnteringEdge.toString()) +
+                ",\n spaceOccupiedAgentEnteringEdge=" + (spaceOccupiedAgentEnteringEdge == null ? "null" : spaceOccupiedAgentEnteringEdge.toString()) +
                 '}';
     }
 

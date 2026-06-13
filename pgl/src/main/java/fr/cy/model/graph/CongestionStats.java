@@ -1,6 +1,7 @@
 package fr.cy.model.graph;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -15,7 +16,7 @@ import fr.cy.model.graph.element.GraphElement;
  */
 public class CongestionStats<T extends GraphElement> implements Serializable {
     private static final long serialVersionUID = 1L;
-
+    private static final CongestionsGraphElementComparator COMPARATOR = new CongestionsGraphElementComparator();
     private double maxCongestionLevel;
     private T mostCongestedElement;
     private double minCongestionLevel;
@@ -54,7 +55,7 @@ public class CongestionStats<T extends GraphElement> implements Serializable {
 
     /**
      * Computes congestion statistics for a list of graph elements.
-
+     * 
      * <p>
      * This method identifies the maximum, minimum, average, and total congestion,
      * as well as the most and least congested elements.
@@ -70,20 +71,20 @@ public class CongestionStats<T extends GraphElement> implements Serializable {
         if (graphElements == null || graphElements.isEmpty()) {
             return null;
         }
+        List<T> sortedElements = new ArrayList<>(graphElements);
+        sortedElements.sort(COMPARATOR);
 
-        graphElements.sort(new CongestionsGraphElementComparator());
-
-        double totalCongestionLevel = graphElements.stream().mapToDouble(T::getCongestion).sum();
-        int count = graphElements.size();
+        double totalCongestionLevel = sortedElements.stream().mapToDouble(T::getCongestion).sum();
+        int count = sortedElements.size();
 
         // After sorting, index 0 is the least congested, last index is most congested
-        double minCongestionLevel = graphElements.get(0).getCongestion();
-        double maxCongestionLevel = graphElements.get(count - 1).getCongestion();
+        double minCongestionLevel = sortedElements.get(0).getCongestion();
+        double maxCongestionLevel = sortedElements.get(count - 1).getCongestion();
         double averageCongestionLevel = totalCongestionLevel / count;
 
         return new CongestionStats<>(maxCongestionLevel, minCongestionLevel, averageCongestionLevel,
                 totalCongestionLevel,
-                graphElements.get(count - 1), graphElements.get(0), graphElements, count);
+                sortedElements.get(count - 1), sortedElements.get(0), sortedElements, count);
     }
 
     /** @return The average congestion level across all elements. */

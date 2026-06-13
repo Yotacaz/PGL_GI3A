@@ -215,12 +215,13 @@ public class GraphPath implements Serializable {
     
     @Override
     public String toString() {
-        return "GraphPath{" +
-                "nodeCount=" + nodes.size() +
-                ", edgeCount=" + edges.size() +
-                ", cost=" + pathCost +
-                ", start=" + (getStartNode() != null ? getStartNode().getId() : "null") +
-                ", destination=" + (getDestinationNode() != null ? getDestinationNode().getId() : "null") +
-                "}";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < nodes.size(); i++) {
+            sb.append(nodes.get(i).getId());
+            if (i < nodes.size() - 1) {
+                sb.append(" -> ");
+            }
+        }
+        return sb.toString();
     }
 }

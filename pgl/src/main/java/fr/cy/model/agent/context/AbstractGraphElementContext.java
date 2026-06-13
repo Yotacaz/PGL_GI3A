@@ -3,7 +3,6 @@ package fr.cy.model.agent.context;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 import fr.cy.model.agent.Agent;
 import fr.cy.model.graph.CongestionStats;
@@ -12,20 +11,12 @@ import fr.cy.model.graph.element.GraphElement;
 abstract class AbstractGraphElementContext<T extends GraphElement> implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private final List<T> accessibleElements;
     private final CongestionStats<T> congestionStats;
 
-    AbstractGraphElementContext(List<T> accessibleElements) {
-        this.accessibleElements = Objects.requireNonNull(accessibleElements, "accessibleElements");
-        this.congestionStats = CongestionStats.computeCongestionStats(accessibleElements);
+    AbstractGraphElementContext(List<T> neighbors) {
+        this.congestionStats = CongestionStats.computeCongestionStats(neighbors);//to test if error bc unmodifiable
     }
 
-    /**
-     * @return the list of accessible graph elements (edges or nodes) that the agent can choose from, in an unmodifiable view
-     */
-    public List<T> getAccessibleElements() {
-        return Collections.unmodifiableList(accessibleElements);
-    }
 
     /** @return the congestion statistics for the accessible graph elements, used to inform decision-making can be null if there are no accessible elements 
     */

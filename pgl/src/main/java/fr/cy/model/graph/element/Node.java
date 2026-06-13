@@ -1,8 +1,11 @@
 package fr.cy.model.graph.element;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
+
+import fr.cy.model.agent.properties.AgentDecisionalProperties;
+import fr.cy.model.agent.properties.AgentPhysicalProperties;
 
 /**
  * Represents a node in the graph structure.
@@ -15,7 +18,7 @@ import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
  * 
  * @version 1.0
  */
-public class Node extends GraphElement {
+public final class Node extends GraphElement {
 
     private final int id;
     private double x;
@@ -48,15 +51,15 @@ public class Node extends GraphElement {
     /**
      * Calculates an attractiveness multiplier for an agent based on local node
      * properties, heavily prioritizing exit nodes.
-     * * @param agentState Agent decision properties.
-     * 
+     * @param agentState Agent decision properties.
+     * @param agentPhysicalProperties Agent physical properties.
      * @return Score multiplier.
      */
     @Override
-    public double getScoreMultiplierForAgent(AgentDecisionalProperties agentState) {
-        double scoreMultiplier = super.getScoreMultiplierForAgent(agentState);
+    public double getScoreMultiplierForAgent(AgentDecisionalProperties agentState, AgentPhysicalProperties agentPhysicalProperties) {
+        double scoreMultiplier = super.getScoreMultiplierForAgent(agentState, agentPhysicalProperties);
         if (isExit()) {
-            scoreMultiplier *= 10; // Significant preference for exits
+            scoreMultiplier *= 20; // Significant preference for exits
         }
         return scoreMultiplier;
     }
@@ -120,13 +123,13 @@ public class Node extends GraphElement {
     }
 
     /**
-     * Retrieves neighbors based on connected edges.
+     * Retrieves an unmodifiable list of neighbors based on connected edges.
      * 
-     * @return A list of {@link GraphElement}s connected to this node.
+     * @return A list of {@link Edge}s connected to this node.
      */
     @Override
-    public List<GraphElement> getNeighbors() {
-        return new ArrayList<>(connectedEdges);
+    public List<Edge> getNeighbors() {
+        return Collections.unmodifiableList(connectedEdges);
     }
 
     /**

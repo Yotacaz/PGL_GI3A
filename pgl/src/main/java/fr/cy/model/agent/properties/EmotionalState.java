@@ -7,19 +7,19 @@ public enum EmotionalState {
      * Agent is calm and behaves normally, reducing stress to others around them.
      * This is the default state when stress levels are low.
      */
-    CALM(0.0f, 0.3f, -0.05),
+    CALM(0.0f, 0.3f, -0.05, 2),
     /**
      * Agent is selfish and may start pushing others to escape faster.
      * This state occurs at moderate stress levels where the agent becomes
      * more focused on personal survival.
      */
-    SELFISH(0.3f, 0.7f, 0.05),
+    SELFISH(0.3f, 0.7f, 0.05, 1),
     /**
      * Agent is panicking and may cause more stress to others around it.
      * This is the highest stress state where the agent's behavior becomes
      * erratic and potentially dangerous to others.
      */
-    PANICKING(0.7f, 1.01d, 0.2);
+    PANICKING(0.7f, 1.01d, 0.2, 0);
 
     /** The minimum stress level required to enter this emotional state */
     private final double minStressLevel;
@@ -30,17 +30,22 @@ public enum EmotionalState {
     /** The amount of stress this emotional state induces to other agents */
     private final double stressInducedToOthers;
 
+    /** The number of times the edge direction disrespect factor is applied for this emotional state */
+    private final int numberOfEdgeDirectionDisrespectApplications;
+
     /**
      * Creates an emotional state with the specified stress level boundaries and impact.
      * 
      * @param minStressLevel the minimum stress level for this state
      * @param maxStressLevel the maximum stress level for this state
      * @param stressInducedToOthers the stress impact on other agents
+     * @param numberOfEdgeDirectionDisrespectApplications the number of times the edge direction disrespect factor is applied
      */
-    private EmotionalState(double minStressLevel, double maxStressLevel, double stressInducedToOthers) {
+    private EmotionalState(double minStressLevel, double maxStressLevel, double stressInducedToOthers, int numberOfEdgeDirectionDisrespectApplications) {
         this.minStressLevel = minStressLevel;
         this.maxStressLevel = maxStressLevel;
         this.stressInducedToOthers = stressInducedToOthers;
+        this.numberOfEdgeDirectionDisrespectApplications = numberOfEdgeDirectionDisrespectApplications;
     }
 
     /**
@@ -106,5 +111,9 @@ public enum EmotionalState {
             default:
                 throw new IllegalStateException("Unexpected value: " + this);
         }
+    }
+
+    public int getNumberOfEdgeDirectionDisrespectApplications() {
+        return numberOfEdgeDirectionDisrespectApplications;
     }
 }

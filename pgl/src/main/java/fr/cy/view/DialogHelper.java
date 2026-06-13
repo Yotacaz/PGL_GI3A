@@ -1,7 +1,6 @@
 package fr.cy.view;
 
 import fr.cy.model.agent.Agent;
-import fr.cy.model.agent.behaviour.properties.EmotionalState;
 import fr.cy.model.fire.Fire;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.GraphElement;
@@ -10,7 +9,9 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import java.util.Optional;
-import fr.cy.model.agent.AgentProfile;
+
+import fr.cy.model.agent.properties.AgentProfile;
+import fr.cy.model.agent.properties.EmotionalState;
 
 /**
  * The {@code DialogHelper} class is a utility class providing static methods
