@@ -9,7 +9,7 @@ import java.io.*;
 
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentSettings;
-import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
+import fr.cy.model.agent.properties.AgentDecisionalProperties;
 import fr.cy.model.fire.Fire;
 import fr.cy.model.simulation.SimulationSettings;
 import fr.cy.model.stress.StressInducing;

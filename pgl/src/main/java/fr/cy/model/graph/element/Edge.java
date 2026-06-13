@@ -3,7 +3,7 @@ package fr.cy.model.graph.element;
 import fr.cy.model.graph.GraphConfig;
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentSettings;
-import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
+import fr.cy.model.agent.properties.AgentDecisionalProperties;
 import fr.cy.model.agent.exceptions.AgentStateException;
 import fr.cy.model.fire.Fire;
 import java.util.List;

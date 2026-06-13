@@ -11,7 +11,7 @@ import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.agent.behaviour.agentActions.FollowSingleEdgeAction;
 import fr.cy.model.agent.behaviour.agentActions.WaitAction;
-import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
+import fr.cy.model.agent.properties.AgentDecisionalProperties;
 import fr.cy.model.agent.context.NodeContext;
 import fr.cy.model.graph.CongestionStats;
 import fr.cy.model.graph.element.Edge;

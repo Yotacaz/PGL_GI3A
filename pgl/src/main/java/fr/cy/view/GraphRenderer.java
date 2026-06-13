@@ -3,9 +3,9 @@ package fr.cy.view;
 import java.util.Objects;
 
 import fr.cy.model.agent.Agent;
-import fr.cy.model.agent.behaviour.properties.EmotionalState;
-import fr.cy.model.agent.AgentProfile;
-import fr.cy.model.agent.AgentProfileRegistry;
+import fr.cy.model.agent.properties.EmotionalState;
+import fr.cy.model.agent.properties.AgentProfile;
+import fr.cy.model.agent.properties.AgentProfileRegistry;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;

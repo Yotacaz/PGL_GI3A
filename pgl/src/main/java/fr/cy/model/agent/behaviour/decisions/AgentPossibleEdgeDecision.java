@@ -8,7 +8,7 @@ import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.agent.behaviour.agentActions.FollowSingleEdgeAction;
 import fr.cy.model.agent.behaviour.agentActions.WaitBeforeOtherAction;
-import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
+import fr.cy.model.agent.properties.AgentDecisionalProperties;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 

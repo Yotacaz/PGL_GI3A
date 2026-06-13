@@ -2,7 +2,7 @@ package fr.cy.model.graph.element;
 
 import java.util.ArrayList;
 import java.util.List;
-import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
+import fr.cy.model.agent.properties.AgentDecisionalProperties;
 
 /**
  * Represents a node in the graph structure.
