@@ -7,27 +7,27 @@ import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.GraphElement;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
+import fr.cy.model.simulation.Simulation;
 
 import java.util.List;
 import java.util.Scanner;
 
 /**
- * Interface console pour visualiser et interagir avec le graphe.
- * Affiche les nœuds, arêtes et informations détaillées en format texte.
+ * Interface console pour piloter et visualiser la simulation d'évacuation.
+ * Délègue la création d'agents à AgentManager et expose les contrôles de simulation.
  */
 public class ConsoleUI {
 
+    private final Simulation simulation;
     private final Graph graph;
     private final Scanner scanner;
 
-    public ConsoleUI(Graph graph) {
-        this.graph = graph;
+    public ConsoleUI(Simulation simulation) {
+        this.simulation = simulation;
+        this.graph = simulation.getGraph();
         this.scanner = new Scanner(System.in);
     }
 
-    /**
-     * Affiche le graphe complet et lance la boucle interactive.
-     */
     public void run() {
         boolean running = true;
         while (running) {
@@ -43,6 +43,7 @@ public class ConsoleUI {
                 case "6" -> displayStatistics();
                 case "7" -> createNodeInteractive();
                 case "8" -> createEdgeInteractive();
+                case "9" -> simulationControlMenu();
                 case "0" -> {
                     System.out.println("\n👋 Au revoir!");
                     running = false;
@@ -55,24 +56,86 @@ public class ConsoleUI {
 
     private void displayMainMenu() {
         System.out.println("\n" + "=".repeat(60));
-        System.out.println("📊 VISUALISEUR DE GRAPHE - CONSOLE");
+        System.out.printf("🔄 SIMULATION  |  Tick: %d  |  %s%n",
+                simulation.getCurrentTick(),
+                simulation.isRunning() ? "▶ EN COURS" : "⏸ EN PAUSE");
+        System.out.printf("   Agents: %d actifs  |  %d évacués  |  %d morts%n",
+                simulation.getAgentManager().getAgentsToEvacuate().size(),
+                simulation.getAgentManager().getEvacuatedAgents().size(),
+                simulation.getAgentManager().getDeadAgents().size());
         System.out.println("=".repeat(60));
         System.out.println("1️⃣  Afficher le graphe complet");
         System.out.println("2️⃣  Lister tous les nœuds");
         System.out.println("3️⃣  Lister toutes les arêtes");
         System.out.println("4️⃣  Détails d'un nœud");
         System.out.println("5️⃣  Détails d'une arête");
-        System.out.println("6️⃣  Afficher statistiques globales");
+        System.out.println("6️⃣  Statistiques globales");
         System.out.println("7️⃣  Ajouter un nœud");
         System.out.println("8️⃣  Ajouter une arête");
+        System.out.println("9️⃣  Contrôle de la simulation");
         System.out.println("0️⃣  Quitter");
         System.out.println("=".repeat(60));
         System.out.print("Choix: ");
     }
 
-    /**
-     * Affiche une visualisation ASCII du graphe avec les nœuds et arêtes.
-     */
+    // ─── Simulation control ───────────────────────────────────────────────────
+
+    private void simulationControlMenu() {
+        boolean inMenu = true;
+        while (inMenu) {
+            System.out.println("\n" + "─".repeat(60));
+            System.out.printf("⚙️  SIMULATION  |  Tick: %d  |  %s%n",
+                    simulation.getCurrentTick(),
+                    simulation.isRunning() ? "▶ EN COURS" : "⏸ EN PAUSE");
+            System.out.printf("   Actifs: %d  |  Évacués: %d  |  Morts: %d%n",
+                    simulation.getAgentManager().getAgentsToEvacuate().size(),
+                    simulation.getAgentManager().getEvacuatedAgents().size(),
+                    simulation.getAgentManager().getDeadAgents().size());
+            System.out.println("─".repeat(60));
+            System.out.println("   1️⃣  Avancer d'un tick");
+            System.out.println("   2️⃣  Avancer de N ticks");
+            System.out.println("   3️⃣  " + (simulation.isRunning() ? "Mettre en pause" : "Démarrer"));
+            System.out.println("   4️⃣  Réinitialiser");
+            System.out.println("   0️⃣  Retour");
+            System.out.println("─".repeat(60));
+            System.out.print("   Choix: ");
+
+            String choice = scanner.nextLine().trim();
+            switch (choice) {
+                case "1" -> {
+                    simulation.stepTick();
+                    System.out.printf("   ✅ Tick %d exécuté (%.2f ms)%n",
+                            simulation.getCurrentTick(), simulation.getLastEngineLoadMs());
+                }
+                case "2" -> {
+                    Integer n = readInt("   Nombre de ticks: ");
+                    if (n != null && n > 0) {
+                        for (int i = 0; i < n; i++) simulation.stepTick();
+                        System.out.printf("   ✅ %d ticks exécutés — tick actuel: %d%n",
+                                n, simulation.getCurrentTick());
+                    }
+                }
+                case "3" -> {
+                    if (simulation.isRunning()) {
+                        simulation.stop();
+                        System.out.println("   ⏸ Simulation mise en pause.");
+                    } else {
+                        simulation.start();
+                        System.out.println("   ▶ Simulation démarrée.");
+                    }
+                }
+                case "4" -> {
+                    simulation.reset();
+                    System.out.println("   🔄 Simulation réinitialisée.");
+                }
+                case "0" -> inMenu = false;
+                default -> System.out.println("   ❌ Option invalide.");
+            }
+        }
+    }
+
+    // ─── Graph display ────────────────────────────────────────────────────────
+
     private void displayGraph() {
         System.out.println("\n" + "═".repeat(80));
         System.out.println("🔗 GRAPHE COMPLET");
@@ -81,7 +144,6 @@ public class ConsoleUI {
         List<Node> nodes = graph.getNodes();
         List<Edge> edges = graph.getEdges();
 
-        // Afficher les nœuds
         System.out.println("\n📍 NŒUDS (" + nodes.size() + "):");
         System.out.println("─".repeat(80));
         for (Node node : nodes) {
@@ -90,7 +152,6 @@ public class ConsoleUI {
             System.out.printf("  %s%s%s%n", node, exitMarker, fireMarker);
         }
 
-        // Afficher les arêtes
         System.out.println("\n🔗 ARÊTES (" + edges.size() + "):");
         System.out.println("─".repeat(80));
         for (Edge edge : edges) {
@@ -100,9 +161,6 @@ public class ConsoleUI {
         System.out.println("\n" + "═".repeat(80));
     }
 
-    /**
-     * Affiche la liste détaillée de tous les nœuds.
-     */
     private void displayAllNodes() {
         List<Node> nodes = graph.getNodes();
 
@@ -116,9 +174,6 @@ public class ConsoleUI {
         }
     }
 
-    /**
-     * Affiche la liste de toutes les arêtes.
-     */
     private void displayAllEdges() {
         List<Edge> edges = graph.getEdges();
 
@@ -133,15 +188,11 @@ public class ConsoleUI {
         System.out.println("═".repeat(80));
     }
 
-    /**
-     * Permet de sélectionner un nœud et affiche ses détails.
-     */
     private void selectNodeAndDisplay() {
         System.out.println("\n📍 Entrez l'ID du nœud (ou 'q' pour quitter): ");
         String input = scanner.nextLine().trim();
 
-        if (input.equalsIgnoreCase("q"))
-            return;
+        if (input.equalsIgnoreCase("q")) return;
 
         try {
             int nodeId = Integer.parseInt(input);
@@ -165,16 +216,11 @@ public class ConsoleUI {
         }
     }
 
-    /**
-     * Permet de sélectionner une arête et affiche ses détails.
-     */
     private void selectEdgeAndDisplay() {
         System.out.println("\n🔗 Entrez l'ID de l'arête (ou 'q' pour quitter): ");
         String input = scanner.nextLine().trim();
 
-        if (input.equalsIgnoreCase("q")) {
-            return;
-        }
+        if (input.equalsIgnoreCase("q")) return;
 
         try {
             int edgeId = Integer.parseInt(input);
@@ -198,21 +244,16 @@ public class ConsoleUI {
         }
     }
 
-    /**
-     * Ajoute un nœud en mode interactif.
-     */
+    // ─── Node / Edge creation ─────────────────────────────────────────────────
+
     private void createNodeInteractive() {
         System.out.println("\n➕ AJOUT D'UN NŒUD");
 
         Double x = readDouble("Position X: ");
-        if (x == null) {
-            return;
-        }
+        if (x == null) return;
 
         Double y = readDouble("Position Y: ");
-        if (y == null) {
-            return;
-        }
+        if (y == null) return;
 
         boolean useDefaultCapacity = readYesNo("Utiliser la capacité par défaut ? (o/n) [o]: ", true);
         Node createdNode;
@@ -221,9 +262,7 @@ public class ConsoleUI {
             createdNode = graph.createNode(x, y);
         } else {
             Double capacity = readDouble("Capacité du nœud: ");
-            if (capacity == null) {
-                return;
-            }
+            if (capacity == null) return;
             createdNode = graph.createNode(x, y, capacity);
         }
 
@@ -233,9 +272,6 @@ public class ConsoleUI {
         System.out.println("\n✅ Nœud créé: " + createdNode);
     }
 
-    /**
-     * Ajoute une arête en mode interactif.
-     */
     private void createEdgeInteractive() {
         System.out.println("\n➕ AJOUT D'UNE ARÊTE");
 
@@ -250,14 +286,10 @@ public class ConsoleUI {
         }
 
         Integer startId = readInt("ID du nœud de début: ");
-        if (startId == null) {
-            return;
-        }
+        if (startId == null) return;
 
         Integer endId = readInt("ID du nœud de fin: ");
-        if (endId == null) {
-            return;
-        }
+        if (endId == null) return;
 
         Node startNode = graph.getNodeById(startId);
         Node endNode = graph.getNodeById(endId);
@@ -274,14 +306,10 @@ public class ConsoleUI {
             createdEdge = graph.createEdge(startNode, endNode);
         } else {
             Double length = readDouble("Longueur: ");
-            if (length == null) {
-                return;
-            }
+            if (length == null) return;
 
             Double width = readDouble("Largeur: ");
-            if (width == null) {
-                return;
-            }
+            if (width == null) return;
 
             boolean directed = readYesNo("Arête orientée ? (o/n) [n]: ", false);
             createdEdge = graph.createEdge(startNode, endNode, length, width, directed);
@@ -290,9 +318,8 @@ public class ConsoleUI {
         System.out.println("\n✅ Arête créée: " + createdEdge);
     }
 
-    /**
-     * Affiche les détails complets d'un nœud.
-     */
+    // ─── Detail views ─────────────────────────────────────────────────────────
+
     private void displayNodeDetails(Node node) {
         List<Agent> agents = node.getAgents();
 
@@ -301,7 +328,6 @@ public class ConsoleUI {
         System.out.println("   Sortie: " + (node.isExit() ? "Oui ✅" : "Non"));
         System.out.println("   Arêtes connectées: " + node.getEdges().size());
 
-        // --- Occupation ---
         System.out.println("\n   ── Occupation ──");
         System.out.println("   Agents présents: " + agents.size());
         System.out.println("   Capacité: " + String.format("%.1f", node.getCapacity()));
@@ -309,33 +335,23 @@ public class ConsoleUI {
         System.out.println("   Congestion: " + String.format("%.0f%%", node.getCongestion() * 100));
         System.out.println("   Accessible: " + (!node.isFull() ? "Oui ✅" : "Non — plein ❌"));
 
-        // --- Agents ---
         System.out.println("\n   ── Agents ──");
         if (agents.isEmpty()) {
             System.out.println("   Vitesse moy.: —");
             System.out.println("   Stress moy.: —");
             System.out.println("   État dominant: —");
         } else {
-            double avgSpeed = agents.stream()
-                    .mapToDouble(Agent::getMaxSpeed)
-                    .average().orElse(0);
+            double avgSpeed = agents.stream().mapToDouble(Agent::getMaxSpeed).average().orElse(0);
             System.out.println("   Vitesse moy.: " + String.format("%.1f", avgSpeed));
-
-            double avgStress = agents.stream()
-                    .mapToDouble(Agent::getStressLevel)
-                    .average().orElse(0);
+            double avgStress = agents.stream().mapToDouble(Agent::getStressLevel).average().orElse(0);
             System.out.println("   Stress moy.: " + String.format("%.0f%%", avgStress * 100));
-
-            EmotionalState dominant = getDominantState(agents);
-            System.out.println("   État dominant: " + dominant.name());
+            System.out.println("   État dominant: " + getDominantState(agents).name());
         }
 
-        // --- Stress global ---
         System.out.println("\n   ── Stress global ──");
-        double globalStress = node.getCachedTotalStressInducedIncludingNeighbors();
-        System.out.println("   Stress (+ voisins): " + String.format("%.0f%%", globalStress * 100));
+        System.out.println("   Stress (+ voisins): " + String.format("%.0f%%",
+                node.getCachedTotalStressInducedIncludingNeighbors() * 100));
 
-        // --- Feu ---
         System.out.println("\n   ── Feu ──");
         if (node.isOnFire()) {
             System.out.println("   🔥 EN FEU");
@@ -350,9 +366,6 @@ public class ConsoleUI {
         }
     }
 
-    /**
-     * Affiche les détails complets d'une arête.
-     */
     private void displayEdgeDetails(Edge edge) {
         List<Agent> agents = edge.getAgents();
 
@@ -363,7 +376,6 @@ public class ConsoleUI {
         System.out.println("   Largeur: " + String.format("%.1f", edge.getWidth()));
         System.out.println("   Capacité: " + String.format("%.1f", edge.getCapacity()));
 
-        // --- Occupation ---
         System.out.println("\n   ── Occupation ──");
         System.out.println("   Agents présents: " + agents.size());
         System.out.println("   Espace occupé: " + String.format("%.1f", edge.getOccupiedSpace()));
@@ -371,31 +383,21 @@ public class ConsoleUI {
         System.out.println("   Accessible: " + (!edge.isFull() ? "Oui ✅" : "Non — plein ❌"));
         System.out.println("   Vitesse max agents: " + String.format("%.2f", edge.getMaxAgentSpeed()));
 
-        // --- Agents ---
         System.out.println("\n   ── Agents ──");
         if (agents.isEmpty()) {
             System.out.println("   Aucun agent sur l'arête");
         } else {
-            double avgSpeed = agents.stream()
-                    .mapToDouble(Agent::getMaxSpeed)
-                    .average().orElse(0);
+            double avgSpeed = agents.stream().mapToDouble(Agent::getMaxSpeed).average().orElse(0);
             System.out.println("   Vitesse moy.: " + String.format("%.1f", avgSpeed));
-
-            double avgStress = agents.stream()
-                    .mapToDouble(Agent::getStressLevel)
-                    .average().orElse(0);
+            double avgStress = agents.stream().mapToDouble(Agent::getStressLevel).average().orElse(0);
             System.out.println("   Stress moy.: " + String.format("%.0f%%", avgStress * 100));
-
-            EmotionalState dominant = getDominantState(agents);
-            System.out.println("   État dominant: " + dominant.name());
+            System.out.println("   État dominant: " + getDominantState(agents).name());
         }
 
-        // --- Stress global ---
         System.out.println("\n   ── Stress global ──");
-        double globalStress = edge.getCachedTotalStressInducedIncludingNeighbors();
-        System.out.println("   Stress (+ voisins): " + String.format("%.0f%%", globalStress * 100));
+        System.out.println("   Stress (+ voisins): " + String.format("%.0f%%",
+                edge.getCachedTotalStressInducedIncludingNeighbors() * 100));
 
-        // --- Feu ---
         System.out.println("\n   ── Feu ──");
         if (edge.isOnFire()) {
             System.out.println("   🔥 EN FEU");
@@ -410,13 +412,11 @@ public class ConsoleUI {
         }
     }
 
-    /**
-     * Affiche les actions possibles sur un élément sélectionné.
-     */
-    private void elementActionsMenu(GraphElement element) {
-        boolean running = true;
+    // ─── Element actions ──────────────────────────────────────────────────────
 
-        while (running) {
+    private void elementActionsMenu(GraphElement element) {
+        boolean inMenu = true;
+        while (inMenu) {
             System.out.println("\n   ── Actions ──");
             System.out.println("   1️⃣ Ajouter un feu");
             System.out.println("   2️⃣ Ajouter un agent");
@@ -427,45 +427,23 @@ public class ConsoleUI {
             System.out.print("   Choix: ");
 
             String choice = scanner.nextLine().trim();
-
             switch (choice) {
-                case "1" -> {
-                    createFireInteractive(element);
-                    displaySelectedElementDetails(element);
-                }
-                case "2" -> {
-                    createAgentInteractive(element);
-                    displaySelectedElementDetails(element);
-                }
-                case "3" -> {
-                    createAgentsBulkInteractive(element);
-                    displaySelectedElementDetails(element);
-                }
+                case "1" -> { createFireInteractive(element); displaySelectedElementDetails(element); }
+                case "2" -> { createAgentInteractive(element); displaySelectedElementDetails(element); }
+                case "3" -> { createAgentsBulkInteractive(element); displaySelectedElementDetails(element); }
                 case "4" -> displayElementAgents(element);
                 case "5" -> displaySelectedElementDetails(element);
-                case "0" -> running = false;
+                case "0" -> inMenu = false;
                 default -> System.out.println("   ❌ Option invalide.");
             }
         }
     }
 
-    /**
-     * Affiche les détails d'un élément, quel qu'il soit.
-     */
     private void displaySelectedElementDetails(GraphElement element) {
-        if (element instanceof Node node) {
-            displayNodeDetails(node);
-            return;
-        }
-
-        if (element instanceof Edge edge) {
-            displayEdgeDetails(edge);
-        }
+        if (element instanceof Node node) { displayNodeDetails(node); return; }
+        if (element instanceof Edge edge) { displayEdgeDetails(edge); }
     }
 
-    /**
-     * Affiche tous les agents présents sur un élément.
-     */
     private void displayElementAgents(GraphElement element) {
         List<Agent> agents = element.getAgents();
 
@@ -494,9 +472,6 @@ public class ConsoleUI {
         System.out.println("═".repeat(80));
     }
 
-    /**
-     * Ajoute ou remplace un feu sur un élément.
-     */
     private void createFireInteractive(GraphElement element) {
         System.out.println("\n   ➕ AJOUT D'UN FEU");
         boolean useDefaultValues = readYesNo("   Utiliser les valeurs par défaut ? (o/n) [o]: ", true);
@@ -506,20 +481,11 @@ public class ConsoleUI {
             fire = new Fire(0.5, 0.4, 0.2);
         } else {
             Double intensity = readDouble("   Intensité: ");
-            if (intensity == null) {
-                return;
-            }
-
+            if (intensity == null) return;
             Double smokeLevel = readDouble("   Fumée: ");
-            if (smokeLevel == null) {
-                return;
-            }
-
+            if (smokeLevel == null) return;
             Double spreadRate = readDouble("   Propagation: ");
-            if (spreadRate == null) {
-                return;
-            }
-
+            if (spreadRate == null) return;
             fire = new Fire(intensity, smokeLevel, spreadRate);
         }
 
@@ -530,107 +496,100 @@ public class ConsoleUI {
     }
 
     /**
-     * Ajoute un agent sur un élément.
+     * Ajoute un agent sur l'élément via AgentManager pour qu'il participe à la simulation.
+     * Les propriétés de l'agent sont générées aléatoirement par AgentGenerator.
      */
     private void createAgentInteractive(GraphElement element) {
-        System.out.println("\n   ➕ AJOUT D'UN AGENT");
-        boolean useDefaultValues = readYesNo("   Utiliser les valeurs par défaut ? (o/n) [o]: ", true);
+        System.out.println("\n   ➕ AJOUT D'UN AGENT (propriétés aléatoires via la simulation)");
+        System.out.print("   Nom/préfixe: ");
+        String name = scanner.nextLine().trim();
+        if (name.isEmpty()) name = "Agent";
 
-        Agent agent;
-        if (useDefaultValues) {
-            agent = new Agent("Agent", 5, 0.5, 0.5);
-        } else {
-            System.out.print("   Nom: ");
-            String name = scanner.nextLine().trim();
-            if (name.isEmpty()) {
-                name = "Agent";
-            }
-
-            Double maxSpeed = readDouble("   Vitesse max: ");
-            if (maxSpeed == null) {
-                return;
-            }
-
-            Double stressTolerance = readDouble("   Tolérance stress (0-1): ");
-            if (stressTolerance == null) {
-                return;
-            }
-
-            Double crowdingTolerance = readDouble("   Tolérance congestion (0-1): ");
-            if (crowdingTolerance == null) {
-                return;
-            }
-
-            agent = new Agent(name, maxSpeed.intValue(), stressTolerance, crowdingTolerance);
+        if (element instanceof Node node) {
+            simulation.getAgentManager().generateAgentOnNode(name, node);
+        } else if (element instanceof Edge edge) {
+            Double progress = readDouble("   Position sur l'arête (0.0–1.0): ");
+            if (progress == null) return;
+            progress = Math.max(0.0, Math.min(1.0, progress));
+            simulation.getAgentManager().generateAgentOnEdge(name, edge, progress);
         }
 
-        element.addAgent(agent);
-        System.out.println("\n   ✅ Agent ajouté: " + agent.getName() + " (#" + agent.getId() + ")");
-        System.out.println("   Congestion actuelle: " + String.format("%.0f%%", element.getCongestion() * 100));
+        System.out.println("\n   ✅ Agent ajouté. Congestion: "
+                + String.format("%.0f%%", element.getCongestion() * 100));
     }
 
     /**
-     * Ajoute plusieurs agents en une seule fois sur un élément.
+     * Ajoute plusieurs agents sur l'élément via AgentManager.
      */
     private void createAgentsBulkInteractive(GraphElement element) {
-        System.out.println("\n   ➕ AJOUT D'AGENTS EN MASSE");
+        System.out.println("\n   ➕ AJOUT D'AGENTS EN MASSE (propriétés aléatoires via la simulation)");
 
         Integer count = readInt("   Nombre d'agents à ajouter: ");
-        if (count == null) {
-            return;
-        }
-
-        if (count <= 0) {
+        if (count == null || count <= 0) {
             System.out.println("   ❌ Le nombre doit être supérieur à 0.");
             return;
         }
 
-        boolean useDefaultValues = readYesNo("   Utiliser les valeurs par défaut ? (o/n) [o]: ", true);
-        String namePrefix = "Agent";
-        int maxSpeed = 5;
-        double stressTolerance = 0.5;
-        double crowdingTolerance = 0.5;
+        System.out.print("   Préfixe du nom [Agent]: ");
+        String namePrefix = scanner.nextLine().trim();
+        if (namePrefix.isEmpty()) namePrefix = "Agent";
 
-        if (!useDefaultValues) {
-            System.out.print("   Préfixe du nom (ex: Agent): ");
-            String prefix = scanner.nextLine().trim();
-            if (!prefix.isEmpty()) {
-                namePrefix = prefix;
+        if (element instanceof Node node) {
+            simulation.getAgentManager().generateAgentsOnNode(namePrefix, node, count);
+        } else if (element instanceof Edge edge) {
+            for (int i = 0; i < count; i++) {
+                simulation.getAgentManager().generateAgentOnEdge(namePrefix, edge, 0.5);
             }
-
-            Double speedInput = readDouble("   Vitesse max: ");
-            if (speedInput == null) {
-                return;
-            }
-            maxSpeed = speedInput.intValue();
-
-            Double stressInput = readDouble("   Tolérance stress (0-1): ");
-            if (stressInput == null) {
-                return;
-            }
-            stressTolerance = stressInput;
-
-            Double crowdingInput = readDouble("   Tolérance congestion (0-1): ");
-            if (crowdingInput == null) {
-                return;
-            }
-            crowdingTolerance = crowdingInput;
         }
 
-        int added = 0;
-        for (int i = 1; i <= count; i++) {
-            Agent agent = new Agent(namePrefix + "_" + i, maxSpeed, stressTolerance, crowdingTolerance);
-            element.addAgent(agent);
-            added++;
-        }
-
-        System.out.println("\n   ✅ " + added + " agents ajoutés sur l'élément.");
-        System.out.println("   Congestion actuelle: " + String.format("%.0f%%", element.getCongestion() * 100));
+        System.out.println("\n   ✅ " + count + " agents ajoutés. Congestion: "
+                + String.format("%.0f%%", element.getCongestion() * 100));
     }
 
-    /**
-     * Détermine l'état émotionnel dominant parmi les agents.
-     */
+    // ─── Statistics ───────────────────────────────────────────────────────────
+
+    private void displayStatistics() {
+        List<Node> nodes = graph.getNodes();
+        List<Edge> edges = graph.getEdges();
+
+        System.out.println("\n" + "═".repeat(80));
+        System.out.println("📊 STATISTIQUES GLOBALES");
+        System.out.println("═".repeat(80));
+
+        System.out.println("\n   ── Simulation ──");
+        System.out.println("   Tick actuel: " + simulation.getCurrentTick());
+        System.out.println("   État: " + (simulation.isRunning() ? "▶ En cours" : "⏸ En pause"));
+        System.out.println("   Agents actifs: " + simulation.getAgentManager().getAgentsToEvacuate().size());
+        System.out.println("   Agents évacués: " + simulation.getAgentManager().getEvacuatedAgents().size());
+        System.out.println("   Agents morts: " + simulation.getAgentManager().getDeadAgents().size());
+        System.out.println("   Durée dernier tick: " + String.format("%.2f ms", simulation.getLastEngineLoadMs()));
+
+        System.out.println("\n   ── Graphe ──");
+        System.out.println("   Nœuds: " + nodes.size());
+        System.out.println("   Arêtes: " + edges.size());
+
+        long exits = nodes.stream().filter(Node::isExit).count();
+        System.out.println("   Sorties: " + exits);
+
+        long onFire = nodes.stream().filter(Node::isOnFire).count();
+        System.out.println("   Nœuds en feu: " + onFire);
+
+        int totalAgents = nodes.stream().mapToInt(n -> n.getAgents().size()).sum();
+        System.out.println("   Agents sur nœuds: " + totalAgents);
+
+        double avgCongestion = nodes.stream().mapToDouble(Node::getCongestion).average().orElse(0);
+        System.out.println("   Congestion moyenne: " + String.format("%.0f%%", avgCongestion * 100));
+
+        double avgStress = nodes.stream()
+                .mapToDouble(Node::getCachedTotalStressInducedIncludingNeighbors)
+                .average().orElse(0);
+        System.out.println("   Stress moyen: " + String.format("%.0f%%", avgStress * 100));
+
+        System.out.println("\n" + "═".repeat(80));
+    }
+
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+
     private EmotionalState getDominantState(List<Agent> agents) {
         int calm = 0, selfish = 0, panicking = 0;
         for (Agent a : agents) {
@@ -640,65 +599,16 @@ public class ConsoleUI {
                 case PANICKING -> panicking++;
             }
         }
-        if (panicking >= calm && panicking >= selfish)
-            return EmotionalState.PANICKING;
-        if (selfish >= calm)
-            return EmotionalState.SELFISH;
+        if (panicking >= calm && panicking >= selfish) return EmotionalState.PANICKING;
+        if (selfish >= calm) return EmotionalState.SELFISH;
         return EmotionalState.CALM;
-    }
-
-    /**
-     * Affiche les statistiques globales du graphe.
-     */
-    private void displayStatistics() {
-        List<Node> nodes = graph.getNodes();
-        List<Edge> edges = graph.getEdges();
-
-        System.out.println("\n" + "═".repeat(80));
-        System.out.println("📊 STATISTIQUES GLOBALES");
-        System.out.println("═".repeat(80));
-
-        System.out.println("\n   Nœuds: " + nodes.size());
-        System.out.println("   Arêtes: " + edges.size());
-
-        // Sorties
-        long exits = nodes.stream().filter(Node::isExit).count();
-        System.out.println("   Sorties: " + exits);
-
-        // Nœuds en feu
-        long onFire = nodes.stream().filter(Node::isOnFire).count();
-        System.out.println("   Nœuds en feu: " + onFire);
-
-        // Agents totaux
-        int totalAgents = nodes.stream()
-                .mapToInt(n -> n.getAgents().size())
-                .sum();
-        System.out.println("   Agents totaux: " + totalAgents);
-
-        // Congestion
-        double avgCongestion = nodes.stream()
-                .mapToDouble(Node::getCongestion)
-                .average()
-                .orElse(0);
-        System.out.println("   Congestion moyenne: " + String.format("%.0f%%", avgCongestion * 100));
-
-        // Stress moyen
-        double avgStress = nodes.stream()
-                .mapToDouble(Node::getCachedTotalStressInducedIncludingNeighbors)
-                .average()
-                .orElse(0);
-        System.out.println("   Stress moyen: " + String.format("%.0f%%", avgStress * 100));
-
-        System.out.println("\n" + "═".repeat(80));
     }
 
     private Integer readInt(String prompt) {
         while (true) {
             System.out.print(prompt);
             String input = scanner.nextLine().trim();
-            if (input.equalsIgnoreCase("q")) {
-                return null;
-            }
+            if (input.equalsIgnoreCase("q")) return null;
             try {
                 return Integer.parseInt(input);
             } catch (NumberFormatException e) {
@@ -711,9 +621,7 @@ public class ConsoleUI {
         while (true) {
             System.out.print(prompt);
             String input = scanner.nextLine().trim();
-            if (input.equalsIgnoreCase("q")) {
-                return null;
-            }
+            if (input.equalsIgnoreCase("q")) return null;
             try {
                 return Double.parseDouble(input);
             } catch (NumberFormatException e) {
@@ -726,15 +634,9 @@ public class ConsoleUI {
         while (true) {
             System.out.print(prompt);
             String input = scanner.nextLine().trim().toLowerCase();
-            if (input.isEmpty()) {
-                return defaultValue;
-            }
-            if (input.equals("o") || input.equals("oui") || input.equals("y") || input.equals("yes")) {
-                return true;
-            }
-            if (input.equals("n") || input.equals("non") || input.equals("no")) {
-                return false;
-            }
+            if (input.isEmpty()) return defaultValue;
+            if (input.equals("o") || input.equals("oui") || input.equals("y") || input.equals("yes")) return true;
+            if (input.equals("n") || input.equals("non") || input.equals("no")) return false;
             System.out.println("❌ Réponse invalide, utilisez o/n.");
         }
     }
