@@ -216,8 +216,9 @@ public class MainController {
             Node node = (Node) entity;
             if (agentManager != null) {
                 List<Node> adjacentNodes = graph.getAdjacentNodes(node);
-                
-                Node targetNodeForRelocation = adjacentNodes.isEmpty() ? null : adjacentNodes.get(RNG.nextInt(adjacentNodes.size())); 
+
+                Node targetNodeForRelocation = adjacentNodes.isEmpty() ? null
+                        : adjacentNodes.get(RNG.nextInt(adjacentNodes.size()));
                 agentManager.relocateAgentsOnNode(node, targetNodeForRelocation); // 1. evacuation
             }
             if (graph != null) {
@@ -329,7 +330,9 @@ public class MainController {
         int dead = deadAgents.size();
 
         int evacuated = agentManager.getEvacuatedAgents().size();
-        double avgEvacTime = 0.0; // TODO: Implement the time taken by exiting agents
+
+        double avgTicks = agentManager.getAverageNumberOfTicksToExitForEvacuatedAgents();
+        double avgEvacTime = avgTicks * sim.getSimulationSettings().getTickDuration();
 
         // --- 3. ACTIVE CROWD METRICS ---
         int totalActive = activeAgents.size();
