@@ -51,7 +51,7 @@ public class SimulationSettings implements Serializable {
      * Sets the tick duration.
      * 
      * @param tickDuration Must be strictly positive.
-     * @throws IllegalArgumentException if value is <= 0.
+     * @throws IllegalArgumentException if value is &lt;= 0.
      */
     public void setTickDuration(double tickDuration) {
         if (tickDuration <= 0) {

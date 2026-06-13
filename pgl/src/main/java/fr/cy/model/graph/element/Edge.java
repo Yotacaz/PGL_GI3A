@@ -541,7 +541,7 @@ public final class Edge extends GraphElement {
      * agent, and {@code alpha}/{@code beta} are taken from {@link AgentSettings}
      * (with {@code beta > alpha} so counter-flow slows agents down more). When
      * enabled, the result is further capped so the agent does not overlap the
-     * closest agent ahead (see {@link #freeDistanceSpeedLimit}).
+     * closest agent ahead.
      * </p>
      *
      * @param agent the agent currently on this edge

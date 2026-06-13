@@ -7,7 +7,7 @@ import fr.cy.model.graph.element.Edge;
 /**
  * Represents the score and associated data for a node-based decision that an agent can make.
  * 
- * <p>This class extends {@link AgentDecisionScore} to provide specific functionality
+ * <p>This class extends {@link AgentPossibleDecisionScore} to provide specific functionality
  * for decisions made at nodes, including information about preferred neighboring edges
  * that the agent might consider when moving from the current node.</p>
  */
