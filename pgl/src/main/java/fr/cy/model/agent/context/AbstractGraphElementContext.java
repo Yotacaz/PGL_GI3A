@@ -18,13 +18,20 @@ abstract class AbstractGraphElementContext<T extends GraphElement> implements Se
     }
 
 
-    /** @return the congestion statistics for the accessible graph elements, used to inform decision-making can be null if there are no accessible elements 
-    */
+    /**
+     * Returns the congestion statistics for the accessible graph elements, used to inform decision-making.
+     *
+     * @return the congestion statistics, or {@code null} if there are no accessible elements
+     */
     public CongestionStats<T> getCongestionStatsForAccessibleElements() {
         return congestionStats;
     }
 
-    /** @return the list of accessible graph elements sorted by congestion (least congested first) */
+    /**
+     * Returns the list of accessible graph elements sorted by congestion level (least congested first).
+     *
+     * @return the sorted list of accessible graph elements, or an empty list if none are available
+     */
     public List<T> getSortedAccessibleElementsByCongestion() {
         return congestionStats == null ? Collections.emptyList() : Collections.unmodifiableList(congestionStats.getSortedByCongestion());
     }

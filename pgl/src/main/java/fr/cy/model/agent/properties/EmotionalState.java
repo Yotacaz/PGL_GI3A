@@ -2,6 +2,10 @@ package fr.cy.model.agent.properties;
 
 import java.util.Optional;
 
+/**
+ * Represents the emotional states an agent can be in during the simulation,
+ * ranging from calm to panicking, based on accumulated stress levels.
+ */
 public enum EmotionalState {
     /**
      * Agent is calm and behaves normally, reducing stress to others around them.
@@ -113,6 +117,11 @@ public enum EmotionalState {
         }
     }
 
+    /**
+     * Returns the number of times agents in this state may disregard edge direction rules.
+     *
+     * @return the number of direction-disrespect applications for this state
+     */
     public int getNumberOfEdgeDirectionDisrespectApplications() {
         return numberOfEdgeDirectionDisrespectApplications;
     }

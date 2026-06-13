@@ -479,6 +479,12 @@ public class AgentSettings implements Serializable {
         return STRESS_MULTIPLIER;
     }
 
+    /**
+     * Sets the stress multiplier.
+     *
+     * @param sTRESS_MULTIPLIER the new stress multiplier value
+     * @deprecated use the new stress configuration approach instead
+     */
     @Deprecated
     public void setSTRESS_MULTIPLIER(double sTRESS_MULTIPLIER) {
         STRESS_MULTIPLIER = sTRESS_MULTIPLIER;

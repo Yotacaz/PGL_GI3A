@@ -80,6 +80,11 @@ public class FollowSingleEdgeAction extends AbstractMoveAction {
         return consumedTime;
     }
 
+    /**
+     * Returns the edge this action traverses.
+     *
+     * @return the edge the agent follows
+     */
     public Edge getEdgeToFollow() {
         return edgeToFollow;
     }

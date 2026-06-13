@@ -23,6 +23,15 @@ public class AgentPhysicalProperties implements Serializable {
     /** Surface area taken by the agent, used to calculate crowding effects */
     private double surfaceAreaTakenByAgent = 0.5;
 
+    /**
+     * Constructs a new {@code AgentPhysicalProperties} instance.
+     *
+     * @param maxSpeed                the maximum speed of the agent in m/s
+     * @param maxHealth               the maximum health of the agent
+     * @param health                  the initial health of the agent (must be between 0 and maxHealth)
+     * @param surfaceAreaTakenByAgent the surface area occupied by the agent in m²
+     * @throws IllegalArgumentException if health is not between 0 and maxHealth
+     */
     public AgentPhysicalProperties(double maxSpeed, double maxHealth, double health, double surfaceAreaTakenByAgent) {
         this.maxSpeed = maxSpeed;
         this.maxHealth = maxHealth;
@@ -45,7 +54,7 @@ public class AgentPhysicalProperties implements Serializable {
     /**
      * Sets the maximum speed of the agent.
      * 
-     * @param maxSpeed
+     * @param maxSpeed the new maximum speed in m/s
      */
     public void setMaxSpeed(double maxSpeed) {
         this.maxSpeed = maxSpeed;
@@ -63,7 +72,7 @@ public class AgentPhysicalProperties implements Serializable {
     /**
      * Sets the surface area taken by the agent.
      * 
-     * @param surfaceAreaTakenByAgent
+     * @param surfaceAreaTakenByAgent the new surface area in m²
      */
     public void setSurfaceAreaTakenByAgent(double surfaceAreaTakenByAgent) {
         this.surfaceAreaTakenByAgent = surfaceAreaTakenByAgent;

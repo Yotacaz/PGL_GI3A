@@ -79,12 +79,20 @@ public final class Edge extends GraphElement {
         setWidth(width);
     }
 
-    /** @return The starting node. */
+    /**
+     * Returns the starting node of this edge.
+     *
+     * @return The starting node.
+     */
     public Node getStart() {
         return start;
     }
 
-    /** @return The ending node. */
+    /**
+     * Returns the ending node of this edge.
+     *
+     * @return The ending node.
+     */
     public Node getEnd() {
         return end;
     }
@@ -103,7 +111,11 @@ public final class Edge extends GraphElement {
         return null;
     }
 
-    /** @return True if the edge is directed. */
+    /**
+     * Returns whether this edge is directed (one-way).
+     *
+     * @return True if the edge is directed.
+     */
     public boolean isDirected() {
         return directed;
     }
@@ -160,27 +172,47 @@ public final class Edge extends GraphElement {
 
     }
 
-    /** @param directed True to make the edge directed. */
+    /**
+     * Sets whether this edge is directed (one-way).
+     *
+     * @param directed True to make the edge directed.
+     */
     public void setDirected(boolean directed) {
         this.directed = directed;
     }
 
-    /** @return The length of the edge. */
+    /**
+     * Returns the length of the edge in meters.
+     *
+     * @return The length of the edge.
+     */
     public double getLength() {
         return length;
     }
 
-    /** @return The width of the edge. */
+    /**
+     * Returns the width of the edge in meters.
+     *
+     * @return The width of the edge.
+     */
     public double getWidth() {
         return width;
     }
 
-    /** @param length New length (clamped to non-negative). */
+    /**
+     * Sets the length of this edge.
+     *
+     * @param length New length (clamped to non-negative).
+     */
     public void setLength(double length) {
         this.length = Math.max(0, length);
     }
 
-    /** @param width New width (clamped to non-negative). */
+    /**
+     * Sets the width of this edge.
+     *
+     * @param width New width (clamped to non-negative).
+     */
     public void setWidth(double width) {
         this.width = Math.max(0, width);
     }
@@ -210,6 +242,9 @@ public final class Edge extends GraphElement {
     // LOCAL CONGESTION MODEL (segment discretization)
     // =============
 
+    /**
+     * Rebuilds all segment occupancy data based on the current agent positions on this edge.
+     */
     public void updateSegments() {
         // update segment occupancy for congestion model
         clearSegments();
@@ -426,6 +461,14 @@ public final class Edge extends GraphElement {
         return occupiedSurface + maxAgentSurface <= width * medianAgentSurface;
     }
 
+    /**
+     * Returns the number of agents occupying the edge between two distances along it.
+     *
+     * @param startDistance    the start of the range (in meters from the edge start)
+     * @param endDistance      the end of the range (in meters from the edge start)
+     * @param forwardDirection {@code true} to count agents moving forward, {@code false} for backward
+     * @return the number of agents in the specified range and direction
+     */
     public int getNumberOfAgentsBetween(double startDistance, double endDistance, boolean forwardDirection) {
         ensureSegments();
         if (startDistance < 0 || endDistance > length || startDistance > endDistance) {
@@ -528,7 +571,7 @@ public final class Edge extends GraphElement {
      * agent, and {@code alpha}/{@code beta} are taken from {@link AgentSettings}
      * (with {@code beta > alpha} so counter-flow slows agents down more). When
      * enabled, the result is further capped so the agent does not overlap the
-     * closest agent ahead (see {@link #freeDistanceSpeedLimit}).
+     * closest agent ahead (see {@code freeDistanceSpeedLimit}).
      * </p>
      *
      * @param agent the agent currently on this edge
@@ -579,10 +622,20 @@ public final class Edge extends GraphElement {
                 getCongestion());
     }
 
+    /**
+     * Returns whether fire is spreading from the start node of this edge.
+     *
+     * @return {@code true} if the edge is burning from the start node
+     */
     public boolean isBurningFromStart() {
         return burningFromStart;
     }
 
+    /**
+     * Returns whether fire is spreading from the end node of this edge.
+     *
+     * @return {@code true} if the edge is burning from the end node
+     */
     public boolean isBurningFromEnd() {
         return burningFromEnd;
     }
@@ -602,12 +655,20 @@ public final class Edge extends GraphElement {
             burningFromEnd = true;
     }
 
-    /** @return The distance burned along the edge length. */
+    /**
+     * Returns the distance that has been burned along this edge.
+     *
+     * @return The distance burned along the edge length.
+     */
     public double getBurnedDistance() {
         return !isOnFire() ? 0.0 : getFire().getBurningTime() * getFire().getSpreadRate();
     }
 
-    /** @return True if the entire edge is consumed by fire. */
+    /**
+     * Returns whether the entire edge has been consumed by fire.
+     *
+     * @return True if the entire edge is consumed by fire.
+     */
     public boolean isFullyBurned() {
         if (!isOnFire())
             return false;
@@ -615,10 +676,20 @@ public final class Edge extends GraphElement {
         return (burningFromEnd && burningFromStart) ? (distance * 2) >= length : distance >= length;
     }
 
+    /**
+     * Sets the start node of this edge.
+     *
+     * @param node the new start node
+     */
     public void setStart(Node node) {
         start = node;
     }
 
+    /**
+     * Sets the end node of this edge.
+     *
+     * @param node the new end node
+     */
     public void setEnd(Node node) {
         end = node;
     }
@@ -636,7 +707,11 @@ public final class Edge extends GraphElement {
         this.burningFromEnd = false;
     }
 
-    /** @return Percentage of edge burned (0.0 to 1.0). */
+    /**
+     * Returns the proportion of this edge that has been burned.
+     *
+     * @return Percentage of edge burned (0.0 to 1.0).
+     */
     public double getBurnPercentage() {
         return !isOnFire() ? 0.0 : Math.min(1.0, getBurnedDistance() / getLength());
     }

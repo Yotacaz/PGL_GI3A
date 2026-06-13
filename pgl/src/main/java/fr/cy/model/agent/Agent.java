@@ -155,6 +155,11 @@ public class Agent implements StressInducing, Serializable {
      */
     private int indexInEdgeAgentsListBackward = -1;
 
+    /**
+     * Returns the index of this agent in the node's agent list.
+     *
+     * @return the index in the node agents list, or -1 if not on a node
+     */
     public int getIndexInNodeAgentsList() {
         return indexInNodeAgentsList;
     }
@@ -166,6 +171,11 @@ public class Agent implements StressInducing, Serializable {
     // Edge indices must be accessible from fr.cy.model.graph.element.Edge
     // (different package), so they are public.
 
+    /**
+     * Returns the index of this agent in the edge's forward-direction agent list.
+     *
+     * @return the index in the forward agent list, or -1 if not moving forward on an edge
+     */
     public int getIndexInEdgeAgentsListForward() {
         return indexInEdgeAgentsListForward;
     }
@@ -174,6 +184,11 @@ public class Agent implements StressInducing, Serializable {
         this.indexInEdgeAgentsListForward = indexInEdgeAgentsListForward;
     }
 
+    /**
+     * Returns the index of this agent in the edge's backward-direction agent list.
+     *
+     * @return the index in the backward agent list, or -1 if not moving backward on an edge
+     */
     public int getIndexInEdgeAgentsListBackward() {
         return indexInEdgeAgentsListBackward;
     }
@@ -541,7 +556,10 @@ public class Agent implements StressInducing, Serializable {
     }
 
     /**
-     * @return the effective speed (m/s) of the agent considering it's state only
+     * Returns the effective speed of the agent based solely on its emotional state,
+     * without considering environmental constraints such as edge congestion.
+     *
+     * @return the effective speed (m/s) of the agent considering its state only
      */
     public double getEffectiveSpeedOutsideOfGraph() {
         double agentMaxSpeed = getMaxSpeed();
@@ -564,8 +582,11 @@ public class Agent implements StressInducing, Serializable {
     }
 
     /**
-     * @return the effective speed of the agent, considering its state and the
-     *         environment
+     * Returns the effective speed of the agent, capped by both its emotional state
+     * and the local maximum speed allowed by the current edge.
+     *
+     * @param agentSettings the simulation-wide agent settings used for speed calculations
+     * @return the effective speed of the agent, considering its state and the environment
      */
     public double getEffectiveSpeed(AgentSettings agentSettings) {
         double maxElemSpeed = Double.MAX_VALUE;
@@ -791,6 +812,10 @@ public class Agent implements StressInducing, Serializable {
         return true;
     }
 
+    /**
+     * Called when the previous edge this agent was on has been deleted from the graph.
+     * Clears the stale edge reference while keeping the agent on its current node.
+     */
     public void onPreviousEdgeDeleted() {
         if (isOnEdge()) {
             throw new AgentStateException(
@@ -831,6 +856,7 @@ public class Agent implements StressInducing, Serializable {
      * is not necessary adjacent to its current position
      * 
      * @param edge                  the edge to place the agent on
+     * @param startingNode          the node from which the agent starts on the edge (must be start for directed edges)
      * @param progressFromEdgeStart the progress from the start of the edge to place
      *                              the agent at, between 0 and 1
      * @return true if the agent was successfully placed on the edge
@@ -857,6 +883,8 @@ public class Agent implements StressInducing, Serializable {
     }
 
     /**
+     * Returns the node the agent is currently on.
+     *
      * @return the current node the agent is on, or {@code null} if the agent is not
      *         on a node
      */
@@ -865,6 +893,8 @@ public class Agent implements StressInducing, Serializable {
     }
 
     /**
+     * Returns the current or most recently traversed edge.
+     *
      * @return the current or previous edge the agent is on, or {@code null} if the
      *         agent is not on an edge
      */
@@ -873,10 +903,12 @@ public class Agent implements StressInducing, Serializable {
     }
 
     /**
-     * Places the agent on an edge. It does not reset the current action
-     * Should be used when the agent is on an neighbouring node
-     * 
+     * Places the agent on an edge. It does not reset the current action.
+     * Should be used when the agent is on a neighbouring node.
+     *
      * @param edge the edge to place the agent on
+     * @return {@code true} if the agent was successfully placed on the edge,
+     *         {@code false} if the edge is at full capacity
      */
     public boolean putOnEdge(Edge edge) {
         Objects.requireNonNull(edge, "edge cannot be null when putting agent on edge, call removeFromGraph() instead");
@@ -891,6 +923,8 @@ public class Agent implements StressInducing, Serializable {
     }
 
     /**
+     * Returns the edge the agent is currently traversing.
+     *
      * @return the current edge the agent is on, or {@code null} if the agent is not
      *         on an edge
      */
@@ -899,10 +933,12 @@ public class Agent implements StressInducing, Serializable {
     }
 
     /**
+     * Returns the current edge or the next edge the agent intends to enter.
+     * This method can return {@code null} if the agent has no ongoing action and is
+     * on a node or if the agent is waiting before something else.
+     *
      * @return the current edge the agent is on, or the next edge if the agent is
      *         not on an edge
-     *         This method can return null if the agent has no ongoing action and is
-     *         on a node or if the agent is waiting before something else.
      */
     public Edge getCurrentEdgeOrNextEdgeIfOnNode() {
         if (currentAction == null) {
@@ -914,9 +950,11 @@ public class Agent implements StressInducing, Serializable {
     }
 
     /**
+     * Returns the current node or the next node the agent is heading toward.
+     * This method can technically return {@code null} but should not under normal conditions.
+     *
      * @return the current node the agent is on, or the next node if the agent is
      *         not on a node
-     *         This method can technically return null but should not
      */
     public Node getCurrentNodeOrNextNodeIfOnEdge() {
         if (currentAction == null) {
@@ -928,6 +966,8 @@ public class Agent implements StressInducing, Serializable {
     }
 
     /**
+     * Returns the graph element (node or edge) the agent is currently occupying.
+     *
      * @return the current graph element the agent is on, or {@code null} if the
      *         agent is not on a graph element
      */
@@ -937,7 +977,9 @@ public class Agent implements StressInducing, Serializable {
 
     /**
      * Returns the progress of the agent along the current edge, between 0 and 1, or
-     * -1 if not applicable
+     * -1 if not applicable.
+     *
+     * @return the progress along the current edge (0 to 1), or -1 if not on an edge
      */
     public double getCurrentEdgeProgress() {
         return isOnEdge() ? currentEdgeProgress : -1.0;
@@ -1061,7 +1103,11 @@ public class Agent implements StressInducing, Serializable {
 
     // Behavioral properties related methods
 
-    /** @return the base own decision-making factor (0..1) */
+    /**
+     * Returns the base own decision-making factor of the agent.
+     *
+     * @return the base own decision-making factor (0..1)
+     */
     public double getBaseOwnDecisionMakingFactor() {
         return behavioralState.getBaseOwnDecisionMakingFactor();
     }
@@ -1139,6 +1185,8 @@ public class Agent implements StressInducing, Serializable {
     }
 
     /**
+     * Returns the current emotional state of the agent.
+     *
      * @return the emotional state (calm, selfish, panicking)
      */
     public EmotionalState getEmotionalState() {
@@ -1148,13 +1196,19 @@ public class Agent implements StressInducing, Serializable {
     // Physical properties related methods
 
     /**
+     * Returns the surface area occupied by the agent on a graph element.
+     *
      * @return the surface area taken by the agent, used for congestion calculations
      */
     public double getSurfaceAreaTakenByAgent() {
         return physicalProperties.getSurfaceAreaTakenByAgent();
     }
 
-    /** @return the maximum speed of the agent in m/s */
+    /**
+     * Returns the maximum speed of the agent.
+     *
+     * @return the maximum speed of the agent in m/s
+     */
     public double getMaxSpeed() {
         return physicalProperties.getMaxSpeed();
     }
@@ -1223,6 +1277,8 @@ public class Agent implements StressInducing, Serializable {
     }
 
     /**
+     * Returns the physical properties of the agent.
+     *
      * @return the physical properties of the agent
      */
     public AgentPhysicalProperties getPhysicalProperties() {
@@ -1230,6 +1286,8 @@ public class Agent implements StressInducing, Serializable {
     }
 
     /**
+     * Returns the behavioral and decisional state of the agent.
+     *
      * @return the behavioral/decisional state of the agent
      */
     public AgentDecisionalProperties getBehavioralState() {

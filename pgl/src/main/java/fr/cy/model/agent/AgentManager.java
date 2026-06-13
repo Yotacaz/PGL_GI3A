@@ -226,6 +226,10 @@ public class AgentManager implements Serializable {
     /**
      * Generates a single agent on the specified node and associates it to the
      * provided profile.
+     *
+     * @param baseName the base name for the agent
+     * @param node     the node where the agent should be placed
+     * @param profile  the profile to assign to the agent
      */
     public void generateAgentOnNode(String baseName, Node node, AgentProfile profile) {
         Agent newAgent = agentGenerator.generateAgent(baseName, node);
@@ -348,17 +352,29 @@ public class AgentManager implements Serializable {
         }
     }
 
-    /** @return the unmodifiable list of agents that are still to evacuate */
+    /**
+     * Returns the list of agents that have not yet evacuated.
+     *
+     * @return the unmodifiable list of agents that are still to evacuate
+     */
     public List<Agent> getAgentsToEvacuate() {
         return Collections.unmodifiableList(agentsToEvacuate);
     }
 
-    /** @return the unmodifiable list of evacuated agents */
+    /**
+     * Returns the list of agents that have successfully evacuated.
+     *
+     * @return the unmodifiable list of evacuated agents
+     */
     public List<Agent> getEvacuatedAgents() {
         return Collections.unmodifiableList(evacuatedAgents);
     }
 
-    /** @return the unmodifiable list of dead agents */
+    /**
+     * Returns the list of agents that have died during the simulation.
+     *
+     * @return the unmodifiable list of dead agents
+     */
     public List<Agent> getDeadAgents() {
         return Collections.unmodifiableList(deadAgents);
     }
@@ -396,9 +412,10 @@ public class AgentManager implements Serializable {
     }
 
     /**
-     * Kills the agent and removes the main agent list, but keeps it in the list of
-     * dead agents for statistics purposes and does not remove him from the graph
-     * 
+     * Kills the agent and removes it from the main agent list, but keeps it in the list of
+     * dead agents for statistics purposes and does not remove it from the graph.
+     *
+     * @param agent the agent to kill
      * @return the killed agent
      */
     public Agent killAgent(Agent agent) {
@@ -434,8 +451,10 @@ public class AgentManager implements Serializable {
 
     /**
      * Deletes the agent from the graph and releases its ID, but does not add it to
-     * the list of dead agents
-     * <b>Agents removed with this method should not be used anymore</b>
+     * the list of dead agents.
+     * <b>Agents removed with this method should not be used anymore.</b>
+     *
+     * @param agent the agent to delete
      */
     public void deleteAgent(Agent agent) {
         agent.releaseId();
@@ -580,6 +599,11 @@ public class AgentManager implements Serializable {
         }
     }
 
+    /**
+     * Returns the average number of simulation ticks it took for evacuated agents to exit.
+     *
+     * @return the average number of ticks to exit for all evacuated agents, or 0 if none have evacuated
+     */
     public double getAverageNumberOfTicksToExitForEvacuatedAgents() {
         if (evacuatedAgents.isEmpty()) {
             return 0.0;

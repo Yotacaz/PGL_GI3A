@@ -19,5 +19,10 @@ package fr.cy.model.agent.properties;
  * </ul>
  */
 public class AgentPositionalProperties {//TODO
-    
+
+    /**
+     * Constructs a new {@code AgentPositionalProperties} with default values.
+     */
+    public AgentPositionalProperties() {
+    }
 }

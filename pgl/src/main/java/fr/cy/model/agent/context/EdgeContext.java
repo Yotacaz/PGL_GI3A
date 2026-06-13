@@ -27,6 +27,8 @@ public class EdgeContext extends AbstractGraphElementContext<Node> {
 
 
     /**
+     * Returns the congestion statistics for the accessible outgoing nodes.
+     *
      * @return the congestion statistics for the accessible outgoing nodes, can be
      *         null if there are no accessible nodes
      */
@@ -35,6 +37,8 @@ public class EdgeContext extends AbstractGraphElementContext<Node> {
     }
 
     /**
+     * Returns the list of accessible nodes sorted by congestion level.
+     *
      * @return the list of accessible nodes sorted by congestion (least congested
      *         first)
      */

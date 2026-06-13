@@ -55,15 +55,16 @@ public class CongestionStats<T extends GraphElement> implements Serializable {
 
     /**
      * Computes congestion statistics for a list of graph elements.
-     * 
+     *
      * <p>
      * This method identifies the maximum, minimum, average, and total congestion,
      * as well as the most and least congested elements.
      * <b>Note:</b> The provided list is sorted in place using
      * {@link CongestionsGraphElementComparator}.
      * </p>
-     * * @param graphElements The list of elements to analyze.
-     * 
+     *
+     * @param <T>           the type of graph element to analyze
+     * @param graphElements the list of elements to analyze
      * @return A {@code CongestionStats} instance containing the metrics,
      *         or {@code null} if the list is empty or null.
      */
@@ -87,7 +88,11 @@ public class CongestionStats<T extends GraphElement> implements Serializable {
                 sortedElements.get(count - 1), sortedElements.get(0), sortedElements, count);
     }
 
-    /** @return The average congestion level across all elements. */
+    /**
+     * Returns the average congestion level across all analyzed elements.
+     *
+     * @return The average congestion level across all elements.
+     */
     public double getAverageCongestionLevel() {
         return averageCongestionLevel;
     }
@@ -111,27 +116,47 @@ public class CongestionStats<T extends GraphElement> implements Serializable {
         return count;
     }
 
-    /** @return The minimum congestion level found. */
+    /**
+     * Returns the minimum congestion level found among the analyzed elements.
+     *
+     * @return The minimum congestion level found.
+     */
     public double getMinCongestionLevel() {
         return minCongestionLevel;
     }
 
-    /** @return The sum of all congestion levels. */
+    /**
+     * Returns the sum of all congestion levels across all analyzed elements.
+     *
+     * @return The sum of all congestion levels.
+     */
     public double getTotalCongestionLevel() {
         return totalCongestionLevel;
     }
 
-    /** @return The element with the lowest congestion level. */
+    /**
+     * Returns the element with the lowest congestion level among those analyzed.
+     *
+     * @return The element with the lowest congestion level.
+     */
     public T getLeastCongestedElement() {
         return leastCongestedElement;
     }
 
-    /** @return The element with the highest congestion level. */
+    /**
+     * Returns the element with the highest congestion level among those analyzed.
+     *
+     * @return The element with the highest congestion level.
+     */
     public T getMostCongestedElement() {
         return mostCongestedElement;
     }
 
-    /** @return The list of elements sorted by congestion (ascending). */
+    /**
+     * Returns the list of analyzed elements sorted by congestion level in ascending order.
+     *
+     * @return The list of elements sorted by congestion (ascending).
+     */
     public List<T> getSortedByCongestion() {
         return sortedByCongestion;
     }

@@ -168,7 +168,8 @@ public class Graph implements Serializable {
 
     /**
      * Adds multiple nodes to the graph.
-     * * @param count The amount of random nodes to inject.
+     *
+     * @param count the number of random nodes to add
      */
     public void addNodes(int count) {
         for (int i = 0; i < count; i++)
@@ -216,7 +217,9 @@ public class Graph implements Serializable {
     }
 
     /**
-     * @return A random node from the graph, or null if the graph is empty.
+     * Returns a random node from the graph.
+     *
+     * @return a random node, or {@code null} if the graph is empty
      */
     public Node getRandomNode() {
         if (nodes.isEmpty()) {
@@ -306,7 +309,8 @@ public class Graph implements Serializable {
 
     /**
      * Generates a batch of randomized edges.
-     * * @param count Total number of edges to randomly deploy.
+     *
+     * @param count total number of edges to randomly deploy
      */
     public void addEdges(int count) {
         for (int i = 0; i < count; i++)
@@ -410,7 +414,8 @@ public class Graph implements Serializable {
     /**
      * Flips the traversal direction parameter of a one-way edge and remaps
      * adjacency matrices.
-     * * @param edge The directed edge targeted for reversal.
+     *
+     * @param edge the directed edge targeted for reversal
      */
     public void switchEdgeDirection(Edge edge) {
         if (edge.isDirected()) {
@@ -428,21 +433,29 @@ public class Graph implements Serializable {
     // 6. QUERIES & TOPOLOGY GETTERS
     // =========================================================================
 
-    /** @return An unmodifiable collection view of all nodes. */
+    /**
+     * Returns all nodes in the graph.
+     *
+     * @return the list of all nodes
+     */
     public List<Node> getNodes() {
         return nodes;
     }
 
-    /** @return An unmodifiable collection view of all edges. */
+    /**
+     * Returns all edges in the graph.
+     *
+     * @return the list of all edges
+     */
     public List<Edge> getEdges() {
         return edges;
     }
 
     /**
      * Searches the graph sequentially to retrieve a node matching a given ID.
-     * * @param id The unique integer ID tag.
-     * 
-     * @return The node instance, or null if no match is found.
+     *
+     * @param id the unique integer ID of the node to find
+     * @return the node instance, or {@code null} if no match is found
      */
     public Node getNodeById(int id) {
         for (Node node : nodes) {
@@ -454,9 +467,9 @@ public class Graph implements Serializable {
 
     /**
      * Fetches all direct neighbors attached to a given node.
-     * * @param node The specific node to query.
-     * 
-     * @return A list containing adjacent nodes.
+     *
+     * @param node the node to query
+     * @return a list containing the adjacent nodes
      */
     public List<Node> getNeighbors(Node node) {
         List<Node> neighbors = new ArrayList<>();
@@ -468,8 +481,9 @@ public class Graph implements Serializable {
     }
 
     /**
-     * @return The complete graph topology represented as an adjacency dictionary
-     *         map.
+     * Returns the complete graph topology as an adjacency map.
+     *
+     * @return the adjacency map from each node to its connected edges
      */
     public Map<Node, List<Edge>> getAdjacencyList() {
         return adjacencyList;
@@ -477,18 +491,18 @@ public class Graph implements Serializable {
 
     /**
      * Retrieves all edges that are actively connected to a specific node.
-     * * @param node The node to target.
-     * 
-     * @return A list containing all attached edges.
+     *
+     * @param node the node to target
+     * @return a list containing all attached edges
      */
     public List<Edge> getAdjacentEdges(Node node) {
         return adjacencyList.getOrDefault(node, new ArrayList<>());
     }
 
     /**
-     * Retrieves a specialized subset of nodes classified as successful evacuation
-     * points.
-     * * @return A list of all marked exit nodes on the graph.
+     * Retrieves all nodes classified as evacuation exit points.
+     *
+     * @return a list of all marked exit nodes on the graph
      */
     public List<Node> getExits() {
         List<Node> exits = new ArrayList<>();

@@ -29,7 +29,12 @@ public class ContextProvider implements Serializable {
     private Map<Node, NodeContext> cachedNodeContexts = new HashMap<>();
     private Map<Edge, EdgeContext> cachedEdgesContexts = new HashMap<>();
 
-    // private final
+    /**
+     * Constructs a new {@code ContextProvider} for the given graph and pathfinder.
+     *
+     * @param graph       the graph used to build node and edge contexts
+     * @param pathFinder  the pathfinder used to compute recommended paths for agents
+     */
     public ContextProvider(Graph graph, PathFinder pathFinder) {
         this.graph = graph;
         this.pathFinder = pathFinder;
@@ -76,6 +81,9 @@ public class ContextProvider implements Serializable {
         return cachedContext;
     }
 
+    /**
+     * Clears all cached node and edge contexts, forcing them to be recomputed on next access.
+     */
     public void clearCache() {
         cachedNodeContexts.clear();
         cachedEdgesContexts.clear();

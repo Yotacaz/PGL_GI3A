@@ -58,6 +58,15 @@ public class AgentDecisionalProperties implements Serializable {
     private final Set<Object> personalityTraits = new HashSet<>();
 
 
+    /**
+     * Constructs a new {@code AgentDecisionalProperties} instance.
+     *
+     * @param agentId                     the unique identifier of the agent
+     * @param stressTolerance             the stress level threshold above which the agent transitions states
+     * @param baseOwnDecisionMakingFactor the base factor (0..1) for independent decision-making
+     * @param repeatLastDecisionTendency  the tendency to repeat the last chosen decision
+     * @param congestionTolerance         the congestion level the agent tolerates before becoming stressed
+     */
     public AgentDecisionalProperties(int agentId, double stressTolerance, double baseOwnDecisionMakingFactor,
             double repeatLastDecisionTendency, double congestionTolerance) {
         this.id = agentId;
@@ -84,6 +93,8 @@ public class AgentDecisionalProperties implements Serializable {
     }
 
     /**
+     * Returns the current emotional state of the agent.
+     *
      * @return the current state of the agent
      */
     public EmotionalState getEmotionnalState() {
@@ -122,33 +133,64 @@ public class AgentDecisionalProperties implements Serializable {
     }
 
     /**
+     * Returns the base own decision-making factor of the agent.
+     *
      * @return the base own decision-making factor (0..1)
      */
     public double getBaseOwnDecisionMakingFactor() {
         return baseOwnDecisionMakingFactor;
     }
 
+    /**
+     * Returns the current own decision-making factor, modulated by the current stress level.
+     *
+     * @return the current own decision-making factor (0..1)
+     */
     public double getCurrentOwnDecisionMakingFactor() {
         return baseOwnDecisionMakingFactor * stressLevel;
     }
 
+    /**
+     * Returns the maximum stress level the agent has experienced during its journey.
+     *
+     * @return the maximum accumulated stress
+     */
     public double getMaxAccumulatedStress() {
         return maxAccumulatedStress;
     }
 
+    /**
+     * Returns the factor controlling the agent's tendency to repeat its last decision.
+     *
+     * @return the repeat-last-decision factor
+     */
     public double getRepeatLastDecisionFactor() {
         return repeatLastDecisionFactor;
     }
 
+    /**
+     * Sets the factor controlling the agent's tendency to repeat its last decision.
+     *
+     * @param repeatLastDecisionTendency the new repeat-last-decision factor
+     */
     public void setRepeatLastDecisionFactor(double repeatLastDecisionTendency) {
         this.repeatLastDecisionFactor = repeatLastDecisionTendency;
     }
 
-    /** @return the congestion tolerance (0..1) */
+    /**
+     * Returns the congestion tolerance of the agent.
+     *
+     * @return the congestion tolerance (0..1)
+     */
     public double getCongestionTolerance() {
         return congestionTolerance;
     }
 
+    /**
+     * Sets the congestion tolerance of the agent.
+     *
+     * @param congestionTolerance the new congestion tolerance (0..1)
+     */
     public void setCongestionTolerance(double congestionTolerance) {
         this.congestionTolerance = congestionTolerance;
     }

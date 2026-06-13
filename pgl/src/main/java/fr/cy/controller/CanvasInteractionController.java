@@ -49,7 +49,16 @@ public class CanvasInteractionController {
      * Defines the supported interaction modes for the canvas.
      */
     public enum InteractionMode {
-        SELECT_AND_DRAG, ADD_NODE, ADD_EDGE_START, ADD_AGENT, DELETE
+        /** Mode for selecting and dragging existing graph elements. */
+        SELECT_AND_DRAG,
+        /** Mode for adding a new node by clicking on the canvas. */
+        ADD_NODE,
+        /** Mode for starting to draw an edge from a source node. */
+        ADD_EDGE_START,
+        /** Mode for placing a new agent on a node. */
+        ADD_AGENT,
+        /** Mode for deleting graph elements by clicking or drawing a selection region. */
+        DELETE
     }
 
     /**
@@ -86,12 +95,20 @@ public class CanvasInteractionController {
         notifySelection(null);
     }
 
-    /** Provides the overlay Rectangle used to visualise the selection zone in DELETE mode. */
+    /**
+     * Provides the overlay Rectangle used to visualise the selection zone in DELETE mode.
+     *
+     * @param overlay the Rectangle to use as the selection overlay
+     */
     public void setSelectionOverlay(Rectangle overlay) {
         this.selectionOverlay = overlay;
     }
 
-    /** Callback fired with every object inside the drawn selection rectangle. */
+    /**
+     * Sets the callback fired with every object inside the drawn selection rectangle.
+     *
+     * @param callback consumer that receives the list of objects within the selection region
+     */
     public void setOnDeleteInRegionRequested(Consumer<List<Object>> callback) {
         this.onDeleteInRegionRequested = callback;
     }

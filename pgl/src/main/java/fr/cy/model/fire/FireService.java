@@ -15,6 +15,9 @@ public class FireService implements Serializable {
     private static final long serialVersionUID = 1L;
     private final Random random;
 
+    /**
+     * Constructs a new {@code FireService} with a fresh random number generator.
+     */
     public FireService() {
         this.random = new Random();
     }
@@ -32,9 +35,9 @@ public class FireService implements Serializable {
     /**
      * Updates the state of all fires in the graph, handling intensity
      * updates and propagation from nodes to edges and vice-versa.
-     * * @param graph The simulation graph.
-     * 
-     * @param tickDuration The duration of the current simulation tick.
+     *
+     * @param graph the simulation graph whose fires to update
+     * @param tickDuration the duration of the current simulation tick in seconds
      */
     public void updateFires(Graph graph, double tickDuration) {
 

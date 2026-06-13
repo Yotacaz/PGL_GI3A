@@ -28,9 +28,15 @@ import fr.cy.model.agent.Agent;
  * </p>
  */
 public class EdgeSegment implements Serializable {
- 
+
     private static final long serialVersionUID = 1L;
- 
+
+    /**
+     * Constructs a new empty {@code EdgeSegment} with no agents.
+     */
+    public EdgeSegment() {
+    }
+
     /** Agents moving from the edge start node towards the end node. */
     private final List<Agent> forwardAgents = new ArrayList<>();
     /** Agents moving from the edge end node towards the start node. */
@@ -93,22 +99,38 @@ public class EdgeSegment implements Serializable {
         return forward ? forwardAgents : backwardAgents;
     }
  
-    /** @return the occupied surface of forward agents. */
+    /**
+     * Returns the total occupied surface of agents moving forward in this segment.
+     *
+     * @return the occupied surface of forward agents.
+     */
     public double getForwardOccupiedSurface() {
         return forwardOccupiedSurface;
     }
  
-    /** @return the occupied surface of backward agents. */
+    /**
+     * Returns the total occupied surface of agents moving backward in this segment.
+     *
+     * @return the occupied surface of backward agents.
+     */
     public double getBackwardOccupiedSurface() {
         return backwardOccupiedSurface;
     }
  
-    /** @return the agents moving from start to end. */
+    /**
+     * Returns the list of agents moving from the start node to the end node.
+     *
+     * @return the agents moving from start to end.
+     */
     public List<Agent> getForwardAgents() {
         return forwardAgents;
     }
  
-    /** @return the agents moving from end to start. */
+    /**
+     * Returns the list of agents moving from the end node to the start node.
+     *
+     * @return the agents moving from end to start.
+     */
     public List<Agent> getBackwardAgents() {
         return backwardAgents;
     }

@@ -18,8 +18,11 @@ public final class AgentProfileRegistry {
     }
 
     /**
-     * Associate a profile to an agent. Passing {@code null} sets the
+     * Associate a profile to an agent. Passing {@code null} for profile sets the
      * {@link AgentProfile#DEFAULT} profile.
+     *
+     * @param agent   the agent to associate the profile with
+     * @param profile the profile to assign, or {@code null} to use the default
      */
     public static void setProfile(Agent agent, AgentProfile profile) {
         if (agent == null)
@@ -30,6 +33,9 @@ public final class AgentProfileRegistry {
     /**
      * Returns the profile associated to the given agent, or
      * {@link AgentProfile#DEFAULT} when none is registered.
+     *
+     * @param agent the agent whose profile is requested
+     * @return the profile associated to the agent, or {@link AgentProfile#DEFAULT} if not found
      */
     public static AgentProfile getProfile(Agent agent) {
         if (agent == null)
@@ -38,7 +44,11 @@ public final class AgentProfileRegistry {
         return p == null ? AgentProfile.DEFAULT : p;
     }
 
-    /** Removes any registered profile for the given agent. */
+    /**
+     * Removes any registered profile for the given agent.
+     *
+     * @param agent the agent whose profile entry should be removed
+     */
     public static void removeProfile(Agent agent) {
         if (agent == null)
             return;

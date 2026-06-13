@@ -48,10 +48,11 @@ public class Fire implements Serializable {
     }
 
     /**
-     * Advance the fire based on the actual time elapsed.
+     * Advances the fire state based on the actual time elapsed.
      * Uses exponential growth scaled by the tick duration to ensure the fire
      * grows at the exact same speed regardless of the simulation framerate.
-     * * @param tickDuration le temps écoulé depuis la dernière frame (en secondes)
+     *
+     * @param tickDuration the time elapsed since the last frame, in seconds
      */
     public void update(double tickDuration) {
         this.burningTime += tickDuration;
@@ -61,11 +62,18 @@ public class Fire implements Serializable {
         this.smokeLevel *= Math.pow(SMOKE_GROWTH_PER_SEC, tickDuration);
     }
 
+    /**
+     * Sets the intensity of the fire.
+     *
+     * @param intensity the new intensity value
+     */
     public void setIntensity(double intensity) {
         this.intensity = intensity;
     }
 
     /**
+     * Returns the current intensity of the fire.
+     *
      * @return the current intensity of the fire
      */
     public double getIntensity() {
@@ -73,6 +81,8 @@ public class Fire implements Serializable {
     }
 
     /**
+     * Returns the current smoke level produced by the fire.
+     *
      * @return the current smoke level produced by the fire
      */
     public double getSmokeLevel() {
@@ -80,20 +90,29 @@ public class Fire implements Serializable {
     }
 
     /**
-     * @return the spread rate of the fire (used by the simulation to propagate
-     *         fire)
+     * Returns the spread rate of the fire used by the simulation to propagate fire.
+     *
+     * @return the spread rate of the fire
      */
     public double getSpreadRate() {
         return spreadRate;
     }
 
     /**
-     * @return the total time this fire has been burning (in seconds)
+     * Returns the total time this fire has been burning.
+     *
+     * @return the total burning time in seconds
      */
     public double getBurningTime() {
         return burningTime;
     }
 
+    /**
+     * Computes the damage dealt to an agent based on current fire properties and exposure duration.
+     *
+     * @param duration the exposure duration in seconds
+     * @return the damage amount for the given exposure duration
+     */
     public double getDamageForAgent(double duration) {
         // Simple damage formula based on intensity and burn duration
         return duration * intensity * smokeLevel * (1 + burningTime / 60.0); // +100% of damage after 1 minute

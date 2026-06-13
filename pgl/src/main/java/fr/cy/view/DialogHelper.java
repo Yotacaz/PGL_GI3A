@@ -20,14 +20,18 @@ import fr.cy.model.agent.properties.EmotionalState;
  */
 public class DialogHelper {
 
+    /** Utility class — do not instantiate. */
+    private DialogHelper() {
+    }
+
     /**
      * Initializes a standard dialog with consistent styling and owner window.
-     * * @param dialog The dialog instance to configure.
-     * * @param title The window title.
-     * 
-     * @param header The header text.
-     * @param parent The parent node used to determine the owner window.
-     * @return The configured {@link DialogPane}.
+     *
+     * @param dialog the dialog instance to configure
+     * @param title  the window title
+     * @param header the header text
+     * @param parent the parent node used to determine the owner window
+     * @return the configured {@link DialogPane}
      */
     private static DialogPane createBaseDialog(Dialog<?> dialog, String title, String header,
             javafx.scene.Node parent) {
@@ -43,8 +47,9 @@ public class DialogHelper {
 
     /**
      * Applies standard action button styles to a dialog.
-     * * @param pane The dialog pane containing the buttons.
-     * * @param okBtn The ButtonType representing the confirm action.
+     *
+     * @param pane  the dialog pane containing the buttons
+     * @param okBtn the {@link ButtonType} representing the confirm action
      */
     private static void styleButtons(DialogPane pane, ButtonType okBtn) {
         ((Button) pane.lookupButton(okBtn)).getStyleClass().addAll("action-btn", "play-btn");
@@ -113,10 +118,10 @@ public class DialogHelper {
 
     /**
      * Opens a dialog to configure and trigger a fire on a specific graph element.
-     * * @param element The graph element to set on fire.
-     * * @param parentNode The parent node for window context.
-     * 
-     * @return An Optional containing the configured {@link Fire} if accepted.
+     *
+     * @param element    the graph element to set on fire
+     * @param parentNode the parent node for window context
+     * @return an Optional containing the configured {@link Fire} if accepted
      */
     public static Optional<Fire> showFireDialog(GraphElement element, javafx.scene.Node parentNode) {
         Dialog<Fire> dialog = new Dialog<>();
@@ -149,8 +154,9 @@ public class DialogHelper {
 
     /**
      * Opens a dialog to input parameters for creating a new node.
-     * * @param parentNode The parent node for window context.
-     * * @return An Optional containing the {@link NodeParams}.
+     *
+     * @param parentNode the parent node for window context
+     * @return an Optional containing the {@link NodeParams}
      */
     public static Optional<NodeParams> showNodeCreationDialog(javafx.scene.Node parentNode) {
         ButtonType okBtn = new ButtonType("Create Node", ButtonBar.ButtonData.OK_DONE);
@@ -178,10 +184,10 @@ public class DialogHelper {
 
     /**
      * Opens a dialog to modify an existing node's properties.
-     * * @param node The node to modify.
-     * * @param parentNode The parent node for window context.
-     * 
-     * @return An Optional containing the {@link NodeParams}.
+     *
+     * @param node       the node to modify
+     * @param parentNode the parent node for window context
+     * @return an Optional containing the {@link NodeParams}
      */
     public static Optional<NodeParams> showNodeUpdateDialog(Node node, javafx.scene.Node parentNode) {
         ButtonType okBtn = new ButtonType("Apply", ButtonBar.ButtonData.OK_DONE);
@@ -210,11 +216,11 @@ public class DialogHelper {
 
     /**
      * Opens a dialog to create a new edge between two nodes.
-     * * @param start The starting node.
-     * * @param end The ending node.
-     * 
-     * @param parentNode The parent node for window context.
-     * @return An Optional containing the {@link EdgeParams}.
+     *
+     * @param start      the starting node
+     * @param end        the ending node
+     * @param parentNode the parent node for window context
+     * @return an Optional containing the {@link EdgeParams}
      */
     public static Optional<EdgeParams> showEdgeCreationDialog(Node start, Node end, javafx.scene.Node parentNode) {
         Dialog<EdgeParams> dialog = new Dialog<>();
@@ -248,10 +254,10 @@ public class DialogHelper {
 
     /**
      * Opens a dialog to modify an existing edge's properties.
-     * * @param edge The edge to modify.
-     * * @param parentNode The parent node for window context.
-     * 
-     * @return An Optional containing the {@link EdgeParams}.
+     *
+     * @param edge       the edge to modify
+     * @param parentNode the parent node for window context
+     * @return an Optional containing the {@link EdgeParams}
      */
     public static Optional<EdgeParams> showEdgeUpdateDialog(Edge edge, javafx.scene.Node parentNode) {
         Dialog<EdgeParams> dialog = new Dialog<>();
@@ -292,11 +298,11 @@ public class DialogHelper {
 
     /**
      * Opens a dialog to request the number of agents to generate.
-     * * @param parentNode The parent node for window context.
-     * * @param title The dialog title.
-     * 
-     * @param headerText The header text.
-     * @return An Optional containing the integer count of agents.
+     *
+     * @param parentNode the parent node for window context
+     * @param title      the dialog title
+     * @param headerText the header text
+     * @return an Optional containing the integer count of agents
      */
     public static Optional<Integer> showAgentCountDialog(javafx.scene.Node parentNode, String title,
             String headerText) {
@@ -328,8 +334,12 @@ public class DialogHelper {
     }
 
     /**
-     * Shows a dialog that requests how many agents to create and which profile
-     * to assign to them. Returns both values in {@link AgentCreationOptions}.
+     * Shows a dialog that requests how many agents to create and which profile to assign to them.
+     *
+     * @param parentNode the parent node for window context
+     * @param title      the dialog title
+     * @param headerText the header text
+     * @return an Optional containing the {@link AgentCreationOptions} if accepted
      */
     public static Optional<AgentCreationOptions> showAgentCountAndProfileDialog(javafx.scene.Node parentNode,
             String title, String headerText) {
@@ -365,8 +375,9 @@ public class DialogHelper {
 
     /**
      * Opens a dialog to define the number of nodes for random graph generation.
-     * * @param parentNode The parent node for window context.
-     * * @return An Optional containing the number of nodes to generate.
+     *
+     * @param parentNode the parent node for window context
+     * @return an Optional containing the number of nodes to generate
      */
     public static Optional<Integer> showRandomGraphDialog(javafx.scene.Node parentNode) {
         Dialog<Integer> dialog = new Dialog<>();
@@ -392,9 +403,20 @@ public class DialogHelper {
 
     /** Data Transfer Object for edge parameters. */
     public static class EdgeParams {
-        public final double width, length;
+        /** The width of the edge. */
+        public final double width;
+        /** The length of the edge. */
+        public final double length;
+        /** Whether the edge is directed. */
         public final boolean directed;
 
+        /**
+         * Constructs an {@code EdgeParams} with the given dimensions and direction flag.
+         *
+         * @param w width of the edge
+         * @param l length of the edge
+         * @param d {@code true} if the edge should be directed
+         */
         public EdgeParams(double w, double l, boolean d) {
             this.width = w;
             this.length = l;
@@ -404,9 +426,17 @@ public class DialogHelper {
 
     /** Data Transfer Object for node parameters. */
     public static class NodeParams {
+        /** The capacity of the node in square metres. */
         public final double capacity;
+        /** Whether the node is an evacuation exit. */
         public final boolean isExit;
 
+        /**
+         * Constructs a {@code NodeParams} with the given capacity and exit flag.
+         *
+         * @param c capacity of the node in square metres
+         * @param e {@code true} if the node is an evacuation exit
+         */
         public NodeParams(double c, boolean e) {
             this.capacity = c;
             this.isExit = e;
@@ -415,10 +445,20 @@ public class DialogHelper {
 
     /** Data Transfer Object for agent parameters. */
     public static class AgentParams {
+        /** The physical surface area taken by the agent in square metres. */
         public final double surfaceArea;
+        /** The maximum speed of the agent in metres per second. */
         public final double maxSpeed;
+        /** The health points of the agent. */
         public final double health;
 
+        /**
+         * Constructs an {@code AgentParams} with the given physical properties.
+         *
+         * @param surfaceArea the surface area taken by the agent in square metres
+         * @param maxSpeed    the maximum speed of the agent in metres per second
+         * @param health      the health points of the agent
+         */
         public AgentParams(double surfaceArea, double maxSpeed, double health) {
             this.surfaceArea = surfaceArea;
             this.maxSpeed = maxSpeed;
@@ -426,7 +466,12 @@ public class DialogHelper {
         }
     }
 
-    /** DTO returned by {@link #showAgentCountAndProfileDialog}. */
+    /**
+     * DTO returned by {@link #showAgentCountAndProfileDialog}.
+     *
+     * @param count   the number of agents to create
+     * @param profile the profile to assign to each created agent
+     */
     public static record AgentCreationOptions(int count, AgentProfile profile) {
     }
 }

@@ -22,7 +22,11 @@ public enum AgentProfile {
         this.label = label;
     }
 
-    /** Returns the human-friendly label for this profile. */
+    /**
+     * Returns the human-friendly label for this profile.
+     *
+     * @return the label string identifying this profile
+     */
     public String getLabel() {
         return label;
     }

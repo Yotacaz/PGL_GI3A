@@ -501,44 +501,94 @@ public class DetailsSidePanel extends ScrollPane {
 
     // --- Callbacks (display) ---
 
+    /**
+     * Sets the callback invoked when toggling fire on a graph element is requested.
+     *
+     * @param listener the consumer that receives the element on which fire is toggled
+     */
     public void setOnToggleFireRequested(Consumer<GraphElement> listener) {
         this.onToggleFireRequested = listener;
     }
 
+    /**
+     * Sets the callback invoked when deletion of a graph element is requested.
+     *
+     * @param listener the consumer that receives the element to delete
+     */
     public void setOnDeleteRequested(Consumer<GraphElement> listener) {
         this.onDeleteRequested = listener;
     }
 
+    /**
+     * Sets the callback invoked when deletion of an agent is requested.
+     *
+     * @param listener the consumer that receives the agent to delete
+     */
     public void setOnDeleteAgentRequested(Consumer<Agent> listener) {
         this.onDeleteAgentRequested = listener;
     }
 
+    /**
+     * Sets the callback invoked when killing an agent is requested.
+     *
+     * @param listener the consumer that receives the agent to kill
+     */
     public void setOnKillAgentRequested(Consumer<Agent> listener) {
         this.onKillAgentRequested = listener;
     }
 
     // --- Callbacks (edit) ---
 
+    /**
+     * Sets the callback invoked when the node capacity value is changed.
+     *
+     * @param listener the consumer that receives the new capacity value
+     */
     public void setOnNodeCapacityChanged(Consumer<Double> listener) {
         this.onNodeCapacityChanged = listener;
     }
 
+    /**
+     * Sets the callback invoked when the node exit status is toggled.
+     *
+     * @param listener the consumer that receives the new exit flag value
+     */
     public void setOnNodeExitChanged(Consumer<Boolean> listener) {
         this.onNodeExitChanged = listener;
     }
 
+    /**
+     * Sets the callback invoked when the edge width is changed.
+     *
+     * @param listener the consumer that receives the new width value
+     */
     public void setOnEdgeWidthChanged(Consumer<Double> listener) {
         this.onEdgeWidthChanged = listener;
     }
 
+    /**
+     * Sets the callback invoked when the edge length is changed.
+     *
+     * @param listener the consumer that receives the new length value
+     */
     public void setOnEdgeLengthChanged(Consumer<Double> listener) {
         this.onEdgeLengthChanged = listener;
     }
 
+    /**
+     * Sets the callback invoked when the edge directed flag is changed.
+     *
+     * @param listener the consumer that receives the new directed flag value
+     */
     public void setOnEdgeDirectedChanged(Consumer<Boolean> listener) {
         this.onEdgeDirectedChanged = listener;
     }
 
+    /**
+     * Sets the callback invoked when reversing the edge direction is requested.
+     *
+     * @param listener the runnable to invoke when the direction reversal is requested
+     */
     public void setOnReverseEdgeDirectionRequested(Runnable listener) {
         this.onReverseEdgeDirectionRequested = listener;
     }

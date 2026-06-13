@@ -17,6 +17,12 @@ import java.util.Objects;
  */
 public class App extends Application {
 
+    /**
+     * Constructs the JavaFX application entry point.
+     */
+    public App() {
+    }
+
     @Override
     public void start(Stage primaryStage) {
     	
@@ -50,6 +56,11 @@ public class App extends Application {
         primaryStage.show();
     }
 
+    /**
+     * Application entry point that launches the JavaFX runtime.
+     *
+     * @param args command-line arguments passed to the application
+     */
     public static void main(String[] args) {
         launch(args);
     }

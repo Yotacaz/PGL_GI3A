@@ -29,6 +29,11 @@ public class FileManagementBar extends HBox {
 
     private final SimulationController simController;
 
+    /**
+     * Constructs a new {@code FileManagementBar} with buttons for file operations.
+     *
+     * @param simController the simulation controller used to handle save/load actions
+     */
     public FileManagementBar(SimulationController simController) {
         super(4);
         this.simController = simController;

@@ -48,6 +48,7 @@ public class AgentGenerator implements Serializable {
 	 * @param baseName base name to use for the agent (a unique id is appended)
 	 * @param startingNode node where the agent should start, or {@code null} to
 	 *                     leave it unplaced
+	 * @return the newly created agent placed on the given node
 	 */
 	public Agent generateAgent(String baseName, Node startingNode) {
 		return createRandomAgent(baseName, startingNode);
@@ -110,9 +111,10 @@ public class AgentGenerator implements Serializable {
 	}
 
 	/**
-	 * Generate a simple agent with randomized parameters.
+	 * Generate a simple agent with randomized parameters placed on a random node.
 	 *
 	 * @param baseName base name to use for the agent (a unique id is appended)
+	 * @return the newly created agent placed on a randomly selected node
 	 */
 	public Agent generateRandomAgentOnRandomNode(String baseName) {
 		if (graph != null && !graph.getNodes().isEmpty()) {

@@ -10,6 +10,8 @@ import fr.cy.model.graph.element.GraphElement;
 /**
  * Holds the aggregated score for a possible decision and its weighted
  * neighboring graph-element choices.
+ *
+ * @param <T> the type of {@link GraphElement} used as neighboring elements
  */
 public abstract class AgentPossibleDecisionScore<T extends GraphElement> implements Serializable {
     /** Serial version UID for serialization compatibility */

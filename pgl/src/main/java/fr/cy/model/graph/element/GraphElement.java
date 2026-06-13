@@ -76,7 +76,11 @@ public sealed abstract class GraphElement implements StressInducing, Serializabl
      */
     public abstract List<? extends GraphElement> getNeighbors();
 
-    /** @return The unique identifier of this element. */
+    /**
+     * Returns the unique identifier of this element.
+     *
+     * @return The unique identifier of this element.
+     */
     public int getId() {
         return id;
     }
@@ -100,7 +104,11 @@ public sealed abstract class GraphElement implements StressInducing, Serializabl
     // 4. AGENT MANAGEMENT (ENTRY / EXIT)
     // =========================================================================
 
-    /** @return The list of agents currently located on this element. */
+    /**
+     * Returns the list of agents currently located on this element.
+     *
+     * @return The list of agents currently located on this element.
+     */
     public List<Agent> getAgents() {
         return agents;
     }
@@ -173,15 +181,27 @@ public sealed abstract class GraphElement implements StressInducing, Serializabl
     // 5. CAPACITY & CONGESTION LOGIC
     // =========================================================================
 
+    /**
+     * Returns the maximum safe capacity of this element in square meters.
+     *
+     * @return the capacity in m²
+     */
     public double getCapacity() {
         return capacity;
     }
 
+    /**
+     * Sets the maximum safe capacity of this element.
+     *
+     * @param capacity the new capacity in m² (clamped to a minimum of 0.1)
+     */
     public void setCapacity(double capacity) {
         this.capacity = Math.max(0.1, capacity);
     }
 
     /**
+     * Returns the total surface area occupied by all agents currently on this element.
+     *
      * @return The total sum of surface areas occupied by all agents currently on
      *         this element.
      */
@@ -204,6 +224,8 @@ public sealed abstract class GraphElement implements StressInducing, Serializabl
     }
 
     /**
+     * Checks whether this element's capacity limit has been reached.
+     *
      * @return {@code true} if the element's capacity limit has been reached or
      *         exceeded.
      */
@@ -211,7 +233,11 @@ public sealed abstract class GraphElement implements StressInducing, Serializabl
         return getOccupiedSpace() >= capacity;
     }
 
-    /** @return {@code true} if the current spatial congestion exceeds 70%. */
+    /**
+     * Checks whether this element is considered congested (occupancy above 70%).
+     *
+     * @return {@code true} if the current spatial congestion exceeds 70%.
+     */
     public boolean isCongested() {
         return getCongestion() > 0.7;
     }
@@ -279,19 +305,36 @@ public sealed abstract class GraphElement implements StressInducing, Serializabl
     // 6. FIRE MECHANICS
     // =========================================================================
 
-    /** @return {@code true} if the element is currently affected by fire. */
+    /**
+     * Checks whether this element is currently affected by fire.
+     *
+     * @return {@code true} if the element is currently affected by fire.
+     */
     public boolean isOnFire() {
         return fire != null;
     }
 
+    /**
+     * Returns the fire currently affecting this element.
+     *
+     * @return the {@link Fire} instance, or {@code null} if not on fire
+     */
     public Fire getFire() {
         return fire;
     }
 
+    /**
+     * Sets the fire affecting this element.
+     *
+     * @param fire the fire to set, or {@code null} to clear it
+     */
     public void setFire(Fire fire) {
         this.fire = fire;
     }
 
+    /**
+     * Removes the fire from this element.
+     */
     public void removeFire() {
         this.fire = null;
     }
@@ -306,7 +349,7 @@ public sealed abstract class GraphElement implements StressInducing, Serializabl
      *
      * @param agentState Agent decision properties.
      * @param agentPhysicalProperties Agent physical properties.
-     * @return Score multiplier (values < 1 decrease attractiveness).
+     * @return Score multiplier (values &lt; 1 decrease attractiveness).
      */
     public double getScoreMultiplierForAgent(AgentDecisionalProperties agentState, AgentPhysicalProperties agentPhysicalProperties) {
         double scoreMult = 1.0;
@@ -363,7 +406,11 @@ public sealed abstract class GraphElement implements StressInducing, Serializabl
         return totalStress;
     }
 
-    /** @return Sum of stress levels for all agents on this element. */
+    /**
+     * Returns the sum of all stress levels for agents currently on this element.
+     *
+     * @return Sum of stress levels for all agents on this element.
+     */
     public double getAgentsTotalStress() {
         double totalStress = 0;
         for (Agent agent : agents) {
@@ -377,18 +424,41 @@ public sealed abstract class GraphElement implements StressInducing, Serializabl
         return getCachedTotalStressInducedIncludingNeighbors();
     }
 
+    /**
+     * Returns the cached stress induced by this element alone (excluding neighbors).
+     *
+     * @return the cached stress value for this element only
+     */
     public double getCachedTotalStressInducedByThisElement() {
         return cachedTotalStressInducedByThisElement;
     }
 
+    /**
+     * Returns the cached stress induced by this element including neighborhood stress.
+     *
+     * @return the total cached stress value including neighbors
+     */
     public double getCachedTotalStressInducedIncludingNeighbors() {
         return cachedTotalStressInducedIncludingNeighbors;
     }
 
+    /**
+     * Returns the damage dealt to an agent for one simulation tick at the default tick duration.
+     *
+     * @param agent the agent receiving the damage
+     * @return the damage amount for this tick
+     */
     public double getDamageForAgent(Agent agent) {
         return getDamageForAgent(agent, SimulationSettings.getInstance().getTickDuration());
     }
 
+    /**
+     * Returns the damage dealt to an agent over the given duration.
+     *
+     * @param agent    the agent receiving the damage
+     * @param duration the time duration in seconds
+     * @return the damage amount for the given duration
+     */
     public double getDamageForAgent(Agent agent, double duration) {
         double damage = (getCongestion() > 1 ? 1 : 0) * duration;
         if (isOnFire()) {
@@ -397,6 +467,11 @@ public sealed abstract class GraphElement implements StressInducing, Serializabl
         return damage;
     }
 
+    /**
+     * Returns the maximum speed allowed for agents on this element, reduced by congestion.
+     *
+     * @return the maximum agent speed in m/s
+     */
     public double getMaxAgentSpeed() {
         // Capped effective congestion for speed calculation to prevent negative speeds
         double effectiveCongestion = Math.min(getCongestion(), 0.9);
@@ -409,22 +484,41 @@ public sealed abstract class GraphElement implements StressInducing, Serializabl
     // 8. STATISTICS & LIFECYCLE
     // =========================================================================
 
+    /**
+     * Increments the total number of agents that have ever passed through this element.
+     */
     public void incrementTotalAgentsCount() {
         this.totalAgentsCount++;
     }
 
+    /**
+     * Returns the total number of agents that have ever entered this element.
+     *
+     * @return the total agents count
+     */
     public int getTotalAgentsCount() {
         return totalAgentsCount;
     }
 
+    /**
+     * Increments the count of times this element has been at full capacity.
+     */
     public void incrementTimesFull() {
         this.timesFull++;
     }
 
+    /**
+     * Returns the number of times this element has reached full capacity.
+     *
+     * @return the times-full count
+     */
     public int getTimesFull() {
         return timesFull;
     }
 
+    /**
+     * Records the current congestion level for statistical purposes.
+     */
     public void recordCongestionMeasure() {
         double currentCongestion = getCongestion();
         sumCongestion += currentCongestion;
@@ -434,22 +528,43 @@ public sealed abstract class GraphElement implements StressInducing, Serializabl
         }
     }
 
+    /**
+     * Returns the highest congestion level ever recorded for this element.
+     *
+     * @return the maximum congestion ratio observed
+     */
     public double getMaxCongestion() {
         return maxCongestion;
     }
 
+    /**
+     * Returns the average congestion level across all recorded measurements.
+     *
+     * @return the average congestion ratio, or 0 if no measurements have been taken
+     */
     public double getAverageCongestion() {
         return (congestionMeasureCount == 0) ? 0 : sumCongestion / congestionMeasureCount;
     }
 
+    /**
+     * Returns the total number of congestion measurements taken for this element.
+     *
+     * @return the congestion measurement count
+     */
     public int getCongestionMeasureCount() {
         return congestionMeasureCount;
     }
 
+    /**
+     * Saves the current fire state as the initial state to be restored on reset.
+     */
     public void setInitialState() {
         this.initialFire = (getFire() != null) ? getFire() : null;
     }
 
+    /**
+     * Resets this element to its initial state, clearing agents and statistics.
+     */
     public void reset() {
         agents.clear();
         setFire((initialFire != null) ? initialFire : null);

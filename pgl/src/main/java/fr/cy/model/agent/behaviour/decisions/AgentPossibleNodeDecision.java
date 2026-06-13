@@ -24,6 +24,7 @@ import fr.cy.model.graph.element.Node;
  */
 public enum AgentPossibleNodeDecision implements AgentDecision {
 
+    /** Agent follows the most congested paths, mimicking crowd behaviour. */
     FOLLOW_CROWD {
         @Override
         public AgentPossibleNodeDecisionScore computeScore(NodeContext context, Agent agent,
@@ -57,6 +58,7 @@ public enum AgentPossibleNodeDecision implements AgentDecision {
             return new FollowSingleEdgeAction(agent, chosenEdge, targetNode);
         }
     },
+    /** Agent avoids congested edges and chooses less crowded paths. */
     FOLLOW_LESS_CROWDED_PATH {
         @Override
         public AgentPossibleNodeDecisionScore computeScore(NodeContext context, Agent agent,
@@ -92,6 +94,7 @@ public enum AgentPossibleNodeDecision implements AgentDecision {
             return new FollowSingleEdgeAction(agent, chosenEdge, targetNode);
         }
     },
+    /** Agent follows the path recommended by the pathfinder toward the nearest exit. */
     FOLLOW_RECOMMENDED_PATH {
         @Override
         public AgentPossibleNodeDecisionScore computeScore(NodeContext context, Agent agent,
@@ -126,6 +129,7 @@ public enum AgentPossibleNodeDecision implements AgentDecision {
         }
 
     },
+    /** Agent picks a random edge to traverse. */
     RANDOM {
         @Override
         public AgentPossibleNodeDecisionScore computeScore(NodeContext context, Agent agent,
@@ -156,6 +160,7 @@ public enum AgentPossibleNodeDecision implements AgentDecision {
             return new FollowSingleEdgeAction(agent, chosenEdge, targetNode);
         }
     },
+    /** Agent chooses the edge with the least stress and congestion. */
     NICEST_PATH {
         @Override
         public AgentPossibleNodeDecisionScore computeScore(NodeContext context, Agent agent,
@@ -190,6 +195,7 @@ public enum AgentPossibleNodeDecision implements AgentDecision {
             return new FollowSingleEdgeAction(agent, chosenEdge, targetNode);
         }
     },
+    /** Agent follows the geometrically shortest path toward the nearest exit. */
     FOLLOW_SHORTEST_PATH {
         @Override
         public AgentPossibleNodeDecisionScore computeScore(NodeContext context, Agent agent,
@@ -227,6 +233,7 @@ public enum AgentPossibleNodeDecision implements AgentDecision {
             return new FollowSingleEdgeAction(agent, chosenEdge, targetNode);
         }
     },
+    /** Agent continues executing its previous action if it is not yet complete. */
     CONTINUE_LAST_ACTION {
         @Override
         public AgentPossibleNodeDecisionScore computeScore(NodeContext context, Agent agent,
@@ -259,6 +266,7 @@ public enum AgentPossibleNodeDecision implements AgentDecision {
             return lastAction;
         }
     },
+    /** Agent waits at its current node for a short duration before deciding again. */
     WAIT {
         @Override
         public AgentPossibleNodeDecisionScore computeScore(NodeContext context, Agent agent,
@@ -289,10 +297,29 @@ public enum AgentPossibleNodeDecision implements AgentDecision {
 
     private static final Random RNG = new Random();
 
+    /**
+     * Computes the desirability score for this decision given the current node context.
+     *
+     * @param context              the context of the node where the decision is made
+     * @param agent                the agent making the decision
+     * @param decisionMakingFactor a factor modulating the overall score based on the agent's autonomy
+     * @param lastDecision         the last node decision made by the agent
+     * @param lastAction           the last action performed by the agent
+     * @param edgeScoreMultipliers a list of score multipliers corresponding to each outgoing edge
+     * @return the computed score and preferred edge data for this decision
+     */
     public abstract AgentPossibleNodeDecisionScore computeScore(NodeContext context, Agent agent,
             double decisionMakingFactor, AgentPossibleNodeDecision lastDecision, AgentAction lastAction,
             List<Double> edgeScoreMultipliers);
 
+    /**
+     * Converts this decision into a concrete {@link AgentAction} for the agent to execute.
+     *
+     * @param context       the context of the node where the decision is made
+     * @param agent         the agent that will perform the action
+     * @param decisionScore the score object produced by {@link #computeScore}
+     * @return the action the agent should perform
+     */
     public abstract AgentAction toAgentAction(NodeContext context, Agent agent,
             AgentPossibleNodeDecisionScore decisionScore);
 

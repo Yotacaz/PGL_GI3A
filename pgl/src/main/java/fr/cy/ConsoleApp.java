@@ -13,6 +13,17 @@ import fr.cy.model.simulation.Simulation;
  */
 public class ConsoleApp {
 
+    /**
+     * Constructs a new ConsoleApp instance.
+     */
+    public ConsoleApp() {
+    }
+
+    /**
+     * Entry point for the console-based simulation without JavaFX GUI.
+     *
+     * @param args command-line arguments (unused)
+     */
     public static void main(String[] args) {
         System.out.println("\n╔════════════════════════════════════════════════════════════════╗");
         System.out.println("║     🌐 SIMULATEUR D'ÉVACUATION - VERSION CONSOLE 🌐           ║");

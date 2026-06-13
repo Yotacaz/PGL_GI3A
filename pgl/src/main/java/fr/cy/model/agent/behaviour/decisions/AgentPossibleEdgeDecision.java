@@ -12,6 +12,10 @@ import fr.cy.model.agent.properties.AgentDecisionalProperties;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 
+/**
+ * Enumerates the possible decisions an agent can make while traversing an edge.
+ * Each constant provides its own score computation and action conversion logic.
+ */
 public enum AgentPossibleEdgeDecision implements AgentDecision {
     /** Agent decides to go back to the node it came from. */
     BACKTRACK {
@@ -85,11 +89,27 @@ public enum AgentPossibleEdgeDecision implements AgentDecision {
 
     private static final Random RNG = new Random();
 
+    /**
+     * Computes the desirability score of this decision given the current context.
+     *
+     * @param currentTargetNode   the node the agent is currently heading toward
+     * @param agentState          the decisional properties of the agent
+     * @param lastDecision        the last edge decision made by the agent
+     * @param lastAction          the last action performed by the agent
+     * @param nodeScoreMultipliers a map of node score multipliers used for attractiveness evaluation
+     * @return the computed score for this decision (higher is more desirable)
+     */
     public abstract double computeScore(Node currentTargetNode,
             AgentDecisionalProperties agentState,
             AgentPossibleEdgeDecision lastDecision, AgentAction lastAction,
             Map<Node, Double> nodeScoreMultipliers);
 
+    /**
+     * Converts this decision into a concrete {@link AgentAction} the agent will execute.
+     *
+     * @param agent the agent that will perform the action
+     * @return the action corresponding to this decision
+     */
     public abstract AgentAction toAgentAction(Agent agent);
 
 }
