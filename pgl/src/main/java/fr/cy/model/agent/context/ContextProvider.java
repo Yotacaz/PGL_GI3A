@@ -128,6 +128,9 @@ public class ContextProvider implements Serializable {
 
         //get the recommended and the shortest path to exit for the node context
         GraphPath recommendedPath = pathFinder.shortestPath(node);
+        if (recommendedPath != null && recommendedPath.getEdgeCount() == 0) {
+            recommendedPath = null; // No path to exit from this node
+        }
         // GraphPath shortestPathToExit = pathFinder.shortestPathToExit(node);
         return new NodeContext(currentNode, recommendedPath, null, nearbyOutgoingAgents, spaceOccupiedAtEdgesEntrance);
     }
