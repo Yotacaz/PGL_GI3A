@@ -1,7 +1,6 @@
 package fr.cy.view;
 
 import fr.cy.model.agent.Agent;
-import fr.cy.model.agent.behaviour.properties.EmotionalState;
 import fr.cy.model.fire.Fire;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.GraphElement;
@@ -10,6 +9,9 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import java.util.Optional;
+
+import fr.cy.model.agent.properties.AgentProfile;
+import fr.cy.model.agent.properties.EmotionalState;
 
 /**
  * The {@code DialogHelper} class is a utility class providing static methods
@@ -326,6 +328,42 @@ public class DialogHelper {
     }
 
     /**
+     * Shows a dialog that requests how many agents to create and which profile
+     * to assign to them. Returns both values in {@link AgentCreationOptions}.
+     */
+    public static Optional<AgentCreationOptions> showAgentCountAndProfileDialog(javafx.scene.Node parentNode,
+            String title, String headerText) {
+        Dialog<AgentCreationOptions> dialog = new Dialog<>();
+        ButtonType generateBtnType = new ButtonType("Generate", ButtonBar.ButtonData.OK_DONE);
+        DialogPane pane = createBaseDialog(dialog, title, headerText, parentNode);
+        pane.getButtonTypes().addAll(generateBtnType, ButtonType.CANCEL);
+        styleButtons(pane, generateBtnType);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(15);
+        grid.setVgap(15);
+        grid.setPadding(new Insets(20));
+
+        Spinner<Integer> countSpinner = new Spinner<>(1, 1000, 10, 1);
+        countSpinner.setEditable(true);
+
+        ComboBox<AgentProfile> profileCombo = new ComboBox<>();
+        profileCombo.getItems().addAll(AgentProfile.DEFAULT, AgentProfile.ELDERLY, AgentProfile.TOURIST);
+        profileCombo.setValue(AgentProfile.DEFAULT);
+
+        grid.add(new Label("Number of agents:"), 0, 0);
+        grid.add(countSpinner, 1, 0);
+        grid.add(new Label("Profile:"), 0, 1);
+        grid.add(profileCombo, 1, 1);
+
+        pane.setContent(grid);
+
+        dialog.setResultConverter(btn -> btn == generateBtnType ? new AgentCreationOptions(countSpinner.getValue(),
+                profileCombo.getValue()) : null);
+        return dialog.showAndWait();
+    }
+
+    /**
      * Opens a dialog to define the number of nodes for random graph generation.
      * * @param parentNode The parent node for window context.
      * * @return An Optional containing the number of nodes to generate.
@@ -386,5 +424,9 @@ public class DialogHelper {
             this.maxSpeed = maxSpeed;
             this.health = health;
         }
+    }
+
+    /** DTO returned by {@link #showAgentCountAndProfileDialog}. */
+    public static record AgentCreationOptions(int count, AgentProfile profile) {
     }
 }

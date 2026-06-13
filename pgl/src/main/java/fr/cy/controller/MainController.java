@@ -6,7 +6,8 @@ import java.util.Random;
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentManager;
 import fr.cy.model.agent.AgentSettings;
-import fr.cy.model.agent.behaviour.properties.EmotionalState;
+import fr.cy.model.agent.properties.AgentProfile;
+import fr.cy.model.agent.properties.EmotionalState;
 import fr.cy.model.graph.Graph;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
@@ -275,9 +276,15 @@ public class MainController {
 
     /** Prompts for agent count and adds them to a specific node. */
     private void promptAndAddAgentsToNode(Node targetNode) {
-        DialogHelper.showAgentCountDialog(graphCanvas, "Generate Crowd", "Add agents to node #" + targetNode.getId())
-                .ifPresent(count -> {
-                    simController.getSimulation().getAgentManager().generateAgentsOnNode("Agent_", targetNode, count);
+        DialogHelper.showAgentCountAndProfileDialog(graphCanvas, "Generate Crowd",
+                "Add agents to node #" + targetNode.getId()).ifPresent(options -> {
+                    if (options.profile() == null || options.profile() == AgentProfile.DEFAULT) {
+                        simController.getSimulation().getAgentManager().generateAgentsOnNode("Agent_", targetNode,
+                                options.count());
+                    } else {
+                        simController.getSimulation().getAgentManager().generateAgentsOnNode("Agent_", targetNode,
+                                options.count(), options.profile());
+                    }
                     AgentSettings settings = simController.getSimulation().getAgentManager().getAgentSettings();
                     detailsPanel.update(targetNode, settings);
                 });

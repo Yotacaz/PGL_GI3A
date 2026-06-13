@@ -5,6 +5,7 @@ module fr.cy {
 
     opens fr.cy to javafx.fxml;
     opens fr.cy.controller to javafx.fxml;
+    exports fr.cy.model.agent.context to fr.cy.model.agent, fr.cy.agent.behaviour.context;
 
     exports fr.cy;
     exports fr.cy.controller;
@@ -17,5 +18,6 @@ module fr.cy {
     exports fr.cy.model.pathfinding;
     exports fr.cy.model.agent.behaviour.agentActions;
     exports fr.cy.model.agent.behaviour.decisions;
-    exports fr.cy.model.agent.behaviour.properties;
+    exports fr.cy.model.agent.properties;
+
 }

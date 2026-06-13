@@ -3,8 +3,9 @@ package fr.cy.model.graph.element;
 import fr.cy.model.graph.GraphConfig;
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentSettings;
-import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
 import fr.cy.model.agent.exceptions.AgentStateException;
+import fr.cy.model.agent.properties.AgentDecisionalProperties;
+import fr.cy.model.agent.properties.AgentPhysicalProperties;
 import fr.cy.model.fire.Fire;
 import java.util.List;
 import java.util.Objects;
@@ -21,7 +22,7 @@ import java.util.Objects;
  * @author GI3A
  * @version 1.0
  */
-public class Edge extends GraphElement {
+public final class Edge extends GraphElement {
 
     /** Nodes defining the edge endpoints. */
     private Node start;
@@ -194,12 +195,15 @@ public class Edge extends GraphElement {
      * Evaluates the attractiveness of this edge for an agent going to a specific
      * node.
      * 
-     * @param agentState      Agent decision properties.
-     * @param destinationNode The target node.
+     * @param agentState              Agent decision properties.
+     * @param agentPhysicalProperties Agent physical properties.
+     * @param destinationNode         The target node.
      * @return Multiplier score.
      */
-    public double getScoreMultiplierForAgentGoingToNode(AgentDecisionalProperties agentState, Node destinationNode) {
-        return getScoreMultiplierForAgent(agentState) * destinationNode.getScoreMultiplierForAgent(agentState);
+    public double getScoreMultiplierForAgentGoingToNode(AgentDecisionalProperties agentState,
+            AgentPhysicalProperties agentPhysicalProperties, Node destinationNode) {
+        return getScoreMultiplierForAgent(agentState, agentPhysicalProperties)
+                * destinationNode.getScoreMultiplierForAgent(agentState, agentPhysicalProperties);
     }
 
     // =============
@@ -411,16 +415,16 @@ public class Edge extends GraphElement {
      * Checks if there is space left at the entrance of the edge for a new agent.
      *
      * @param entranceNode the node at which to check for space
-     * @return {@code true} if there is space left at the entrance for the largest possible agent, {@code false}
+     * @return {@code true} if there is space left at the entrance for the largest
+     *         possible agent, {@code false}
      *         otherwise
      */
     public boolean hasSpaceLeftAtEntranceForMaxSizedAgent(Node entranceNode) {
         double occupiedSurface = getTotalAreaOccupiedByAgentsAtEntrance(entranceNode);
         double maxAgentSurface = AgentSettings.getInstance().getMAX_SURFACE_AREA_TAKEN_BY_AGENT();
         double medianAgentSurface = AgentSettings.getInstance().getMedianSurfaceAreaTakenByAgent();
-        return occupiedSurface + maxAgentSurface <= width * medianAgentSurface; 
+        return occupiedSurface + maxAgentSurface <= width * medianAgentSurface;
     }
-
 
     public int getNumberOfAgentsBetween(double startDistance, double endDistance, boolean forwardDirection) {
         ensureSegments();
@@ -465,11 +469,12 @@ public class Edge extends GraphElement {
      * Computes the local density (occupied surface per available surface) around a
      * position, for agents travelling in a given physical direction.
      * <p>
-     * A symmetric window of {@link GraphConfig#DENSITY_WINDOW_IN_FRONT} segments on
-     * each side of the central segment is considered. The numerator uses the
-     * pre-computed surface sums ({@link Agent#getSurfaceAreaTakenByAgent()}, not a
-     * mere agent count); the denominator is the physically available surface
-     * {@code windowLength * width}.
+     * A window in front of the agent is considered from
+     * {@link GraphConfig#DENSITY_WINDOW_IN_FRONT} to
+     * {@link GraphConfig#DENSITY_WINDOW_BEHIND} meters in front of the agent. The
+     * numerator uses the pre-computed surface sums
+     * ({@link Agent#getSurfaceAreaTakenByAgent()}, not a mere agent count); the
+     * denominator is the physically available surface {@code windowLength * width}.
      * </p>
      *
      * @param progressFromStart the normalized position from the start node
@@ -488,10 +493,8 @@ public class Edge extends GraphElement {
         double radiusBehind = GraphConfig.DENSITY_WINDOW_BEHIND; // meters behind
         double radiusBehindPercent = radiusBehind / length;
         int radiusBehindInSegments = segmentIndexForProgressFromStart(radiusBehindPercent);
-        // System.out.println("center=" + center + ", radiusInSegmentInFront=" +
-        // radiusInSegmentInFront + ", radiusBehindInSegments="
-        // + radiusBehindInSegments);
-        int low = Math.max(0, center - radiusBehindInSegments);
+
+        int low = Math.max(Math.min(n - 1, center + radiusBehindInSegments), 0);
         int high = Math.min(n - 1, center + radiusInSegmentInFront);
 
         double occupiedSurface = getAreaOccupiedByAgentsBetween(low, high, forwardDirection);
@@ -551,10 +554,12 @@ public class Edge extends GraphElement {
     }
 
     /**
-     * Checks if the largest possible agent can fit at the entrance of the edge when it is empty.
+     * Checks if the largest possible agent can fit at the entrance of the edge when
+     * it is empty.
      *
      * @param entranceNode the node at which to check for space
-     * @return {@code true} if the largest possible agent can fit at the entrance when the edge is empty, {@code false}
+     * @return {@code true} if the largest possible agent can fit at the entrance
+     *         when the edge is empty, {@code false}
      */
     public boolean canMaxSizedAgentFitAtEntranceWhenEdgeIsEmpty(Node entranceNode) {
         double maxAgentSurface = AgentSettings.getInstance().getMAX_SURFACE_AREA_TAKEN_BY_AGENT();
@@ -562,7 +567,7 @@ public class Edge extends GraphElement {
     }
 
     @Override
-    public List<GraphElement> getNeighbors() {
+    public List<Node> getNeighbors() {
         return List.of(start, end);
     }
 

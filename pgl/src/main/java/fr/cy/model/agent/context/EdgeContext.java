@@ -1,15 +1,13 @@
-package fr.cy.model.agent.behaviour.decisions;
+package fr.cy.model.agent.context;
 
 import java.security.InvalidParameterException;
 import java.util.List;
 import java.util.Objects;
 
-
 import fr.cy.model.agent.Agent;
 import fr.cy.model.graph.CongestionStats;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
-//TODO REMOVE
 
 /** Context for decisions made while traversing an {@link Edge}. */
 public class EdgeContext extends AbstractGraphElementContext<Node> {
@@ -18,27 +16,28 @@ public class EdgeContext extends AbstractGraphElementContext<Node> {
     /** The edge from which the decision is made. */
     private final Edge sourceEdge;
 
-    /** @param sourceEdge the edge from which the decision is made
+    /**
+     * @param sourceEdge      the edge from which the decision is made
      * @param accessibleNodes the list of nodes that can be accessed from the edge
      */
-    EdgeContext(
-            Edge sourceEdge,
-            List<Node> accessibleNodes) {
-        super(accessibleNodes);
+    EdgeContext(Edge sourceEdge) {
+        super(sourceEdge.getNeighbors());
         this.sourceEdge = Objects.requireNonNull(sourceEdge, "sourceEdge");
     }
 
-    /** @return the list of accessible nodes */
-    public List<Node> getAccessibleNodes() {
-        return getAccessibleElements();
-    }
 
-    /** @return the congestion statistics for the accessible outgoing nodes, can be null if there are no accessible nodes */
+    /**
+     * @return the congestion statistics for the accessible outgoing nodes, can be
+     *         null if there are no accessible nodes
+     */
     public CongestionStats<Node> getCongestionStatsForOutgoingNodes() {
         return getCongestionStatsForAccessibleElements();
     }
 
-    /** @return the list of accessible nodes sorted by congestion (least congested first) */
+    /**
+     * @return the list of accessible nodes sorted by congestion (least congested
+     *         first)
+     */
     public List<Node> getSortedAccessiblesNodesByCongestion() {
         return getSortedAccessibleElementsByCongestion();
     }
@@ -52,7 +51,7 @@ public class EdgeContext extends AbstractGraphElementContext<Node> {
         Objects.requireNonNull(agent);
 
         if (node.equals(sourceEdge.getStart())) {
-            //TODO check flux
+            // TODO check flux
         } else if (node.equals(sourceEdge.getEnd())) {
         } else {
             throw new InvalidParameterException("node" + node + "is not connected to the edge of this context");
@@ -89,7 +88,6 @@ public class EdgeContext extends AbstractGraphElementContext<Node> {
     public String toString() {
         return "DecisionEdgeContext{" +
                 "sourceEdge=" + sourceEdge +
-                ", accessibleNodes=" + getAccessibleNodes().size() +
                 '}';
     }
 }

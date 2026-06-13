@@ -10,7 +10,7 @@ import fr.cy.model.graph.element.Node;
 /**
  * Action representing behavior where an agent follows another agent.
  */
-public class FollowAgentAction extends AgentAction {
+public class FollowAgentAction extends AbstractMoveAction {
 	private static final long serialVersionUID = 1L;
 
 	/** The agent that this action will follow */

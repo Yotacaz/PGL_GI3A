@@ -5,11 +5,13 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
+import fr.cy.model.graph.element.GraphElement;
+
 /**
  * Holds the aggregated score for a possible decision and its weighted
  * neighboring graph-element choices.
  */
-public abstract class AgentDecisionScore<T> implements Serializable {
+public abstract class AgentPossibleDecisionScore<T extends GraphElement> implements Serializable {
     /** Serial version UID for serialization compatibility */
     private static final long serialVersionUID = 1L;
 
@@ -27,7 +29,7 @@ public abstract class AgentDecisionScore<T> implements Serializable {
      * @param preferredNeighboringElements a map of neighboring graph elements to their associated scores, representing the agent's preferences
      * @param totalScoreForPreferredNeighboringElements the sum of the scores for the preferred neighboring elements, used for weighted selection
      */
-    AgentDecisionScore(double decisionScore, Map<T, Double> preferredNeighboringElements,
+    AgentPossibleDecisionScore(double decisionScore, Map<T, Double> preferredNeighboringElements,
             double totalScoreForPreferredNeighboringElements) {
         this.decisionScore = Math.max(0.0, decisionScore);
         this.preferredNeighboringElements = Objects.requireNonNull(preferredNeighboringElements,
@@ -72,7 +74,7 @@ public abstract class AgentDecisionScore<T> implements Serializable {
         if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-        AgentDecisionScore<?> other = (AgentDecisionScore<?>) obj;
+        AgentPossibleDecisionScore<?> other = (AgentPossibleDecisionScore<?>) obj;
         return Double.compare(decisionScore, other.decisionScore) == 0
                 && Objects.equals(preferredNeighboringElements, other.preferredNeighboringElements)
                 && Double.compare(totalScoreForPreferredNeighboringElements,

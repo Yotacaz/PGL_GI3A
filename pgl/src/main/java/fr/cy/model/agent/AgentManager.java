@@ -6,18 +6,19 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Random;
 
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.agent.behaviour.agentActions.WaitBeforeOtherAction;
-import fr.cy.model.agent.behaviour.decisions.NodeContext;
-import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
-import fr.cy.model.agent.behaviour.properties.AgentPhysicalProperties;
+import fr.cy.model.agent.context.ContextProvider;
+import fr.cy.model.agent.context.EdgeContext;
+import fr.cy.model.agent.context.NodeContext;
 import fr.cy.model.agent.exceptions.AgentStateException;
+import fr.cy.model.agent.properties.AgentDecisionalProperties;
+import fr.cy.model.agent.properties.AgentPhysicalProperties;
+import fr.cy.model.agent.properties.AgentProfile;
+import fr.cy.model.agent.properties.AgentProfileRegistry;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
-import fr.cy.model.agent.behaviour.decisions.ContextProvider;
-import fr.cy.model.agent.behaviour.decisions.EdgeContext;
 import fr.cy.model.simulation.SimulationSettings;
 
 
@@ -39,8 +40,6 @@ import fr.cy.model.simulation.SimulationSettings;
 public class AgentManager implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    private static final Random RNG = new Random();
 
     /** Indicates whether the current tick is the first one */
     private boolean isFirstTick = true;
@@ -68,11 +67,11 @@ public class AgentManager implements Serializable {
     /** For storing initial snapshots of agents (for reset functionality) */
     private List<AgentSnapshot> initialAgentSnapshots = null;
 
-    /**
-     * The time elapsed since the last edge decision was made, used to prompt edge
-     * decisions 
-     */
-    private double timeSinceLastEdgeDecision = 0.0;
+    // /**
+    //  * The time elapsed since the last edge decision was made, used to prompt edge
+    //  * decisions 
+    //  */
+    // private double timeSinceLastEdgeDecision = 0.0; 
 
     /**
      * Creates a new AgentManager with the specified lists of agents and
@@ -208,6 +207,33 @@ public class AgentManager implements Serializable {
     }
 
     /**
+     * Generates multiple agents on the specified node and associates them to the
+     * provided profile. Passing {@code null} uses {@link AgentProfile#DEFAULT}.
+     *
+     * @param baseName base name for created agents
+     * @param node     target node
+     * @param count    number of agents
+     * @param profile  profile to associate to created agents
+     */
+    public void generateAgentsOnNode(String baseName, Node node, int count, AgentProfile profile) {
+        for (int i = 0; i < count; i++) {
+            Agent newAgent = agentGenerator.generateAgent(baseName + (i + 1), node);
+            agentsToEvacuate.add(newAgent);
+            AgentProfileRegistry.setProfile(newAgent, profile);
+        }
+    }
+
+    /**
+     * Generates a single agent on the specified node and associates it to the
+     * provided profile.
+     */
+    public void generateAgentOnNode(String baseName, Node node, AgentProfile profile) {
+        Agent newAgent = agentGenerator.generateAgent(baseName, node);
+        agentsToEvacuate.add(newAgent);
+        AgentProfileRegistry.setProfile(newAgent, profile);
+    }
+
+    /**
      * Generates a single agent on a specific node.
      * 
      * @param baseName the base name for the agent
@@ -283,9 +309,9 @@ public class AgentManager implements Serializable {
             if (agent.isOnNode()) {
 
                 // HEAVY CONGESTION PENALTY
-                // if (!agent.getCurrentNode().canAgentLeave(agent)) {
-                //     continue; // Penality 2 cycles
-                // }
+                if (!agent.getCurrentNode().canAgentLeave(agent)) {
+                    continue; // Penality 2 cycles
+                }
                 
 
                 NodeContext decisionContext = decisionContextProvider.getNodeContext(agent.getCurrentNode());
@@ -298,11 +324,7 @@ public class AgentManager implements Serializable {
                     continue;
                 } else if (!registered) {
                     agent.setCurrentAction(new WaitBeforeOtherAction(agent, tickDuration, action));
-                    // System.out.println("Agent " + agent.getName() + " decided to "+agent.getLastSelectedDecision()+" but could not register the action " + action + " and will wait before performing it. Decision factors: "
-                    //     + agent.getCurrentOwnDecisionMakingFactor());
                 }
-                // System.out.println("Agent " + agent.getName() + " decided to "+agent.getLastSelectedDecision()+" and perform " + agent.getCurrentAction() + " with decision factors: "
-                //     + agent.getCurrentOwnDecisionMakingFactor());
 
             } else if (agent.isOnEdge()) {
                 EdgeContext decisionContext = decisionContextProvider.getEdgeContext(agent.getCurrentEdge());
@@ -310,12 +332,7 @@ public class AgentManager implements Serializable {
                     continue;
                 }
                 AgentAction action = agent.makeEdgeDecision(decisionContext, agentSettings);
-                // if (agent.getLastSelectedEdgeDecision() ==
-                // AgentPossibleEdgeDecision.BACKTRACK) {
-                // System.out.println(
-                // "Agent " + agent.getName() + " is backtracking from edge " +
-                // agent.getCurrentEdge());
-                // }
+
                 boolean registered = decisionContextProvider.registerChosenAction(agent, action);
                 if (action == null) {
                     throw new AgentStateException("Agent " + agent.getName() + " is on edge " + agent.getCurrentEdge()
@@ -563,6 +580,17 @@ public class AgentManager implements Serializable {
         }
     }
 
+    public double getAverageNumberOfTicksToExitForEvacuatedAgents() {
+        if (evacuatedAgents.isEmpty()) {
+            return 0.0;
+        }
+        double totalTicks = 0.0;
+        for (Agent agent : evacuatedAgents) {
+            totalTicks += agent.getnOfTickAliveUntilExited();
+        }
+        return totalTicks / evacuatedAgents.size();
+    }
+
     /**
      * Inner class to capture and store the state of an agent at a point in time.
      * This allows agents to be restored to a previous state, including their
@@ -593,7 +621,7 @@ public class AgentManager implements Serializable {
         private final Edge currentOrPreviousEdge;
         private final boolean isOnNode;
         private final int nOfNodeVisited;
-
+        private final int nOfTickAliveUntilExited;
         // Action and related state
         private final AgentAction currentAction;
 
@@ -623,6 +651,7 @@ public class AgentManager implements Serializable {
             this.currentOrPreviousEdge = agent.getPreviousOrCurrentEdge();
             this.isOnNode = agent.isOnNode();
             this.nOfNodeVisited = agent.getnOfNodeVisited();
+            this.nOfTickAliveUntilExited = agent.getnOfTickAliveUntilExited();
             this.currentEdgeProgress = agent.getCurrentEdgeProgress();
 
             // Current action (will be serialized as-is)
@@ -662,9 +691,10 @@ public class AgentManager implements Serializable {
             agent.setCongestionTolerance(this.crowdingTolerance);
 
             // Restore number of nodes visited
-            for (int i = 0; i < this.nOfNodeVisited; i++) {
-                agent.incrementNodeVisited();
-            }
+            agent.setnOfNodeVisited(this.nOfNodeVisited);
+
+            // Restore number of ticks alive until exited
+            agent.setnOfTickAliveUntilExited(this.nOfTickAliveUntilExited);
 
             // Restore position
             if (!this.isOnNode && this.currentOrPreviousEdge != null) {

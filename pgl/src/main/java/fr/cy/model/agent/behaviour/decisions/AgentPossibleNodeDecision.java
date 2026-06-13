@@ -11,7 +11,8 @@ import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.agent.behaviour.agentActions.FollowSingleEdgeAction;
 import fr.cy.model.agent.behaviour.agentActions.WaitAction;
-import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
+import fr.cy.model.agent.properties.AgentDecisionalProperties;
+import fr.cy.model.agent.context.NodeContext;
 import fr.cy.model.graph.CongestionStats;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
@@ -21,11 +22,11 @@ import fr.cy.model.graph.element.Node;
  * Each decision has its own logic for computing a score based on the current context and
  * for converting that decision into an actionable {@link AgentAction}.
  */
-public enum AgentPossibleNodeDecision {
+public enum AgentPossibleNodeDecision implements AgentDecision {
 
     FOLLOW_CROWD {
         @Override
-        public AgentNodeDecisionScore computeScore(NodeContext context, Agent agent,
+        public AgentPossibleNodeDecisionScore computeScore(NodeContext context, Agent agent,
                 double decisionMakingFactor, AgentPossibleNodeDecision lastDecision, AgentAction lastAction,
                 List<Double> edgeScoreMultipliers) {
             AgentDecisionalProperties agentState = agent.getBehavioralState();
@@ -33,7 +34,8 @@ public enum AgentPossibleNodeDecision {
             CongestionStats<Edge> congestionStats = context.getCongestionStatsForOutgoingEdges();
             double congestionLevel = congestionStats == null ? 0.0 : congestionStats.getAverageCongestionLevel();
             Map<Edge, Double> preferredNeighboringEdges = new HashMap<>();
-            double totalScoreForPreferredNeighboringEdges = computeEdgesScore(context.getOutgoingEdges(),
+            Node sourceNode = context.getSourceNode();
+            double totalScoreForPreferredNeighboringEdges = computeEdgesScore(sourceNode.getOutgoingEdges(),
                     edge -> edge.getCongestion()
                             / (1.0 + edge.getCachedTotalStressInducedIncludingNeighbors() * 0.125),
                     preferredNeighboringEdges, edgeScoreMultipliers);
@@ -42,12 +44,12 @@ public enum AgentPossibleNodeDecision {
             if (lastDecision == this) {
                 decisionScore *= agentState.getRepeatLastDecisionFactor(); //prefer to repeat last decision if it was the same
             }
-            return new AgentNodeDecisionScore(decisionScore, preferredNeighboringEdges,
+            return new AgentPossibleNodeDecisionScore(decisionScore, preferredNeighboringEdges,
                     totalScoreForPreferredNeighboringEdges);
         }
 
         @Override
-        public AgentAction toAgentAction(NodeContext context, Agent agent, AgentNodeDecisionScore decisionScore) {
+        public AgentAction toAgentAction(NodeContext context, Agent agent, AgentPossibleNodeDecisionScore decisionScore) {
             Map<Edge, Double> preferredEdges = decisionScore.getPreferredNeighboringEdges();
             double totalScore = decisionScore.getTotalScoreForPreferredNeighboringEdges();
             Edge chosenEdge = selectEdgeBasedOnScores(preferredEdges, totalScore);
@@ -57,15 +59,15 @@ public enum AgentPossibleNodeDecision {
     },
     FOLLOW_LESS_CROWDED_PATH {
         @Override
-        public AgentNodeDecisionScore computeScore(NodeContext context, Agent agent,
+        public AgentPossibleNodeDecisionScore computeScore(NodeContext context, Agent agent,
                 double decisionMakingFactor, AgentPossibleNodeDecision lastDecision, AgentAction lastAction,
                 List<Double> edgeScoreMultipliers) {
             CongestionStats<Edge> congestionStats = context.getCongestionStatsForOutgoingEdges();
             Map<Edge, Double> preferredNeighboringEdges = new HashMap<>();
             AgentDecisionalProperties agentState = agent.getBehavioralState();
             double congestionLevel = congestionStats == null ? 0.0 : congestionStats.getAverageCongestionLevel();
-
-            double totalScoreForPreferredNeighboringEdges = computeEdgesScore(context.getOutgoingEdges(),
+            Node sourceNode = context.getSourceNode();
+            double totalScoreForPreferredNeighboringEdges = computeEdgesScore(sourceNode.getOutgoingEdges(),
                     edge -> (1.0 - edge.getCongestion())
                             / (1.0 + edge.getCachedTotalStressInducedIncludingNeighbors() * 0.125),
                     preferredNeighboringEdges, edgeScoreMultipliers);
@@ -77,12 +79,12 @@ public enum AgentPossibleNodeDecision {
             if (lastDecision == this) {
                 decisionScore *= agentState.getRepeatLastDecisionFactor();
             }
-            return new AgentNodeDecisionScore(decisionScore, preferredNeighboringEdges,
+            return new AgentPossibleNodeDecisionScore(decisionScore, preferredNeighboringEdges,
                     totalScoreForPreferredNeighboringEdges);
         }
 
         @Override
-        public AgentAction toAgentAction(NodeContext context, Agent agent, AgentNodeDecisionScore decisionScore) {
+        public AgentAction toAgentAction(NodeContext context, Agent agent, AgentPossibleNodeDecisionScore decisionScore) {
             Map<Edge, Double> preferredEdges = decisionScore.getPreferredNeighboringEdges();
             double totalScore = decisionScore.getTotalScoreForPreferredNeighboringEdges();
             Edge chosenEdge = selectEdgeBasedOnScores(preferredEdges, totalScore);
@@ -92,14 +94,15 @@ public enum AgentPossibleNodeDecision {
     },
     FOLLOW_RECOMMENDED_PATH {
         @Override
-        public AgentNodeDecisionScore computeScore(NodeContext context, Agent agent,
+        public AgentPossibleNodeDecisionScore computeScore(NodeContext context, Agent agent,
                 double decisionMakingFactor, AgentPossibleNodeDecision lastDecision, AgentAction lastAction,
                 List<Double> edgeScoreMultipliers) {
             Map<Edge, Double> preferredNeighboringEdges = new HashMap<>();
             double totalScoreForPreferredNeighboringEdges = 0.0;
             AgentDecisionalProperties agentState = agent.getBehavioralState();
+            Node sourceNode = context.getSourceNode();
             if (context.getRecommendedPath() != null) {
-                totalScoreForPreferredNeighboringEdges = computeEdgesScore(context.getOutgoingEdges(),
+                totalScoreForPreferredNeighboringEdges = computeEdgesScore(sourceNode.getOutgoingEdges(),
                         edge -> context.getRecommendedPath().getEdges().contains(edge) ? 1.0 : 0.0,
                         preferredNeighboringEdges, edgeScoreMultipliers);
             }
@@ -108,12 +111,12 @@ public enum AgentPossibleNodeDecision {
             if (lastDecision == this) {
                 decisionScore *= agentState.getRepeatLastDecisionFactor();
             }
-            return new AgentNodeDecisionScore(decisionScore, preferredNeighboringEdges,
+            return new AgentPossibleNodeDecisionScore(decisionScore, preferredNeighboringEdges,
                     totalScoreForPreferredNeighboringEdges);
         }
 
         @Override
-        public AgentAction toAgentAction(NodeContext context, Agent agent, AgentNodeDecisionScore decisionScore) {
+        public AgentAction toAgentAction(NodeContext context, Agent agent, AgentPossibleNodeDecisionScore decisionScore) {
             Map<Edge, Double> preferredEdges = decisionScore.getPreferredNeighboringEdges();
             double totalScore = decisionScore.getTotalScoreForPreferredNeighboringEdges();
             Edge chosenEdge = selectEdgeBasedOnScores(preferredEdges, totalScore);
@@ -125,25 +128,26 @@ public enum AgentPossibleNodeDecision {
     },
     RANDOM {
         @Override
-        public AgentNodeDecisionScore computeScore(NodeContext context, Agent agent,
+        public AgentPossibleNodeDecisionScore computeScore(NodeContext context, Agent agent,
                 double decisionMakingFactor, AgentPossibleNodeDecision lastDecision, AgentAction lastAction,
                 List<Double> edgeScoreMultipliers) {
             Map<Edge, Double> preferredNeighboringEdges = new HashMap<>();
             AgentDecisionalProperties agentState = agent.getBehavioralState();
+            Node sourceNode = context.getSourceNode();
 
-            double totalScoreForPreferredNeighboringEdges = computeEdgesScore(context.getOutgoingEdges(),
+            double totalScoreForPreferredNeighboringEdges = computeEdgesScore(sourceNode.getOutgoingEdges(),
                     edge -> RNG.nextDouble(),
                     preferredNeighboringEdges, edgeScoreMultipliers);
             double decisionScore = (RNG.nextDouble() + agentState.getStressLevel()) * decisionMakingFactor;
             if (lastDecision == this) {
                 decisionScore *= agentState.getRepeatLastDecisionFactor();
             }
-            return new AgentNodeDecisionScore(decisionScore, preferredNeighboringEdges,
+            return new AgentPossibleNodeDecisionScore(decisionScore, preferredNeighboringEdges,
                     totalScoreForPreferredNeighboringEdges);
         }
 
         @Override
-        public AgentAction toAgentAction(NodeContext context, Agent agent, AgentNodeDecisionScore decisionScore) {
+        public AgentAction toAgentAction(NodeContext context, Agent agent, AgentPossibleNodeDecisionScore decisionScore) {
             Map<Edge, Double> preferredEdges = decisionScore.getPreferredNeighboringEdges();
             double totalScore = decisionScore.getTotalScoreForPreferredNeighboringEdges();
             Edge chosenEdge = selectEdgeBasedOnScores(preferredEdges, totalScore);
@@ -154,12 +158,13 @@ public enum AgentPossibleNodeDecision {
     },
     NICEST_PATH {
         @Override
-        public AgentNodeDecisionScore computeScore(NodeContext context, Agent agent,
+        public AgentPossibleNodeDecisionScore computeScore(NodeContext context, Agent agent,
                 double decisionMakingFactor, AgentPossibleNodeDecision lastDecision, AgentAction lastAction,
                 List<Double> edgeScoreMultipliers) {
             AgentDecisionalProperties agentState = agent.getBehavioralState();
+            Node sourceNode = context.getSourceNode();
             Map<Edge, Double> preferredNeighboringEdges = new HashMap<>();
-            double totalScoreForPreferredNeighboringEdges = computeEdgesScore(context.getOutgoingEdges(),
+            double totalScoreForPreferredNeighboringEdges = computeEdgesScore(sourceNode.getOutgoingEdges(),
                     edge -> Math.max(1.0 / (edge.getStressInducingImpact() + 1.0)
                             - edge.getCongestion(), 0.0),
                     preferredNeighboringEdges, edgeScoreMultipliers);
@@ -171,12 +176,12 @@ public enum AgentPossibleNodeDecision {
             if (lastDecision == this) {
                 decisionScore *= agentState.getRepeatLastDecisionFactor();
             }
-            return new AgentNodeDecisionScore(decisionScore, preferredNeighboringEdges,
+            return new AgentPossibleNodeDecisionScore(decisionScore, preferredNeighboringEdges,
                     totalScoreForPreferredNeighboringEdges);
         }
 
         @Override
-        public AgentAction toAgentAction(NodeContext context, Agent agent, AgentNodeDecisionScore decisionScore) {
+        public AgentAction toAgentAction(NodeContext context, Agent agent, AgentPossibleNodeDecisionScore decisionScore) {
             Map<Edge, Double> preferredEdges = decisionScore.getPreferredNeighboringEdges();
             double totalScore = decisionScore.getTotalScoreForPreferredNeighboringEdges();
             Edge chosenEdge = selectEdgeBasedOnScores(preferredEdges, totalScore);
@@ -187,16 +192,17 @@ public enum AgentPossibleNodeDecision {
     },
     FOLLOW_SHORTEST_PATH {
         @Override
-        public AgentNodeDecisionScore computeScore(NodeContext context, Agent agent,
+        public AgentPossibleNodeDecisionScore computeScore(NodeContext context, Agent agent,
                 double decisionMakingFactor, AgentPossibleNodeDecision lastDecision, AgentAction lastAction,
                 List<Double> edgeScoreMultipliers) {
             AgentDecisionalProperties agentState = agent.getBehavioralState();
+            Node sourceNode = context.getSourceNode();
             Map<Edge, Double> preferredNeighboringEdges = new HashMap<>();
             double totalScoreForPreferredNeighboringEdges = 0.0;
             boolean hasRecommendedPath = context.getRecommendedPath() != null;
             if (hasRecommendedPath) {
                 List<Edge> recommendedPathEdges = context.getRecommendedPath().getEdges();
-                totalScoreForPreferredNeighboringEdges = computeEdgesScore(context.getOutgoingEdges(),
+                totalScoreForPreferredNeighboringEdges = computeEdgesScore(sourceNode.getOutgoingEdges(),
                         edge -> recommendedPathEdges.contains(edge) ? 1.0 : 0.0,
                         preferredNeighboringEdges, edgeScoreMultipliers);
             }
@@ -207,12 +213,12 @@ public enum AgentPossibleNodeDecision {
             if (lastDecision == this) {
                 decisionScore *= agentState.getRepeatLastDecisionFactor();
             }
-            return new AgentNodeDecisionScore(decisionScore, preferredNeighboringEdges,
+            return new AgentPossibleNodeDecisionScore(decisionScore, preferredNeighboringEdges,
                     totalScoreForPreferredNeighboringEdges);
         }
 
         @Override
-        public AgentAction toAgentAction(NodeContext context, Agent agent, AgentNodeDecisionScore decisionScore) {
+        public AgentAction toAgentAction(NodeContext context, Agent agent, AgentPossibleNodeDecisionScore decisionScore) {
             Map<Edge, Double> preferredEdges = decisionScore.getPreferredNeighboringEdges();
             double totalScore = decisionScore.getTotalScoreForPreferredNeighboringEdges();
             Edge chosenEdge = selectEdgeBasedOnScores(preferredEdges, totalScore); //FIXME: temporary solution, should directly follow the recommended path without random selection
@@ -223,16 +229,17 @@ public enum AgentPossibleNodeDecision {
     },
     CONTINUE_LAST_ACTION {
         @Override
-        public AgentNodeDecisionScore computeScore(NodeContext context, Agent agent,
+        public AgentPossibleNodeDecisionScore computeScore(NodeContext context, Agent agent,
                 double decisionMakingFactor, AgentPossibleNodeDecision lastDecision, AgentAction lastAction,
                 List<Double> edgeScoreMultipliers) {
             AgentDecisionalProperties agentState = agent.getBehavioralState();
             Map<Edge, Double> preferredNeighboringEdges = new HashMap<>();
             double totalScoreForPreferredNeighboringEdges = 0.0;
             double decisionScore = 0;
+            Node sourceNode = context.getSourceNode();
             if (lastAction != null && lastAction.isCompleted() == false) {
                 //prefer to continue on the next edge of the action if there is an ongoing action
-                totalScoreForPreferredNeighboringEdges = computeEdgesScore(context.getOutgoingEdges(),
+                totalScoreForPreferredNeighboringEdges = computeEdgesScore(sourceNode.getOutgoingEdges(),
                         edge -> edge.equals(lastAction.getClosestTargetEdge()) ? 1.0 : 0.0,
                         preferredNeighboringEdges, edgeScoreMultipliers);
                 decisionScore = 1.0 * decisionMakingFactor; //prefer to continue last action if there is one
@@ -241,12 +248,12 @@ public enum AgentPossibleNodeDecision {
                 decisionScore *= agentState.getRepeatLastDecisionFactor();
             }
 
-            return new AgentNodeDecisionScore(decisionScore, preferredNeighboringEdges,
+            return new AgentPossibleNodeDecisionScore(decisionScore, preferredNeighboringEdges,
                     totalScoreForPreferredNeighboringEdges);
         }
 
         @Override
-        public AgentAction toAgentAction(NodeContext context, Agent agent, AgentNodeDecisionScore decisionScore) {
+        public AgentAction toAgentAction(NodeContext context, Agent agent, AgentPossibleNodeDecisionScore decisionScore) {
             AgentAction lastAction = Objects.requireNonNull(agent.getCurrentAction(),
                     "Last action cannot be null when choosing to continue last action");
             return lastAction;
@@ -254,7 +261,7 @@ public enum AgentPossibleNodeDecision {
     },
     WAIT {
         @Override
-        public AgentNodeDecisionScore computeScore(NodeContext context, Agent agent,
+        public AgentPossibleNodeDecisionScore computeScore(NodeContext context, Agent agent,
                 double decisionMakingFactor, AgentPossibleNodeDecision lastDecision, AgentAction lastAction,
                 List<Double> edgeScoreMultipliers) {
             AgentDecisionalProperties agentState = agent.getBehavioralState();
@@ -269,12 +276,12 @@ public enum AgentPossibleNodeDecision {
             if (lastDecision == this) {
                 decisionScore *= agentState.getRepeatLastDecisionFactor();
             }
-            return new AgentNodeDecisionScore(decisionScore, preferredNeighboringEdges,
+            return new AgentPossibleNodeDecisionScore(decisionScore, preferredNeighboringEdges,
                     totalScoreForPreferredNeighboringEdges);
         }
 
         @Override
-        public AgentAction toAgentAction(NodeContext context, Agent agent, AgentNodeDecisionScore decisionScore) {
+        public AgentAction toAgentAction(NodeContext context, Agent agent, AgentPossibleNodeDecisionScore decisionScore) {
             double timeToWait = RNG.nextDouble() * 0.5 + 1; //wait between 1 and 1.5 s
             return new WaitAction(agent, timeToWait);
         }
@@ -282,12 +289,12 @@ public enum AgentPossibleNodeDecision {
 
     private static final Random RNG = new Random();
 
-    public abstract AgentNodeDecisionScore computeScore(NodeContext context, Agent agent,
+    public abstract AgentPossibleNodeDecisionScore computeScore(NodeContext context, Agent agent,
             double decisionMakingFactor, AgentPossibleNodeDecision lastDecision, AgentAction lastAction,
             List<Double> edgeScoreMultipliers);
 
     public abstract AgentAction toAgentAction(NodeContext context, Agent agent,
-            AgentNodeDecisionScore decisionScore);
+            AgentPossibleNodeDecisionScore decisionScore);
 
     private static Edge selectEdgeBasedOnScores(Map<Edge, Double> edgeScores, double totalScore) {
         return DecisionScoreUtils.selectElementBasedOnScores(edgeScores, totalScore);

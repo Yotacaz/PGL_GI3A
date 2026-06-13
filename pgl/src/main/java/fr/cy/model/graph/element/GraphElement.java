@@ -9,7 +9,8 @@ import java.io.*;
 
 import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.AgentSettings;
-import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
+import fr.cy.model.agent.properties.AgentDecisionalProperties;
+import fr.cy.model.agent.properties.AgentPhysicalProperties;
 import fr.cy.model.fire.Fire;
 import fr.cy.model.simulation.SimulationSettings;
 import fr.cy.model.stress.StressInducing;
@@ -24,7 +25,7 @@ import fr.cy.model.stress.StressInducing;
  * 
  * @version 1.0
  */
-public abstract class GraphElement implements StressInducing, Serializable {
+public sealed abstract class GraphElement implements StressInducing, Serializable permits Node,Edge {
     private static final long serialVersionUID = 1L;
 
     // Identity
@@ -73,7 +74,7 @@ public abstract class GraphElement implements StressInducing, Serializable {
      *
      * @return A list of neighboring {@link GraphElement} instances.
      */
-    public abstract List<GraphElement> getNeighbors();
+    public abstract List<? extends GraphElement> getNeighbors();
 
     /** @return The unique identifier of this element. */
     public int getId() {
@@ -304,13 +305,14 @@ public abstract class GraphElement implements StressInducing, Serializable {
      * conditions.
      *
      * @param agentState Agent decision properties.
+     * @param agentPhysicalProperties Agent physical properties.
      * @return Score multiplier (values < 1 decrease attractiveness).
      */
-    public double getScoreMultiplierForAgent(AgentDecisionalProperties agentState) {
+    public double getScoreMultiplierForAgent(AgentDecisionalProperties agentState, AgentPhysicalProperties agentPhysicalProperties) {
         double scoreMult = 1.0;
         if (isOnFire()) {
             Fire f = getFire();
-            scoreMult *= 0.1 / (1.0 + f.getIntensity() + f.getSmokeLevel() + f.getSpreadRate());
+            scoreMult *= 0.1 / (1.0 + (f.getIntensity() + f.getSmokeLevel() + f.getSpreadRate())*100+ (1-agentPhysicalProperties.getHealthPercentage())*10);
         }
         double congestion = getCongestion();
         if (isCongested()) {

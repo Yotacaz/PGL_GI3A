@@ -1,4 +1,4 @@
-package fr.cy.model.agent.behaviour.properties;
+package fr.cy.model.agent.properties;
 
 import java.io.Serializable;
 import java.util.HashSet;

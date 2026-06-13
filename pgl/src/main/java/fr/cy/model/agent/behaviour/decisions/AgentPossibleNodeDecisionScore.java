@@ -11,10 +11,10 @@ import fr.cy.model.graph.element.Edge;
  * for decisions made at nodes, including information about preferred neighboring edges
  * that the agent might consider when moving from the current node.</p>
  */
-public class AgentNodeDecisionScore extends AgentDecisionScore<Edge> {
+public class AgentPossibleNodeDecisionScore extends AgentPossibleDecisionScore<Edge> {
     private static final long serialVersionUID = 1L;
 
-    AgentNodeDecisionScore(double totalScore, Map<Edge, Double> preferredNeighboringEdges,
+    AgentPossibleNodeDecisionScore(double totalScore, Map<Edge, Double> preferredNeighboringEdges,
             double totalScoreForPreferredNeighboringEdges) {
         super(totalScore, preferredNeighboringEdges, totalScoreForPreferredNeighboringEdges);
     }

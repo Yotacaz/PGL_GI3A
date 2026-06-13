@@ -8,11 +8,11 @@ import fr.cy.model.agent.Agent;
 import fr.cy.model.agent.behaviour.agentActions.AgentAction;
 import fr.cy.model.agent.behaviour.agentActions.FollowSingleEdgeAction;
 import fr.cy.model.agent.behaviour.agentActions.WaitBeforeOtherAction;
-import fr.cy.model.agent.behaviour.properties.AgentDecisionalProperties;
+import fr.cy.model.agent.properties.AgentDecisionalProperties;
 import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 
-public enum AgentPossibleEdgeDecision {
+public enum AgentPossibleEdgeDecision implements AgentDecision {
     /** Agent decides to go back to the node it came from. */
     BACKTRACK {
         @Override
@@ -34,7 +34,7 @@ public enum AgentPossibleEdgeDecision {
             Edge currentEdge = Objects.requireNonNull(agent.getCurrentEdge());
             Node targetNode = Objects
                     .requireNonNull(currentEdge.getOppositeNode(agent.getCurrentNodeOrNextNodeIfOnEdge()));
-            System.out.println("Agent " + agent.getId() + " is backtracking to node " + targetNode.getId() + " with progress " + currentProgress);
+            // System.out.println("Agent " + agent.getId() + " is backtracking to node " + targetNode.getId() + " with progress " + currentProgress);
             agent.setCurrentEdgeProgress(currentProgress); // update edge progress to reflect backtracking
             return new FollowSingleEdgeAction(agent, currentEdge, targetNode, Math.max(0.0, currentProgress));
         }
