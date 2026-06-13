@@ -9,14 +9,14 @@ import fr.cy.model.graph.CongestionStats;
 import fr.cy.model.graph.element.GraphElement;
 
 abstract class AbstractGraphElementContext<T extends GraphElement> implements Serializable {
+
     private static final long serialVersionUID = 1L;
 
     private final CongestionStats<T> congestionStats;
 
-    AbstractGraphElementContext(List<T> neighbors) {
-        this.congestionStats = CongestionStats.computeCongestionStats(neighbors);//to test if error bc unmodifiable
+    AbstractGraphElementContext(CongestionStats<T> congestionStats) {
+        this.congestionStats = congestionStats;
     }
-
 
     /**
      * Returns the congestion statistics for the accessible graph elements, used to inform decision-making.
@@ -38,13 +38,13 @@ abstract class AbstractGraphElementContext<T extends GraphElement> implements Se
 
     /**
      * Registers an agent's intent to use an outgoing {@code GraphElement}.
-     * 
+     *
      * <p>This method checks if the graph element has sufficient capacity for the agent
      * and updates the space occupation data accordingly. If the graph element is already
      * at capacity, the registration fails.</p>
-     * 
+     *
      * @param element the graph element the agent intends to use
-     * @param agent the agent attempting to register its intent
+     * @param agent   the agent attempting to register its intent
      * @return true if the registration was successful, false if the graph element is at capacity
      */
     abstract boolean registerOutgoingIntent(T element, Agent agent);

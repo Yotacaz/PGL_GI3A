@@ -474,6 +474,8 @@ public class Agent implements StressInducing, Serializable {
                 multiplier *= Math.pow(edgeDirectionDisrespectMult,
                         getEmotionalState().getNumberOfEdgeDirectionDisrespectApplications());
             }
+            boolean isForwardDirection = edge.getStart().equals(sourceNode);
+            multiplier *= (edge.getOccupiedSurfaceRatioInDirection(isForwardDirection) + 0.5); 
             multipliers.add(multiplier);
         }
         return multipliers;
@@ -524,13 +526,15 @@ public class Agent implements StressInducing, Serializable {
     private double computeSingleNodeScoreForEdgeDecision(Node node, Edge edge, Node previousTargetNode,
             double backtrackingMult, double edgeDirectionDisrespectMult) {
         double multiplier = node.getScoreMultiplierForAgent(behavioralState, physicalProperties);
-        if (edge.isDirected() && edge.getStart().equals(node)) { // bad direction
+        boolean isForwardDirection = edge.getStart().equals(node);
+        if (edge.isDirected() && !isForwardDirection) { // bad direction
             multiplier *= Math.pow(edgeDirectionDisrespectMult,
                     getEmotionalState().getNumberOfEdgeDirectionDisrespectApplications());
         }
         if (node.equals(previousTargetNode)) {
             multiplier *= backtrackingMult;
         }
+        multiplier *= (edge.getOccupiedSurfaceRatioInDirection(isForwardDirection) + 0.5); // Add 0.5 to avoid multiplying by 0 and to reduce the impact of the occupied surface ratio
         return multiplier;
     }
 

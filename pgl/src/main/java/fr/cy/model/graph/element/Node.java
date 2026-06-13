@@ -174,16 +174,16 @@ public final class Node extends GraphElement {
     }
 
     /**
-     * @return List of edges agents can travel through from this node.
+     * @return an unmodifiable list of edges agents can travel through from this node.
      */
     public List<Edge> getOutgoingEdges() {
-        return outgoingEdges;
+        return Collections.unmodifiableList(outgoingEdges);
     }
 
     /**
-     * @return a copy of all edges incident to this node.
+     * @return an unmodifiable list of all edges incident to this node.
      */
     public List<Edge> getEdges() {
-        return new ArrayList<>(connectedEdges);
+        return Collections.unmodifiableList(connectedEdges);
     }
 }

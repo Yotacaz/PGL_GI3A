@@ -55,7 +55,7 @@ public class AgentSettings implements Serializable {
         // Initialize decision-making factors for each decision type
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_CROWD, 4.0);
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_LESS_CROWDED_PATH, 0.1);
-        defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_RECOMMENDED_PATH, 2.0);
+        defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_RECOMMENDED_PATH, 3.0);
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.FOLLOW_SHORTEST_PATH, 0.05);
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.NICEST_PATH, 0.2);
         defaultNodeDecisionMakingFactors.put(AgentPossibleNodeDecision.RANDOM, 0.5);
@@ -115,13 +115,13 @@ public class AgentSettings implements Serializable {
     /** Maximum base own decision-making factor for every agent */
     private double MAX_BASE_OWN_DECISION_MAKING_FACTOR = 1.0;
     /** Minimum health for every agent */
-    private int MIN_HEALTH = 75;
+    private int MIN_HEALTH = 90;
     /** Maximum health for every agent */
-    private int MAX_HEALTH = 100;
+    private int MAX_HEALTH = 150;
     /** Minimum surface area taken by an agent on a node or edge */
     private double MIN_SURFACE_AREA_TAKEN_BY_AGENT = 0.3;
     /** Maximum surface area taken by an agent on a node or edge */
-    private double MAX_SURFACE_AREA_TAKEN_BY_AGENT = 1.5;
+    private double MAX_SURFACE_AREA_TAKEN_BY_AGENT = 1.0;
 
     /** Multiplier for stress calculation */
     private double STRESS_MULTIPLIER = 40.0;
@@ -142,14 +142,14 @@ public class AgentSettings implements Serializable {
      * beta*rho_opposite)}). Higher values mean a stronger slowdown when the lane
      * fills up with agents going the same way.
      */
-    private double CONGESTION_ALPHA = 2.0;
+    private double CONGESTION_ALPHA = 1.75;
     /**
      * Sensitivity of the local speed model to the local density of agents moving
      * in the <b>opposite</b> direction (counter-flow). It is intentionally larger
      * than {@link #CONGESTION_ALPHA} because facing a counter-flow is more
      * disruptive than following the crowd.
      */
-    private double CONGESTION_BETA = 5.0;
+    private double CONGESTION_BETA = 4.75;
 
     /**
      * Gets an immutable view of the default decision-making factors for node

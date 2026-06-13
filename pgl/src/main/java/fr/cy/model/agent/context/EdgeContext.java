@@ -1,6 +1,5 @@
 package fr.cy.model.agent.context;
 
-import java.security.InvalidParameterException;
 import java.util.List;
 import java.util.Objects;
 
@@ -10,18 +9,19 @@ import fr.cy.model.graph.element.Edge;
 import fr.cy.model.graph.element.Node;
 
 /** Context for decisions made while traversing an {@link Edge}. */
-public class EdgeContext extends AbstractGraphElementContext<Node> {
+public class EdgeContext extends AbstractGraphElementContext<Node>  {
     private static final long serialVersionUID = 1L;
 
     /** The edge from which the decision is made. */
     private final Edge sourceEdge;
 
     /**
-     * @param sourceEdge      the edge from which the decision is made
-     * @param accessibleNodes the list of nodes that can be accessed from the edge
+     * Constructs a context for decisions made while traversing the given edge.
+     *
+     * @param sourceEdge the edge from which the decision is made
      */
     EdgeContext(Edge sourceEdge) {
-        super(sourceEdge.getNeighbors());
+        super(CongestionStats.computeCongestionStats(sourceEdge.getNeighbors()));
         this.sourceEdge = Objects.requireNonNull(sourceEdge, "sourceEdge");
     }
 
@@ -39,8 +39,7 @@ public class EdgeContext extends AbstractGraphElementContext<Node> {
     /**
      * Returns the list of accessible nodes sorted by congestion level.
      *
-     * @return the list of accessible nodes sorted by congestion (least congested
-     *         first)
+     * @return the list of accessible nodes sorted by congestion (least congested first)
      */
     public List<Node> getSortedAccessiblesNodesByCongestion() {
         return getSortedAccessibleElementsByCongestion();
@@ -51,15 +50,14 @@ public class EdgeContext extends AbstractGraphElementContext<Node> {
      */
     @Override
     boolean registerOutgoingIntent(Node node, Agent agent) {
-        Objects.requireNonNull(node);
-        Objects.requireNonNull(agent);
-
-        if (node.equals(sourceEdge.getStart())) {
-            // TODO check flux
-        } else if (node.equals(sourceEdge.getEnd())) {
-        } else {
-            throw new InvalidParameterException("node" + node + "is not connected to the edge of this context");
-        }
+        // Objects.requireNonNull(node);
+        // Objects.requireNonNull(agent);
+        
+        // if (node.equals(sourceEdge.getStart())) {
+        // } else if (node.equals(sourceEdge.getEnd())) {
+        // } else {
+        //     throw new InvalidParameterException("node" + node + "is not connected to the edge of this context");
+        // }
 
         return true;
     }

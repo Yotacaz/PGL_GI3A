@@ -96,7 +96,7 @@ public class Simulation implements Serializable {
      */
     public void reset() {
         graph.reset();
-        agentManager.reset();
+        agentManager.reset(graph);
         currentTick = 0;
         running = false;
         lastEngineLoadMs = 0.0;
